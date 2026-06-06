@@ -1,0 +1,161 @@
+You are helping build a Flutter food ordering app called Aklatna (أكلاتنا) for the city of Daria (داريا), Syria.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Flutter (latest stable)
+- State management: flutter_bloc (BLoC for complex, Cubit for simple)
+- Backend: Supabase (auth, database, realtime, storage)
+- Dependency injection: GetIt + injectable
+- Navigation: GoRouter
+- Error handling: dartz (Either<Failure, Success>)
+- Architecture: Clean Architecture (data / domain / presentation)
+- Equatable for BLoC state comparison
+- cached_network_image for images
+- connectivity_plus for network checks
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PROJECT STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+lib/
+├── main.dart
+├── app.dart
+├── core/
+│   ├── constants/
+│   ├── errors/
+│   ├── network/
+│   ├── router/
+│   ├── theme/
+│   └── widgets/
+├── features/
+│   ├── auth/
+│   ├── home/
+│   ├── restaurants/
+│   ├── menu/
+│   ├── cart/
+│   ├── orders/
+│   ├── jobs/
+│   └── profile/
+└── injection_container.dart
+
+Each feature follows this structure:
+feature/
+├── data/
+│   ├── datasources/      (Supabase calls live here)
+│   ├── models/           (extends entity, has fromJson/toJson)
+│   └── repositories/     (implements domain repository)
+├── domain/
+│   ├── entities/         (pure Dart classes, no dependencies)
+│   ├── repositories/     (abstract)
+│   └── usecases/         (one usecase per file)
+└── presentation/
+    ├── bloc/ or cubit/
+    └── pages/
+        └── widgets/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CODING RULES — ALWAYS FOLLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Use BLoC for complex state (auth, orders, restaurants)
+   Use Cubit for simple state (cart, profile, UI toggles)
+
+2. Always handle errors with Either<Failure, Success>
+   - Left = Failure
+   - Right = Success
+   Never throw raw exceptions to the UI
+
+3. Never put business logic inside widgets or BLoC
+   Business logic belongs in UseCases only
+
+4. Every Supabase call goes in the datasource layer only
+   Repositories just call datasources and handle exceptions
+
+5. All entities are immutable (use final fields, const constructors)
+
+6. All BLoC states and events extend Equatable
+
+7. Use snake_case for Supabase table/column names
+   Use camelCase for Dart variables and fields
+
+8. Never hardcode strings in widgets
+   All UI text goes through the localization system (Arabic/English)
+
+9. Always check network connectivity before making requests
+
+10. Always handle loading, success, and error states in every BLoC
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SUPABASE RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Supabase is the ONLY backend — no custom REST API
+- Always use Supabase Auth for authentication
+- RLS is enabled on ALL tables — never bypass it
+- Use Supabase Realtime for live order status updates
+- Use Supabase Storage for restaurant/menu images
+- Store JWT token securely using flutter_secure_storage
+- Always handle Supabase exceptions and convert to Failures
+
+Supabase table names:
+- profiles
+- restaurants
+- menu_categories
+- menu_items
+- orders
+- order_items
+- job_posts
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UI / UX RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- App supports Arabic and English
+- Arabic is the PRIMARY language (Syrian Damascene dialect)
+- ALL layouts must support RTL
+- Currency is always displayed in ل.س (Syrian Pounds)
+- Primary color: #ED3D2F
+- Secondary color: #F0F0F0
+- Neutral color: #87726D
+- Font: Fira Jakarta Sans
+- Rounded cards (16px border radius)
+- No heavy shadows — subtle borders only
+- Always show loading indicators during async operations
+- Always show meaningful error messages in Arabic
+- Empty states must have illustration + message + action button
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ERROR HANDLING PATTERN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Failures (core/errors/failures.dart)
+abstract class Failure extends Equatable {}
+class ServerFailure extends Failure {}
+class NetworkFailure extends Failure {}
+class AuthFailure extends Failure {}
+class CacheFailure extends Failure {}
+
+// In datasource — catch and throw typed exceptions
+// In repository — catch exceptions, return Left(Failure)
+// In BLoC — emit error state with message
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BLOC PATTERN TO ALWAYS FOLLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// States always have 4 variants:
+// Initial, Loading, Success, Failure
+
+// Example:
+abstract class OrderState extends Equatable {}
+class OrderInitial extends OrderState {}
+class OrderLoading extends OrderState {}
+class OrderSuccess extends OrderState { final Order order; }
+class OrderFailure extends OrderState { final String message; }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT NOT TO DO — NEVER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Never call Supabase directly from a widget or BLoC
+- Never skip error handling
+- Never use var for class fields — always type explicitly
+- Never put multiple features in one file
+- Never use print() — use proper logging
+- Never store sensitive data in SharedPreferences — use flutter_secure_storage
+- Never skip RLS policies on any Supabase table
+- Never hardcode Supabase URL or anon key in code — use .env
