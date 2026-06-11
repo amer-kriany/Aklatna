@@ -3,12 +3,12 @@ class AppuserEntity {
   final String userName;
   final String? email;
   final String? phone;
-  final bool isPhoneProtected;
+  final bool isPhoneverified;
   AppuserEntity({
     required this.id,
     required this.userName,
-    required this.email,
-    required this.phone,
-    required this.isPhoneProtected,
+     this.email,
+    this.phone,
+    required this.isPhoneverified,
   });
 }

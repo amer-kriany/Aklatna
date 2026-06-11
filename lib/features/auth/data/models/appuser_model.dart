@@ -5,13 +5,13 @@ class AppuserModel {
   final String userName;
   final String? email;
   final String? phone;
-  final bool isPhoneProtected;
+  final bool isPhoneverified;
   AppuserModel({
     required this.id,
     required this.userName,
-    required this.email,
+     this.email,
     required this.phone,
-    required this.isPhoneProtected,
+    required this.isPhoneverified,
   });
 
   factory AppuserModel.fromSupabase(
@@ -22,6 +22,7 @@ class AppuserModel {
      userName: profileData['username'],
       email: user.email,
        phone: user.phone,
-       isPhoneProtected: profileData['is_phone_protected']); 
+       isPhoneverified: profileData['is_phone_verified'] ?? false,
+       ); 
   }
 }

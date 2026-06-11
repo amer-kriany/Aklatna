@@ -1,0 +1,54 @@
+import 'package:aklatna/features/auth/data/datasources/auth_datasource.dart';
+import 'package:aklatna/features/auth/data/models/appuser_model.dart';
+import 'package:aklatna/features/auth/domain/entities/appuser_entity.dart';
+import 'package:aklatna/features/auth/domain/repositories/auth_repository.dart';
+
+class AuthRepositoryImpl implements AuthRepository {
+  final AuthDatasource datasource;
+  AuthRepositoryImpl({required this.datasource});
+
+  @override
+  Future<AppuserEntity> signUp(
+    String? email,
+    String password,
+    String username,
+    String phone,
+  ) async {
+    final user = await datasource.signUp(email, password, username, phone);
+    if (user == null) throw Exception("Failed to sign up");
+    return mapToEntity(user);
+  }
+
+  @override
+  Future<AppuserEntity> signIn(
+    String? email,
+    String phone,
+    String password,
+  ) async {
+    final user = await datasource.signIn(email, phone, password);
+    if (user == null) throw Exception("Failed to sign in");
+    return mapToEntity(user);
+  }
+
+  @override
+  Future<AppuserEntity> getCurrentUser(String id) async {
+    final user = await datasource.getCurrentUser(id);
+    if(user == null) throw Exception("No user found");
+    return mapToEntity(user);
+  }
+
+  @override
+  Future<void> signOut() {
+    return datasource.signOut();
+  }
+
+  mapToEntity(AppuserModel model) {
+    return AppuserEntity(
+      id: model.id,
+      userName: model.userName,
+      email: model.email,
+      phone: model.phone,
+      isPhoneverified: model.isPhoneverified,
+    );
+  }
+}
