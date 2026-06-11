@@ -22,7 +22,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<AppuserEntity> signIn(
     String? email,
-    String phone,
+    String? phone,
     String password,
   ) async {
     final user = await datasource.signIn(email, phone, password);
@@ -31,8 +31,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AppuserEntity> getCurrentUser(String id) async {
-    final user = await datasource.getCurrentUser(id);
+  Future<AppuserEntity> getCurrentUser() async {
+    final user = await datasource.getCurrentUser();
     if(user == null) throw Exception("No user found");
     return mapToEntity(user);
   }

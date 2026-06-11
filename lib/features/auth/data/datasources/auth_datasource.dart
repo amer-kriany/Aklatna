@@ -77,7 +77,7 @@ class AuthDatasource {
   }
 
   // get current user
-  Future<AppuserModel?> getCurrentUser(String id) async {
+  Future<AppuserModel?> getCurrentUser() async {
     try {
       final user = supabase.auth.currentUser;
       if (user != null) {
