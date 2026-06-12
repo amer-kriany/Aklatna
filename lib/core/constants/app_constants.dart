@@ -45,14 +45,19 @@ class AppConstants {
   static const String authSignUpTab = 'إنشاء حساب';
   static const String authEmailOrPhoneLabel = 'البريد الإلكتروني أو رقم الهاتف';
   static const String authEmailOrPhoneHint = 'ادخل بريدك أو رقمك';
-  static const String authFullNameLabel = 'الاسم الكامل';
-  static const String authFullNameHint = 'ادخل اسمك الكامل';
+  static const String authEmailLabel = 'البريد الإلكتروني';
+  static const String authEmailHint = 'ادخل بريدك الإلكتروني';
+  static const String authOptionalEmailLabel = 'البريد الإلكتروني (اختياري)';
+  static const String authUsernameLabel = 'اسم المستخدم';
+  static const String authUsernameHint = 'ادخل اسم المستخدم';
   static const String authPhoneLabel = 'رقم الهاتف';
   static const String authPhoneHint = 'ادخل رقم هاتفك';
   static const String authPasswordLabel = 'كلمة المرور';
   static const String authPasswordHint = '••••••••';
   static const String authConfirmPasswordLabel = 'تأكيد كلمة المرور';
   static const String authRequiredFieldError = 'هذا الحقل مطلوب';
+  static const String authEmailOrPhoneRequiredError =
+      'اكتب البريد الإلكتروني أو رقم الهاتف';
   static const String authPasswordMismatchError = 'كلمتا المرور غير متطابقتين';
   static const String authForgotPassword = 'نسيت كلمة المرور؟';
   static const String authSignInAction = 'دخول';

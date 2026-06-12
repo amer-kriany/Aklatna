@@ -8,7 +8,7 @@ class AppuserEntity {
     required this.id,
     required this.userName,
      this.email,
-    this.phone,
+   this.phone,
     required this.isPhoneverified,
   });
 }

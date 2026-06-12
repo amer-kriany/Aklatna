@@ -18,16 +18,19 @@ class SignInForm extends StatefulWidget {
 
 class _SignInFormState extends State<SignInForm> {
   final _formKey = GlobalKey<FormState>();
-  final _emailOrPhoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
 
   bool get _canSubmit =>
-      _emailOrPhoneController.text.trim().isNotEmpty &&
+      (_emailController.text.trim().isNotEmpty ||
+          _phoneController.text.trim().isNotEmpty) &&
       _passwordController.text.isNotEmpty;
 
   @override
   void dispose() {
-    _emailOrPhoneController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -40,12 +43,22 @@ class _SignInFormState extends State<SignInForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AuthTextField(
-            controller: _emailOrPhoneController,
-            label: AppConstants.authEmailOrPhoneLabel,
-            hint: AppConstants.authEmailOrPhoneHint,
-            iconAsset: AppAssets.person,
+            controller: _emailController,
+            label: AppConstants.authEmailLabel,
+            hint: AppConstants.authEmailHint,
+            iconAsset: AppAssets.message,
             keyboardType: TextInputType.emailAddress,
-            validator: _requiredValidator,
+            validator: _emailOrPhoneValidator,
+            onChanged: _handleFieldChanged,
+          ),
+          const SizedBox(height: AuthStyles.formGap),
+          AuthTextField(
+            controller: _phoneController,
+            label: AppConstants.authPhoneLabel,
+            hint: AppConstants.authPhoneHint,
+            iconAsset: AppAssets.phone,
+            keyboardType: TextInputType.phone,
+            validator: _emailOrPhoneValidator,
             onChanged: _handleFieldChanged,
           ),
           const SizedBox(height: AuthStyles.formGap),
@@ -88,6 +101,13 @@ class _SignInFormState extends State<SignInForm> {
   String? _requiredValidator(String? value) {
     return value == null || value.trim().isEmpty
         ? AppConstants.authRequiredFieldError
+        : null;
+  }
+
+  String? _emailOrPhoneValidator(String? value) {
+    return _emailController.text.trim().isEmpty &&
+            _phoneController.text.trim().isEmpty
+        ? AppConstants.authEmailOrPhoneRequiredError
         : null;
   }
 

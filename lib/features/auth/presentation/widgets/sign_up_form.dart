@@ -17,21 +17,23 @@ class SignUpForm extends StatefulWidget {
 
 class _SignUpFormState extends State<SignUpForm> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   bool get _canSubmit =>
-      _fullNameController.text.trim().isNotEmpty &&
+      _usernameController.text.trim().isNotEmpty &&
       _phoneController.text.trim().isNotEmpty &&
       _passwordController.text.isNotEmpty &&
       _confirmPasswordController.text.isNotEmpty;
 
   @override
   void dispose() {
-    _fullNameController.dispose();
+    _usernameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -45,9 +47,9 @@ class _SignUpFormState extends State<SignUpForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           AuthTextField(
-            controller: _fullNameController,
-            label: AppConstants.authFullNameLabel,
-            hint: AppConstants.authFullNameHint,
+            controller: _usernameController,
+            label: AppConstants.authUsernameLabel,
+            hint: AppConstants.authUsernameHint,
             iconAsset: AppAssets.person,
             keyboardType: TextInputType.name,
             validator: _requiredValidator,
@@ -61,6 +63,15 @@ class _SignUpFormState extends State<SignUpForm> {
             iconAsset: AppAssets.phone,
             keyboardType: TextInputType.phone,
             validator: _requiredValidator,
+            onChanged: _handleFieldChanged,
+          ),
+          const SizedBox(height: AuthStyles.formGap),
+          AuthTextField(
+            controller: _emailController,
+            label: AppConstants.authOptionalEmailLabel,
+            hint: AppConstants.authEmailHint,
+            iconAsset: AppAssets.message,
+            keyboardType: TextInputType.emailAddress,
             onChanged: _handleFieldChanged,
           ),
           const SizedBox(height: AuthStyles.formGap),
