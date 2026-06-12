@@ -8,7 +8,7 @@ import 'package:aklatna/features/auth/presentation/widgets/auth_styles.dart';
 class AuthPrimaryButton extends StatelessWidget {
   const AuthPrimaryButton({required this.label, this.onPressed, super.key});
 
-  final String label;
+  final Widget label;
   final VoidCallback? onPressed;
 
   @override
@@ -29,7 +29,7 @@ class AuthPrimaryButton extends StatelessWidget {
           textStyle: AuthStyles.button,
         ),
         icon: SvgPicture.asset(AppAssets.entry, width: 18, height: 18),
-        label: Text(label),
+        label: label,
       ),
     );
   }

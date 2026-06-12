@@ -60,6 +60,8 @@ class AppConstants {
       'اكتب البريد الإلكتروني أو رقم الهاتف';
   static const String authPasswordMismatchError = 'كلمتا المرور غير متطابقتين';
   static const String authForgotPassword = 'نسيت كلمة المرور؟';
+  static const String authSignInWithEmail = 'الدخول بالبريد الإلكتروني';
+  static const String authSignInWithPhone = 'الدخول برقم الهاتف';
   static const String authSignInAction = 'دخول';
   static const String authSignUpAction = 'إنشاء حساب';
   static const String authTermsPrefix = 'بالمتابعة، أنت توافق على ';

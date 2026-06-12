@@ -1,3 +1,4 @@
+import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 
 import 'package:aklatna/core/constants/app_assets.dart';
@@ -5,12 +6,14 @@ import 'package:aklatna/core/constants/app_constants.dart';
 import 'package:aklatna/features/auth/presentation/widgets/auth_primary_button.dart';
 import 'package:aklatna/features/auth/presentation/widgets/auth_styles.dart';
 import 'package:aklatna/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+enum SignInMethod { email, phone }
 
 class SignInForm extends StatefulWidget {
-  const SignInForm({this.onForgotPassword, this.onSubmit, super.key});
+  const SignInForm({this.onForgotPassword, super.key});
 
   final VoidCallback? onForgotPassword;
-  final VoidCallback? onSubmit;
 
   @override
   State<SignInForm> createState() => _SignInFormState();
@@ -21,11 +24,14 @@ class _SignInFormState extends State<SignInForm> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  SignInMethod _method = SignInMethod.phone;
 
-  bool get _canSubmit =>
-      (_emailController.text.trim().isNotEmpty ||
-          _phoneController.text.trim().isNotEmpty) &&
-      _passwordController.text.isNotEmpty;
+  bool get _canSubmit {
+    final identifier = _method == SignInMethod.email
+        ? _emailController.text.trim()
+        : _phoneController.text.trim();
+    return identifier.isNotEmpty && _passwordController.text.isNotEmpty;
+  }
 
   @override
   void dispose() {
@@ -35,6 +41,14 @@ class _SignInFormState extends State<SignInForm> {
     super.dispose();
   }
 
+  void _toggleMethod() {
+    setState(() {
+      _method = _method == SignInMethod.email
+          ? SignInMethod.phone
+          : SignInMethod.email;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -42,24 +56,29 @@ class _SignInFormState extends State<SignInForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AuthTextField(
-            controller: _emailController,
-            label: AppConstants.authEmailLabel,
-            hint: AppConstants.authEmailHint,
-            iconAsset: AppAssets.message,
-            keyboardType: TextInputType.emailAddress,
-            validator: _emailOrPhoneValidator,
-            onChanged: _handleFieldChanged,
-          ),
-          const SizedBox(height: AuthStyles.formGap),
-          AuthTextField(
-            controller: _phoneController,
-            label: AppConstants.authPhoneLabel,
-            hint: AppConstants.authPhoneHint,
-            iconAsset: AppAssets.phone,
-            keyboardType: TextInputType.phone,
-            validator: _emailOrPhoneValidator,
-            onChanged: _handleFieldChanged,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: _method == SignInMethod.email
+                ? AuthTextField(
+                    key: const ValueKey('email-field'),
+                    controller: _emailController,
+                    label: AppConstants.authEmailLabel,
+                    hint: AppConstants.authEmailHint,
+                    iconAsset: AppAssets.message,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: _requiredValidator,
+                    onChanged: _handleFieldChanged,
+                  )
+                : AuthTextField(
+                    key: const ValueKey('phone-field'),
+                    controller: _phoneController,
+                    label: AppConstants.authPhoneLabel,
+                    hint: AppConstants.authPhoneHint,
+                    iconAsset: AppAssets.phone,
+                    keyboardType: TextInputType.phone,
+                    validator: _requiredValidator,
+                    onChanged: _handleFieldChanged,
+                  ),
           ),
           const SizedBox(height: AuthStyles.formGap),
           AuthTextField(
@@ -72,26 +91,73 @@ class _SignInFormState extends State<SignInForm> {
             onChanged: _handleFieldChanged,
           ),
           const SizedBox(height: 8),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TextButton(
-              onPressed: widget.onForgotPassword,
-              style: TextButton.styleFrom(
-                foregroundColor: AuthStyles.link.color,
-                padding: EdgeInsets.zero,
-                minimumSize: const Size(0, 28),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: widget.onForgotPassword,
+                style: TextButton.styleFrom(
+                  foregroundColor: AuthStyles.link.color,
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: const Text(
+                  AppConstants.authForgotPassword,
+                  style: AuthStyles.link,
+                ),
               ),
-              child: const Text(
-                AppConstants.authForgotPassword,
-                style: AuthStyles.link,
+              TextButton(
+                onPressed: _toggleMethod,
+                style: TextButton.styleFrom(
+                  foregroundColor: AuthStyles.link.color,
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 28),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  _method == SignInMethod.email
+                      ? AppConstants.authSignInWithPhone
+                      : AppConstants.authSignInWithEmail,
+                  style: AuthStyles.link,
+                ),
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 12),
-          AuthPrimaryButton(
-            label: AppConstants.authSignInAction,
-            onPressed: _canSubmit ? _submit : null,
+          BlocBuilder<AuthBloc, AuthState>(
+            builder: (context, state) {
+              if (state is AuthLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state is AuthError) {
+                return ScaffoldMessenger(
+                  child: Center(child: Text(state.message)),
+                );
+              }
+              if (state is AuthAuthenticated) {
+                // navigate to home page
+              }
+              return AuthPrimaryButton(
+                label: state is AuthLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : Text(AppConstants.authSignInAction),
+                onPressed: () {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    context.read<AuthBloc>().add(
+                      SignInEvent(
+                        password: _passwordController.text,
+                        email: _emailController.text,
+                        phone: _phoneController.text,
+                        
+                      ),
+                     
+                    );
+                   
+                  }
+                },
+              );
+            },
           ),
         ],
       ),
@@ -104,20 +170,9 @@ class _SignInFormState extends State<SignInForm> {
         : null;
   }
 
-  String? _emailOrPhoneValidator(String? value) {
-    return _emailController.text.trim().isEmpty &&
-            _phoneController.text.trim().isEmpty
-        ? AppConstants.authEmailOrPhoneRequiredError
-        : null;
-  }
-
   void _handleFieldChanged(String value) {
     setState(() {});
   }
 
-  void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      widget.onSubmit?.call();
-    }
-  }
+  
 }

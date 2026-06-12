@@ -96,7 +96,7 @@ class _SignUpFormState extends State<SignUpForm> {
           ),
           const SizedBox(height: 24),
           AuthPrimaryButton(
-            label: AppConstants.authSignUpAction,
+            label: Text(AppConstants.authSignUpAction),
             onPressed: _canSubmit ? _submit : null,
           ),
         ],

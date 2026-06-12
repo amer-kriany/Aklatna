@@ -37,7 +37,6 @@ class AuthContent extends StatelessWidget {
               ? SignInForm(
                   key: const ValueKey('sign-in-form'),
                   onForgotPassword: onForgotPassword,
-                  onSubmit: onSignIn,
                 )
               : SignUpForm(
                   key: const ValueKey('sign-up-form'),

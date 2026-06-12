@@ -31,12 +31,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     SignUpEvent event,
     Emitter<AuthState> emit,
   ) async {
-    return await signUpUsecase(
-      event.email,
-      event.password,
-      event.username,
-      event.phone,
-    );
+    try {
+      emit(AuthLoading());
+      final user = await signUpUsecase(
+        event.email,
+        event.password,
+        event.username,
+        event.phone,
+      );
+      // if(user){
+//////////////                   look at the the entity you wanna it to reutrn nullabel its user so could be nullabe
+      return user;
+      // }
+    } catch (e) {
+      emit(AuthError(message: e.toString()));
+    }
   }
 
   // sign in
