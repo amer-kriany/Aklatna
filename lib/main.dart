@@ -19,7 +19,7 @@ void main() async {
   await dotenv.load(fileName: ".env");
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
-    publishableKey: dotenv.env['PUBLISHABLE_KEY'],
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
   final authDatasource = AuthDatasource();
   final repository = AuthRepositoryImpl(datasource: authDatasource);
@@ -41,7 +41,7 @@ void main() async {
           ),
         ),
       ],
-      child: Container(),
+      child: MyApp(),
     ),
   );
 }

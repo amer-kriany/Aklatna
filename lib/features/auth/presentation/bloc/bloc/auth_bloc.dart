@@ -27,7 +27,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<GetCurrentUserEvent>(_getCurrentUser);
   }
   // sign up
-  Future<AppuserEntity> _signUp(
+  Future<void> _signUp(
     SignUpEvent event,
     Emitter<AuthState> emit,
   ) async {
@@ -39,33 +39,49 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.username,
         event.phone,
       );
-      // if(user){
-//////////////                   look at the the entity you wanna it to reutrn nullabel its user so could be nullabe
-      return user;
-      // }
+      emit(AuthAuthenticated(user: user));
     } catch (e) {
       emit(AuthError(message: e.toString()));
     }
   }
 
   // sign in
-  Future<AppuserEntity> _signIn(
+  Future<void> _signIn(
     SignInEvent event,
     Emitter<AuthState> emit,
   ) async {
-    return await signInUsecase(event.email, event.password, event.phone);
+    try{
+      emit(AuthLoading());
+    final user = await signInUsecase(event.email, event.password, event.phone);
+    emit(AuthAuthenticated(user: user));
+    }catch(e){
+      emit(AuthError(message: e.toString()));
+    }
+    
   }
 
   // sign out
   Future<void> _signOut(SignOutEvent event, Emitter<AuthState> emit) async {
+    try{
+      emit(AuthLoading());
     await signOutUsecase();
+    emit(AuthUnauthenticated());
+    }catch(e){
+      emit(AuthError(message: e.toString()));
+    }
   }
 
   // current user
-  Future<AppuserEntity?> _getCurrentUser(
+  Future<void> _getCurrentUser(
     GetCurrentUserEvent event,
     Emitter<AuthState> emit,
   ) async {
-    return await currentUserUsecase();
+    try{
+      emit(AuthLoading());
+    final user =  await currentUserUsecase();
+     emit(AuthAuthenticated(user: user));
+    }catch(e){
+      emit(AuthError(message: e.toString()));
+      }
   }
 }
