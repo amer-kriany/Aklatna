@@ -5,25 +5,27 @@ class AppColors {
 
   static const Color primary = Color(0xFFED3D2F);
   static const Color primaryLight = Color(0xFFFF6B5E);
-  static const Color primaryDark = Color(0xFFC42D21);
+  static const Color primaryDark = Color(0xFFA93101);
 
   static const Color secondary = Color(0xFFF0F0F0);
   static const Color neutral = Color(0xFF87726D);
 
-  static const Color background = Color(0xFFFAFAFA);
+  static const Color background = Color(0xFFFFF8F6);
   static const Color surface = Color(0xFFFFFFFF);
 
-  static const Color textPrimary = Color(0xFF1A1A1A);
-  static const Color textSecondary = Color(0xFF757575);
-  static const Color textHint = Color(0xFFBDBDBD);
+  static const Color textPrimary = Color(0xFF261815);
+  static const Color textSecondary = Color(0xFF59413A);
+  static const Color textMuted = Color(0xFF5D5F5F);
+  static const Color textHint = Color(0xFF6B7280);
 
   static const Color success = Color(0xFF4CAF50);
   static const Color warning = Color(0xFFFF9800);
   static const Color error = Color(0xFFED3D2F);
 
-  static const Color cardBorder = Color(0xFFEEEEEE);
+  static const Color cardBorder = Color(0xFFE1BFB6);
   static const Color divider = Color(0xFFF5F5F5);
+  static const Color tagBackground = Color(0xFFFFE9E3);
 
-  static const Color openBadge = Color(0xFF4CAF50);
+  static const Color openBadge = Color(0xFF22C55E);
   static const Color closedBadge = Color(0xFF9E9E9E);
 }
