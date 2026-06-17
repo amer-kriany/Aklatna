@@ -47,7 +47,6 @@ class AppConstants {
   static const String authEmailOrPhoneHint = 'ادخل بريدك أو رقمك';
   static const String authEmailLabel = 'البريد الإلكتروني';
   static const String authEmailHint = 'ادخل بريدك الإلكتروني';
-  static const String authOptionalEmailLabel = 'البريد الإلكتروني (اختياري)';
   static const String authUsernameLabel = 'اسم المستخدم';
   static const String authUsernameHint = 'ادخل اسم المستخدم';
   static const String authPhoneLabel = 'رقم الهاتف';

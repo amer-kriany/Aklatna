@@ -1,3 +1,4 @@
+import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 
 import 'package:aklatna/core/constants/app_assets.dart';
@@ -5,6 +6,7 @@ import 'package:aklatna/core/constants/app_constants.dart';
 import 'package:aklatna/features/auth/presentation/widgets/auth_primary_button.dart';
 import 'package:aklatna/features/auth/presentation/widgets/auth_styles.dart';
 import 'package:aklatna/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SignUpForm extends StatefulWidget {
   const SignUpForm({this.onSubmit, super.key});
@@ -68,7 +70,7 @@ class _SignUpFormState extends State<SignUpForm> {
           const SizedBox(height: AuthStyles.formGap),
           AuthTextField(
             controller: _emailController,
-            label: AppConstants.authOptionalEmailLabel,
+            label: AppConstants.authEmailLabel,
             hint: AppConstants.authEmailHint,
             iconAsset: AppAssets.message,
             keyboardType: TextInputType.emailAddress,
@@ -95,9 +97,37 @@ class _SignUpFormState extends State<SignUpForm> {
             onChanged: _handleFieldChanged,
           ),
           const SizedBox(height: 24),
-          AuthPrimaryButton(
-            label: Text(AppConstants.authSignUpAction),
-            onPressed: _canSubmit ? _submit : null,
+          BlocConsumer<AuthBloc, AuthState>(
+            listener: (BuildContext context, AuthState state) {  
+              if (state is AuthError) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
+              } else if (state is AuthAuthenticated) {
+                // navigate to home page
+              }
+
+            },
+            builder: (context, state) {
+             if(state is AuthLoading){
+                return Center(child: CircularProgressIndicator());
+              }
+              return AuthPrimaryButton(
+                label:  Text(AppConstants.authSignUpAction),
+                onPressed: () async{
+                  if (_canSubmit) {
+                    if (_formKey.currentState?.validate() ?? false) {
+                       context.read<AuthBloc>().add(
+                        SignUpEvent(
+                          email: _emailController.text.trim(),
+                          phone: _phoneController.text,
+                          password: _passwordController.text,
+                          username: _usernameController.text,
+                        ),
+                      );
+                    }
+                  }
+                },
+              );
+            }, 
           ),
         ],
       ),
@@ -125,9 +155,5 @@ class _SignUpFormState extends State<SignUpForm> {
     setState(() {});
   }
 
-  void _submit() {
-    if (_formKey.currentState?.validate() ?? false) {
-      widget.onSubmit?.call();
-    }
-  }
+  
 }

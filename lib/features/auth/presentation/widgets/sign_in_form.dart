@@ -125,35 +125,35 @@ class _SignInFormState extends State<SignInForm> {
             ],
           ),
           const SizedBox(height: 12),
-          BlocBuilder<AuthBloc, AuthState>(
-            builder: (context, state) {
-              if (state is AuthLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          BlocConsumer<AuthBloc, AuthState>(
+            listener: (BuildContext context, AuthState state) {
+             
               if (state is AuthError) {
-                return ScaffoldMessenger(
-                  child: Center(child: Text(state.message)),
-                );
-              }
-              if (state is AuthAuthenticated) {
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(state.message)));
+              } else if (state is AuthAuthenticated) {
                 // navigate to home page
               }
+            },
+            builder: (context, state) {
+               if(state is AuthLoading){
+                return Center(child: CircularProgressIndicator());
+              }
               return AuthPrimaryButton(
-                label: state is AuthLoading
-                    ? Center(child: CircularProgressIndicator())
-                    : Text(AppConstants.authSignInAction),
+                label: 
+                     Text(AppConstants.authSignInAction),
                 onPressed: () {
-                  if (_formKey.currentState?.validate() ?? false) {
-                    context.read<AuthBloc>().add(
-                      SignInEvent(
-                        password: _passwordController.text,
-                        email: _emailController.text,
-                        phone: _phoneController.text,
-                        
-                      ),
-                     
-                    );
-                   
+                  if (_canSubmit) {
+                    if (_formKey.currentState?.validate() ?? false) {
+                      context.read<AuthBloc>().add(
+                        SignInEvent(
+                          password: _passwordController.text,
+                          email: _emailController.text,
+                          phone: _phoneController.text,
+                        ),
+                      );
+                    }
                   }
                 },
               );
@@ -173,6 +173,4 @@ class _SignInFormState extends State<SignInForm> {
   void _handleFieldChanged(String value) {
     setState(() {});
   }
-
-  
 }

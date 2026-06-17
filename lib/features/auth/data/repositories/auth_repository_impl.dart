@@ -8,20 +8,21 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.datasource});
 
   @override
-  Future<AppuserEntity> signUp(
-    String? email,
-    String password,
-    String username,
-    String phone,
-  ) async {
-    final formattedPhone = phone.startsWith('0')
+  Future<AppuserEntity> signUp({
+   required String email,
+   required  String password,
+   required  String username,
+    required String phone,
+  }) async {
+    final formattedPhone =  phone.startsWith('+')?phone:
+    phone.startsWith('0')
         ? '+963${phone.substring(1)}'
-        : phone;
+        : '+963$phone';
     final user = await datasource.signUp(
-      email,
-      password,
-      username,
-      formattedPhone,
+      email: email,
+      password: password,
+      username: username,
+      phone: formattedPhone,
     );
     if (user == null) throw Exception("Failed to sign up");
     return mapToEntity(user);
@@ -36,12 +37,12 @@ class AuthRepositoryImpl implements AuthRepository {
     final AppuserModel? user;
     
     if (phone == null) {
-       user = await datasource.signIn(email, phone, password);
+       user = await datasource.signIn( email, phone,  password);
     } else {
       final formattedPhone = phone.startsWith('0')
           ? '+963${phone.substring(1)}'
           : phone;
-       user = await datasource.signIn(email, formattedPhone, password);
+       user = await datasource.signIn( email,  formattedPhone,  password);
     }
 
     if (user == null) throw Exception("Failed to sign in");

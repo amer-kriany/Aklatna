@@ -5,18 +5,17 @@ class AuthDatasource {
   final supabase = Supabase.instance.client;
 
   // sign up
-  Future<AppuserModel?> signUp(
-    String? email,
-    String password,
-    String username,
-    String phone,
+  Future<AppuserModel?> signUp({
+    required String email,
+   required  String password,
+    required String username,
+    required String phone,}
   ) async {
     try {
       final AuthResponse response;
         response = await supabase.auth.signUp(
           password: password,
           email: email,
-          phone: phone,
         );
       
       final user = response.user;
@@ -25,6 +24,7 @@ class AuthDatasource {
         await supabase.from("profiles").insert({
           "id": user.id,
           "username": username,
+          "phone_number": phone,
           "is_phone_verified": false,
         });
         final profileData = await supabase

@@ -5,11 +5,16 @@ class SignUpUsecase {
   final AuthRepositoryImpl repository;
   SignUpUsecase({required this.repository});
   Future<AppuserEntity> call(
-    String? email,
+    String email,
     String password,
     String phone,
     String username,
   ) async {
-    return await repository.signUp(email, password, username, phone);
+    return await repository.signUp(
+      email: email,
+      password: password,
+      username: username,
+      phone: phone,
+    );
   }
 }

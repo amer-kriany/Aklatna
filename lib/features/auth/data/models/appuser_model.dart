@@ -21,7 +21,7 @@ class AppuserModel {
     return AppuserModel(id: user.id,
      userName: profileData['username'],
       email: user.email,
-       phone: user.phone,
+       phone: profileData['phone_number'],
        isPhoneverified: profileData['is_phone_verified'] ?? false,
        ); 
   }
