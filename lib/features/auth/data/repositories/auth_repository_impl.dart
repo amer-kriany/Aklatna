@@ -14,7 +14,15 @@ class AuthRepositoryImpl implements AuthRepository {
     String username,
     String phone,
   ) async {
-    final user = await datasource.signUp(email, password, username, phone);
+    final formattedPhone = phone.startsWith('0')
+        ? '+963${phone.substring(1)}'
+        : phone;
+    final user = await datasource.signUp(
+      email,
+      password,
+      username,
+      formattedPhone,
+    );
     if (user == null) throw Exception("Failed to sign up");
     return mapToEntity(user);
   }
@@ -25,7 +33,17 @@ class AuthRepositoryImpl implements AuthRepository {
     String? phone,
     String password,
   ) async {
-    final user = await datasource.signIn(email, phone, password);
+    final AppuserModel? user;
+    
+    if (phone == null) {
+       user = await datasource.signIn(email, phone, password);
+    } else {
+      final formattedPhone = phone.startsWith('0')
+          ? '+963${phone.substring(1)}'
+          : phone;
+       user = await datasource.signIn(email, formattedPhone, password);
+    }
+
     if (user == null) throw Exception("Failed to sign in");
     return mapToEntity(user);
   }
@@ -33,7 +51,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<AppuserEntity> getCurrentUser() async {
     final user = await datasource.getCurrentUser();
-    if(user == null) throw Exception("No user found");
+    if (user == null) throw Exception("No user found");
     return mapToEntity(user);
   }
 
