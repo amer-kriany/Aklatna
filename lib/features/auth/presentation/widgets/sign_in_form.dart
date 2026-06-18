@@ -44,8 +44,8 @@ class _SignInFormState extends State<SignInForm> {
   void _toggleMethod() {
     setState(() {
       _method = _method == SignInMethod.email
-          ? SignInMethod.phone
-          : SignInMethod.email;
+          ? SignInMethod.email
+          : SignInMethod.phone;
     });
   }
 
@@ -127,30 +127,35 @@ class _SignInFormState extends State<SignInForm> {
           const SizedBox(height: 12),
           BlocConsumer<AuthBloc, AuthState>(
             listener: (BuildContext context, AuthState state) {
-             
               if (state is AuthError) {
                 ScaffoldMessenger.of(
                   context,
                 ).showSnackBar(SnackBar(content: Text(state.message)));
               } else if (state is AuthAuthenticated) {
-                // navigate to home page
+                // Navigate to the home screen
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("successfully signed in")),
+                );
               }
             },
             builder: (context, state) {
-               if(state is AuthLoading){
+              if (state is AuthLoading) {
                 return Center(child: CircularProgressIndicator());
               }
               return AuthPrimaryButton(
-                label: 
-                     Text(AppConstants.authSignInAction),
+                label: Text(AppConstants.authSignInAction),
                 onPressed: () {
                   if (_canSubmit) {
                     if (_formKey.currentState?.validate() ?? false) {
                       context.read<AuthBloc>().add(
                         SignInEvent(
                           password: _passwordController.text,
-                          email: _emailController.text,
-                          phone: _phoneController.text,
+                          email: _method == SignInMethod.email
+                              ? _emailController.text.trim()
+                              : null,
+                          phone: _method == SignInMethod.phone
+                              ? _phoneController.text.trim()
+                              : null,
                         ),
                       );
                     }

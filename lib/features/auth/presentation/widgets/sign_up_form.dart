@@ -74,6 +74,7 @@ class _SignUpFormState extends State<SignUpForm> {
             hint: AppConstants.authEmailHint,
             iconAsset: AppAssets.message,
             keyboardType: TextInputType.emailAddress,
+            validator: _requiredValidator,
             onChanged: _handleFieldChanged,
           ),
           const SizedBox(height: AuthStyles.formGap),
@@ -102,7 +103,10 @@ class _SignUpFormState extends State<SignUpForm> {
               if (state is AuthError) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
               } else if (state is AuthAuthenticated) {
-                // navigate to home page
+                // navigate to onboarding 
+                 ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text("successfully signed up")));
               }
 
             },

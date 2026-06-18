@@ -7,26 +7,22 @@ class AuthDatasource {
   // sign up
   Future<AppuserModel?> signUp({
     required String email,
-   required  String password,
+    required String password,
     required String username,
-    required String phone,}
-  ) async {
+    required String phone,
+  }) async {
     try {
       final AuthResponse response;
-        response = await supabase.auth.signUp(
-          password: password,
-          email: email,
-        );
-      
+      response = await supabase.auth.signUp(password: password, email: email,
+      data: {
+    'username': username,
+    'phone_number': phone,
+  },);
+
       final user = response.user;
 
       if (user != null) {
-        await supabase.from("profiles").insert({
-          "id": user.id,
-          "username": username,
-          "phone_number": phone,
-          "is_phone_verified": false,
-        });
+       await Future.delayed(const Duration(milliseconds: 500));
         final profileData = await supabase
             .from("profiles")
             .select()
@@ -47,10 +43,18 @@ class AuthDatasource {
     String password,
   ) async {
     try {
+      String? authEmail = email;
+      if (phone != null && email == null) {
+        final emailResponse = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("phone_number", phone)
+            .single();
+        authEmail = emailResponse["email"];
+      }
       final response = await supabase.auth.signInWithPassword(
-        email: email,
+        email: authEmail,
         password: password,
-        phone: phone,
       );
       final user = response.user;
       if (user != null) {

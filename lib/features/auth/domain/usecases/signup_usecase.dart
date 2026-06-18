@@ -7,8 +7,8 @@ class SignUpUsecase {
   Future<AppuserEntity> call(
     String email,
     String password,
-    String phone,
     String username,
+    String phone,
   ) async {
     return await repository.signUp(
       email: email,
