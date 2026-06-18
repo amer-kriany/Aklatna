@@ -39,9 +39,10 @@ class AuthRepositoryImpl implements AuthRepository {
     if (phone == null) {
        user = await datasource.signIn( email, phone,  password);
     } else {
-      final formattedPhone = phone.startsWith('0')
-          ? '+963${phone.substring(1)}'
-          : phone;
+      final formattedPhone =  phone.startsWith('+')?phone:
+    phone.startsWith('0')
+        ? '+963${phone.substring(1)}'
+        : '+963$phone';
        user = await datasource.signIn( email,  formattedPhone,  password);
     }
 
