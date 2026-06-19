@@ -6,6 +6,10 @@ import 'package:aklatna/features/auth/domain/usecases/signup_usecase.dart';
 import 'package:aklatna/features/auth/domain/usecases/singout_usecase.dart';
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:aklatna/features/auth/presentation/pages/login_page.dart';
+import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart';
+import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
+import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
+import 'package:aklatna/features/home/presentation/cubit/cubit/business_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -21,14 +25,18 @@ void main() async {
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+  // data sources
   final authDatasource = AuthDatasource();
+  final getBusinessDatasource = BusinessDatasrouce();
+  // repositories
   final repository = AuthRepositoryImpl(datasource: authDatasource);
+  final businessRepository = Businessrepoimp(businessDatasrouce: getBusinessDatasource);
   //use cases
   final signUpUsecase = SignUpUsecase(repository: repository);
   final signInUsecase = SigninUsecase(repository: repository);
   final currentUserUsecase = CurrentuserUsecase(repository: repository);
   final signOutUsecase = SingoutUsecase(repository: repository);
-
+  final getBusinessUsecase = GetbusinessUsecase(repository: businessRepository);
   runApp(
     MultiBlocProvider(
       providers: [
@@ -39,6 +47,9 @@ void main() async {
             currentUserUsecase: currentUserUsecase,
             signOutUsecase: signOutUsecase,
           ),
+        ),
+        BlocProvider(
+          create: (context) => BusinessCubit(getBusinessUsecase),
         ),
       ],
       child: MyApp(),
