@@ -1,6 +1,6 @@
-import 'package:aklatna/features/home/businessType.dart';
+import 'package:aklatna/features/home/business_type.dart';
 
-class Businessmodel {
+class BusinessModel {
   final String id;
   final String? name;
   final String nameAr;
@@ -10,11 +10,11 @@ class Businessmodel {
   final String closingTime;
   final bool isActive;
   final BusinessType type;
-  final String logoUrl;
+  final String? logoUrl;
   final String? coverUrl;
   final String adress;
 
-  Businessmodel({
+  BusinessModel({
     required this.id,
     this.name,
     required this.nameAr,
@@ -23,12 +23,12 @@ class Businessmodel {
     required this.openingTime,
     required this.closingTime,
     required this.isActive,
-    required this.logoUrl,
+    this.logoUrl,
     this.coverUrl,
     required this.adress, required this.type,
   });
-  factory Businessmodel.fromSupabase(Map<String, dynamic> business) {
-    return Businessmodel(
+  factory BusinessModel.fromSupabase(Map<String, dynamic> business) {
+    return BusinessModel(
       id: business['id'],
       name: business['name'],
       nameAr: business['name_ar'],

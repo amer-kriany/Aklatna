@@ -14,8 +14,8 @@ class BusinessCubit extends Cubit<BusinessState> {
     emit(BusinessLoading());
     try {
       // call usecase to get business
-      final business = await getBusinessUsecase();
-      emit(BusinessFetched(business: business));
+      final businesses = await getBusinessUsecase();
+      emit(BusinessFetched(businesses: businesses));
     } catch (e) {
       emit(BusinessError(message: e.toString()));
     }

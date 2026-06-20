@@ -10,8 +10,8 @@ sealed class BusinessState extends Equatable {
 final class BusinessInitial extends BusinessState {}
 final class BusinessLoading extends BusinessState {}
 final class BusinessFetched extends BusinessState {
-  final BusinessEntity business;
-  const BusinessFetched({required this.business});
+  final List<BusinessEntity> businesses;
+  const BusinessFetched({required this.businesses});
 }
 final class BusinessError extends BusinessState {
   final String message;

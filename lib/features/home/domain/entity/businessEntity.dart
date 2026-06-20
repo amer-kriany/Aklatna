@@ -1,4 +1,4 @@
-import 'package:aklatna/features/home/businessType.dart';
+import 'package:aklatna/features/home/business_type.dart';
 
 class BusinessEntity {
   final String id;
@@ -10,7 +10,7 @@ class BusinessEntity {
   final String closingTime;
   final bool isActive;
   final BusinessType type;
-  final String logoUrl;
+  final String? logoUrl;
   final String? coverUrl;
   final String adress;
 
@@ -23,7 +23,7 @@ class BusinessEntity {
     required this.openingTime,
     required this.closingTime,
     required this.isActive,
-    required this.logoUrl,
+    this.logoUrl,
     this.coverUrl,
     required this.adress,
     required this.type,

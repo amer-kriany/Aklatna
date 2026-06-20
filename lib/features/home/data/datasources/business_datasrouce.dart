@@ -5,10 +5,10 @@ class BusinessDatasrouce {
   final supabase = Supabase.instance.client;
 
   // get business table form supa
-  Future<Businessmodel> getBusinesses() async {
+  Future<List<BusinessModel>> getBusinesses() async {
     try {
-      final business = await supabase.from("businesses").select().single();
-      return Businessmodel.fromSupabase(business) ;
+      final business = await supabase.from("businesses").select();
+      return business.map((e)=>BusinessModel.fromSupabase(e)).toList();
     } catch (e) {
       rethrow;
     }

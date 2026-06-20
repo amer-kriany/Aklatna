@@ -5,7 +5,7 @@ class GetbusinessUsecase {
   final Businessrepoimp repository;
   GetbusinessUsecase({required this.repository,});
 
-  Future<BusinessEntity> call() async {
+  Future<List<BusinessEntity>> call() async {
     return await repository.getBusinessTable();
   }
 }
