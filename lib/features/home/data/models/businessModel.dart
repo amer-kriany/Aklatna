@@ -13,6 +13,8 @@ class BusinessModel {
   final String? logoUrl;
   final String? coverUrl;
   final String adress;
+  final String? createdAt;
+  final String? ownerId;
 
   BusinessModel({
     required this.id,
@@ -25,7 +27,7 @@ class BusinessModel {
     required this.isActive,
     this.logoUrl,
     this.coverUrl,
-    required this.adress, required this.type,
+    required this.adress, required this.type, this.createdAt, this.ownerId,
   });
   factory BusinessModel.fromSupabase(Map<String, dynamic> business) {
     return BusinessModel(
@@ -34,12 +36,15 @@ class BusinessModel {
       nameAr: business['name_ar'],
       phone: business['phone'],
       openingTime: business['opening_time'],
-      closingTime: business['closing_tiime'],
+      closingTime: business['closing_time'],
       isActive: business['is_active'],
       logoUrl: business['logo_url'],
       adress: business['adress'],
       description: business['description'],
-      coverUrl: business['cover_url'], type: business['type'],
+      createdAt: business['created_at'],
+      ownerId: business['owner_user_id'],
+      coverUrl: business['cover_url'],
+       type: BusinessType.values.byName(business['type']),
     );
   }
  

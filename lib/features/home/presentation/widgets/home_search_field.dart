@@ -9,6 +9,7 @@ class HomeSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // when the user tap on the search bar it will go to search page , it will be added soon
     return SizedBox(
       height: 46,
       child: TextField(

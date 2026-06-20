@@ -1,3 +1,4 @@
+import 'package:aklatna/features/home/presentation/cubit/business_cubit.dart';
 import 'package:flutter/material.dart';
 
 import 'package:aklatna/core/theme/app_colors.dart';
@@ -8,6 +9,7 @@ import 'package:aklatna/features/home/presentation/widgets/home_restaurant_list.
 import 'package:aklatna/features/home/presentation/widgets/home_search_field.dart';
 import 'package:aklatna/features/home/presentation/widgets/home_section_header.dart';
 import 'package:aklatna/features/home/presentation/widgets/home_trending_list.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,6 +20,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _currentIndex = 0;
+  @override
+  void initState() {
+    super.initState();
+      print('🔵 HomePage initState called');
+
+    context.read<BusinessCubit>().getBusinesses();
+  }
 
   @override
   Widget build(BuildContext context) {

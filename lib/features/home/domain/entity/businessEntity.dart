@@ -13,6 +13,8 @@ class BusinessEntity {
   final String? logoUrl;
   final String? coverUrl;
   final String adress;
+  final String? createdAt;
+  final String? ownerId;
 
   BusinessEntity({
     required this.id,
@@ -26,6 +28,6 @@ class BusinessEntity {
     this.logoUrl,
     this.coverUrl,
     required this.adress,
-    required this.type,
+    required this.type, this.createdAt, this.ownerId,
   });
 }

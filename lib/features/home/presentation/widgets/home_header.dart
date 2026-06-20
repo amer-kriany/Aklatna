@@ -9,9 +9,13 @@ class HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _HeaderIconButton(icon: Icons.notifications_none_rounded, onTap: () {}),
+        _HeaderIconButton(icon: Icons.notifications_none_rounded, onTap: () {
+          // notifications logic will be implemented in the future, so this button is just a placeholder for now.
+        }),
         const SizedBox(width: 8),
-        _HeaderIconButton(icon: Icons.favorite_border_rounded, onTap: () {}),
+        _HeaderIconButton(icon: Icons.favorite_border_rounded, onTap: () {
+          // favorite logic will be implemented in the future, so this button is just a placeholder for now.
+        }),
         const Spacer(),
         Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -26,6 +30,7 @@ class HomeHeader extends StatelessWidget {
               ),
             ),
             SizedBox(height: 2),
+            // TODO: Implement location logic in the future, so this is just a placeholder for now.
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -52,6 +57,8 @@ class HomeHeader extends StatelessWidget {
                 ),
               ],
             ),
+            //  TODO: Implement location logic in the future, so this is just a placeholder for now.
+
           ],
         ),
       ],

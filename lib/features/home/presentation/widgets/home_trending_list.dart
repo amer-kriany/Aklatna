@@ -1,15 +1,37 @@
+import 'package:aklatna/features/home/presentation/cubit/business_cubit.dart';
+import 'package:aklatna/features/home/presentation/widgets/trending_resturant_card.dart';
 import 'package:flutter/material.dart';
 
 import 'package:aklatna/features/home/presentation/widgets/home_empty_section.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeTrendingList extends StatelessWidget {
   const HomeTrendingList({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const HomeEmptySection(
-      height: 174,
-      // TODO: Replace this placeholder with trending items from the home Cubit.
+    return BlocBuilder<BusinessCubit, BusinessState>(
+      builder: (context, state) {
+        if (state is BusinessFetched) {
+          if (state.businesses.isEmpty) {
+            return const HomeEmptySection(height: 0);
+          }
+          return SizedBox(
+            height: 200,
+            child: ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              scrollDirection: Axis.horizontal,
+              itemCount: state.businesses.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final item = state.businesses[index];
+                return TrendingResturantCard(item: item);
+              },
+            ),
+          );
+        }
+        return Container();
+      },
     );
   }
 }
