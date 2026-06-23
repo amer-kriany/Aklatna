@@ -15,6 +15,8 @@ class BusinessModel {
   final String adress;
   final String? createdAt;
   final String? ownerId;
+  final double rating;
+  final int ratingCount;
 
   BusinessModel({
     required this.id,
@@ -27,7 +29,7 @@ class BusinessModel {
     required this.isActive,
     this.logoUrl,
     this.coverUrl,
-    required this.adress, required this.type, this.createdAt, this.ownerId,
+    required this.adress, required this.type, this.createdAt, this.ownerId, required this.rating, required this.ratingCount,
   });
   factory BusinessModel.fromSupabase(Map<String, dynamic> business) {
     return BusinessModel(
@@ -44,6 +46,8 @@ class BusinessModel {
       createdAt: business['created_at'],
       ownerId: business['owner_user_id'],
       coverUrl: business['cover_url'],
+      rating: business['rating'],
+      ratingCount: business['rating_count'],
        type: BusinessType.values.byName(business['type']),
     );
   }

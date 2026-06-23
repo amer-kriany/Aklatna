@@ -24,6 +24,8 @@ class Businessrepoimp {
       logoUrl: model.logoUrl,
       adress: model.adress,
       type: model.type,
+      rating: model.rating,
+      ratingCount: model.ratingCount,
     );
   }
 }

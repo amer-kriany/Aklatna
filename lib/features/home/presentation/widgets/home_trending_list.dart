@@ -10,14 +10,24 @@ class HomeTrendingList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BusinessCubit, BusinessState>(
-      builder: (context, state) {
-        if (state is BusinessError) {
+    return BlocConsumer<BusinessCubit, BusinessState>(
+      listener: (context, state) {
+         if (state is BusinessError) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text("error fetching data")));
-          return const HomeEmptySection(height: 0);
         }
+      },
+      
+   
+      
+      builder: (context, state) {
+        if(state is BusinessError){
+                    return const HomeEmptySection(height: 0);
+
+
+        }
+       
         if (state is BusinessLoading) {
           return Center(child: CircularProgressIndicator());
         }

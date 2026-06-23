@@ -15,6 +15,8 @@ class BusinessEntity {
   final String adress;
   final String? createdAt;
   final String? ownerId;
+  final double rating;
+  final int ratingCount;
 
   BusinessEntity({
     required this.id,
@@ -28,6 +30,6 @@ class BusinessEntity {
     this.logoUrl,
     this.coverUrl,
     required this.adress,
-    required this.type, this.createdAt, this.ownerId,
+    required this.type, this.createdAt, this.ownerId,required this.rating,required this.ratingCount,
   });
 }
