@@ -1,11 +1,13 @@
 import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart';
 import 'package:aklatna/features/home/data/models/businessModel.dart';
 import 'package:aklatna/features/home/domain/entity/businessEntity.dart';
+import 'package:aklatna/features/home/domain/repository/businessRepo.dart';
 
-class Businessrepoimp {
+class Businessrepoimp implements Businessrepo {
   final BusinessDatasrouce businessDatasrouce;
   Businessrepoimp({required this.businessDatasrouce});
 
+@override
   Future<List<BusinessEntity>> getBusinessTable() async {
     final business = await businessDatasrouce.getBusinesses();
     return business.map((e)=>mapToEntity(e)).toList();

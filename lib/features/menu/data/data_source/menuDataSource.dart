@@ -1,4 +1,5 @@
 import 'package:aklatna/features/menu/data/models/menuCategoryModel.dart';
+import 'package:aklatna/features/menu/data/models/menuItemModel.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Menudatasource {
@@ -17,13 +18,13 @@ class Menudatasource {
     }
   }
   // get menu_items
-  Future<List<Menucategorymodel>> getMenuItems() async {
+  Future<List<Menuitemmodel>> getMenuItems() async {
     try {
       final response = await supabase.from("menu_items").select();
       if (response.isEmpty) {
         throw "empty result";
       }
-      return response.map((e)=>Menucategorymodel.fromSupabase(e)).toList();
+      return response.map((e)=>Menuitemmodel.fromSupabase(e)).toList();
     } catch (e) {
       rethrow;
     }
