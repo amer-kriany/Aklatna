@@ -1,3 +1,4 @@
+import 'package:aklatna/core/utils/business_time_utils.dart';
 import 'package:aklatna/features/home/business_type.dart';
 
 class BusinessEntity {
@@ -17,6 +18,7 @@ class BusinessEntity {
   final String? ownerId;
   final double rating;
   final int ratingCount;
+  bool get isOpen => BusinessTimeUtils.isOpenNow(openingTime, closingTime);
 
   BusinessEntity({
     required this.id,
@@ -30,6 +32,10 @@ class BusinessEntity {
     this.logoUrl,
     this.coverUrl,
     required this.adress,
-    required this.type, this.createdAt, this.ownerId,required this.rating,required this.ratingCount,
+    required this.type,
+    this.createdAt,
+    this.ownerId,
+    required this.rating,
+    required this.ratingCount,
   });
 }

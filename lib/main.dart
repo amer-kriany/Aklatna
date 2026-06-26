@@ -10,10 +10,10 @@ import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart'
 import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
 import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
 import 'package:aklatna/features/home/presentation/cubit/business_cubit.dart';
-import 'package:aklatna/features/home/presentation/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shimmer/main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:aklatna/core/theme/app_theme.dart';
@@ -67,7 +67,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Aklatna',
       theme: AppTheme.lightTheme,
-      home: const Scaffold(body: HomePage()),
+      home:  Scaffold(body: Container()),
     );
   }
 }
