@@ -1,16 +1,21 @@
 import 'package:aklatna/features/home/domain/entity/businessEntity.dart';
 import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 
+part 'business_event.dart';
 part 'business_state.dart';
 
-class BusinessCubit extends Cubit<BusinessState> {
-  final GetbusinessUsecase getBusinessUsecase;
-  BusinessCubit(this.getBusinessUsecase) : super(BusinessInitial());
-
-  // get business from supa
-  Future<void> getBusinesses() async {
+class BusinessBloc extends Bloc<BusinessEvent, BusinessState> {
+    final GetbusinessUsecase getBusinessUsecase;
+  BusinessBloc( {required this.getBusinessUsecase}) : super(BusinessInitial()) {
+    on<GetBusinesses>(_getBusinesses);
+  }
+   Future<void> _getBusinesses(
+    GetBusinesses event,
+    Emitter<BusinessState> emit
+   ) async {
       print('🟡 getBusinesses started');
 
     emit(BusinessLoading());
@@ -26,5 +31,4 @@ class BusinessCubit extends Cubit<BusinessState> {
       emit(BusinessError(message: e.toString()));
     }
   }
-
 }

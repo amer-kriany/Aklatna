@@ -9,7 +9,14 @@ import 'package:aklatna/features/auth/presentation/pages/login_page.dart';
 import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart';
 import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
 import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
-import 'package:aklatna/features/home/presentation/cubit/business_cubit.dart';
+import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
+import 'package:aklatna/features/menu/data/data_source/menuDataSource.dart';
+import 'package:aklatna/features/menu/data/repository/menuRepoImp.dart';
+import 'package:aklatna/features/menu/domain/entity/menuCategoryEntity.dart';
+import 'package:aklatna/features/menu/domain/entity/menuItemEntity.dart';
+import 'package:aklatna/features/menu/domain/usecases/getCategoriesUseCase.dart';
+import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
+import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -29,15 +36,23 @@ void main() async {
   // data sources
   final authDatasource = AuthDatasource();
   final getBusinessDatasource = BusinessDatasrouce();
+  final getMenuDataSource = Menudatasource();
   // repositories
   final repository = AuthRepositoryImpl(datasource: authDatasource);
-  final businessRepository = Businessrepoimp(businessDatasrouce: getBusinessDatasource);
+  final businessRepository = Businessrepoimp(
+    businessDatasrouce: getBusinessDatasource,
+  );
+  final menuRepo = Menurepoimp(menudatasource: getMenuDataSource);
   //use cases
   final signUpUsecase = SignUpUsecase(repository: repository);
   final signInUsecase = SigninUsecase(repository: repository);
   final currentUserUsecase = CurrentuserUsecase(repository: repository);
   final signOutUsecase = SingoutUsecase(repository: repository);
   final getBusinessUsecase = GetbusinessUsecase(repository: businessRepository);
+  final getcategoriesusecase = Getcategoriesusecase(
+    repo: menuRepo,
+  );
+  final getitemsusecase = Getitemsusecase(repo: menuRepo);
   runApp(
     MultiBlocProvider(
       providers: [
@@ -50,8 +65,13 @@ void main() async {
           ),
         ),
         BlocProvider(
-          create: (context) => BusinessCubit(getBusinessUsecase),
+          create: (context) =>
+              BusinessBloc(getBusinessUsecase: getBusinessUsecase),
         ),
+        BlocProvider(
+          create: (context) => MenuBloc(menuCategoriesusecase: getcategoriesusecase, menuItemsusecase: getitemsusecase),
+          child: Container(),
+        )
       ],
       child: MyApp(),
     ),
@@ -67,7 +87,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Aklatna',
       theme: AppTheme.lightTheme,
-      home:  Scaffold(body: Container()),
+      home: Scaffold(body: Container()),
     );
   }
 }

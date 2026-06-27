@@ -5,15 +5,20 @@ import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 
+part 'menu_event.dart';
 part 'menu_state.dart';
 
-class MenuCubit extends Cubit<MenuState> {
-  final Getcategoriesusecase menuCategoriesusecase;
+class MenuBloc extends Bloc<MenuEvent, MenuState> {
+    final Getcategoriesusecase menuCategoriesusecase;
   final Getitemsusecase menuItemsusecase;
-  MenuCubit({required this.menuCategoriesusecase, required this.menuItemsusecase}) : super(MenuInitial());
-  
-  // get menu categories and items
-  Future<void> getMenu() async {
+  MenuBloc({required this.menuCategoriesusecase, required this.menuItemsusecase}) : super(MenuInitial()) {
+    on<GetMenu>(_getMenu);
+  }
+   // get menu categories and items
+  Future<void> _getMenu(
+    GetMenu event,
+    Emitter<MenuState> emit,
+  ) async {
     emit(MenuLoading());
     try {
       final categories = await menuCategoriesusecase();
