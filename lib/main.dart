@@ -12,15 +12,17 @@ import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/menu/data/data_source/menuDataSource.dart';
 import 'package:aklatna/features/menu/data/repository/menuRepoImp.dart';
-import 'package:aklatna/features/menu/domain/entity/menuCategoryEntity.dart';
-import 'package:aklatna/features/menu/domain/entity/menuItemEntity.dart';
 import 'package:aklatna/features/menu/domain/usecases/getCategoriesUseCase.dart';
 import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
+import 'package:aklatna/features/profile/data/datasource/profile_datasource.dart';
+import 'package:aklatna/features/profile/data/repository/profileRepoImp.dart';
+import 'package:aklatna/features/profile/domain/usecases/getProfilesUsecase.dart';
+import 'package:aklatna/features/profile/domain/usecases/updateProfileUsecase.dart';
+import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:shimmer/main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:aklatna/core/theme/app_theme.dart';
@@ -37,22 +39,24 @@ void main() async {
   final authDatasource = AuthDatasource();
   final getBusinessDatasource = BusinessDatasrouce();
   final getMenuDataSource = Menudatasource();
+  final profileDatasource = ProfileDatasource();
   // repositories
   final repository = AuthRepositoryImpl(datasource: authDatasource);
   final businessRepository = Businessrepoimp(
     businessDatasrouce: getBusinessDatasource,
   );
   final menuRepo = Menurepoimp(menudatasource: getMenuDataSource);
+  final profileRepo = Profilerepoimp(profileDatasource: profileDatasource);
   //use cases
   final signUpUsecase = SignUpUsecase(repository: repository);
   final signInUsecase = SigninUsecase(repository: repository);
   final currentUserUsecase = CurrentuserUsecase(repository: repository);
   final signOutUsecase = SingoutUsecase(repository: repository);
   final getBusinessUsecase = GetbusinessUsecase(repository: businessRepository);
-  final getcategoriesusecase = Getcategoriesusecase(
-    repo: menuRepo,
-  );
+  final getcategoriesusecase = Getcategoriesusecase(repo: menuRepo);
   final getitemsusecase = Getitemsusecase(repo: menuRepo);
+  final getprofilesusecase = Getprofilesusecase(repo: profileRepo);
+  final updateprofileusecase = Updateprofileusecase(repo: profileRepo);
   runApp(
     MultiBlocProvider(
       providers: [
@@ -69,8 +73,13 @@ void main() async {
               BusinessBloc(getBusinessUsecase: getBusinessUsecase),
         ),
         BlocProvider(
-          create: (context) => MenuBloc(menuCategoriesusecase: getcategoriesusecase, menuItemsusecase: getitemsusecase),
-          child: Container(),
+          create: (context) => MenuBloc(
+            menuCategoriesusecase: getcategoriesusecase,
+            menuItemsusecase: getitemsusecase,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => ProfileBloc(),
         )
       ],
       child: MyApp(),
