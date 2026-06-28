@@ -26,4 +26,12 @@ class CartItem {
     businessId: businessId ?? this.businessId,
   );
 }
+Map<String, dynamic> toJson() {
+  return {
+    'itemId': itemId,
+    'nameAr': nameAr,
+    'price': price,
+    'quantity': quantity,
+  };
+}
 }
