@@ -15,6 +15,12 @@ final class OrderSuccess extends OrderState {
   @override
   List<Object> get props => [message];
 }
+final class CustomerOrdersFetched extends OrderState {
+  final List<OrderEntity> orders;
+  const CustomerOrdersFetched({required this.orders});
+  @override
+  List<Object> get props => [orders];
+}
 final class OrderFailure extends OrderState {
   final String error;
   const OrderFailure({required this.error});

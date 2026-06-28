@@ -12,3 +12,9 @@ class PlaceOrderEvent extends OrderEvent {
   @override
   List<Object> get props => [order];
 }
+class GetCustomerOrdersEvent extends OrderEvent {
+  final String customerId;
+  const GetCustomerOrdersEvent({required this.customerId});
+  @override
+  List<Object> get props => [customerId];
+}

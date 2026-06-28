@@ -23,6 +23,8 @@ class OrderModel {
 
   Map<String, dynamic> ordretoJson() {
     return {
+      'business_id': businessId,
+      'customer_id': customerId,
       'customer_username': customerUsername,
       'customer_phone': customerPhone,
       'items': items.map((e) => e.toJson()).toList(),
@@ -33,5 +35,15 @@ class OrderModel {
     };
   }
 
-  
+  factory OrderModel.fromSupabase(Map<String, dynamic> orders) {
+    return OrderModel(
+      businessId: orders['business_id'],
+      customerId: orders['customer_id'],
+      customerUsername: orders['customer_username'],
+      customerPhone: orders['customer_phone'],
+      items: orders['items'],
+      totalPrice: orders['total_price'],
+      orderType: orders['orderType'],
+    );
+  }
 }
