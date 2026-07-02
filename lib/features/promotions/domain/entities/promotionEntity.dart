@@ -4,8 +4,9 @@ class Promotionentity {
   final int discountPercentage;
   final String businessId;
   final String? imageUrl;
-  final String startTime;
-  final String endTime;
+final DateTime startTime;
+  final DateTime endTime;
+  final DateTime createdAt;
   const Promotionentity({
     required this.id,
     required this.label,
@@ -13,6 +14,6 @@ class Promotionentity {
     required this.businessId,
     required this.startTime,
     required this.endTime,
-    this.imageUrl,
+    this.imageUrl, required this.createdAt,
   });
 }

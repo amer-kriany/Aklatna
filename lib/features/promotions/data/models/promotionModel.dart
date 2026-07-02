@@ -4,15 +4,17 @@ class Promotionmodel {
   final int discountPercentage;
   final String businessId;
   final String? imageUrl;
-  final String startTime;
-  final String endTime;
+  final DateTime startTime;
+  final DateTime endTime;
+  final DateTime createdAt;
   const Promotionmodel({
     required this.id,
     required this.label,
     required this.discountPercentage,
     required this.businessId,
     required this.startTime,
-    required this.endTime, this.imageUrl,
+    required this.endTime,
+    this.imageUrl, required this.createdAt,
   });
 
   factory Promotionmodel.fromJson(Map<String, dynamic> json) {
@@ -22,9 +24,9 @@ class Promotionmodel {
       discountPercentage: json['discountPercentage'],
       businessId: json['businessId'],
       imageUrl: json['imageUrl'],
-      startTime: json['startTime'],
-      endTime: json['endTime'],
+      startTime: DateTime.parse(json['start_time']),
+      endTime:DateTime.parse(json['end_time']) ,
+      createdAt: DateTime.parse(json['created_at'])
     );
   }
 }
-
