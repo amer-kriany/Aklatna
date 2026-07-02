@@ -31,5 +31,5 @@ Profileentity mapToEntity(Profilemodel model) {
     isPhoneVerified: model.isPhoneVerified,
     email: model.email,
   );
-  ;
+  
 }
