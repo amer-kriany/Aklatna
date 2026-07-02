@@ -5,9 +5,9 @@ class OrderRemoteDatasource {
   final supabase = Supabase.instance.client;
 
   // place an order
-  Future<bool> placeOrder(OrderModel order) async {
+  Future<void> placeOrder(OrderModel order) async {
     try {
-      return await supabase.from('order').insert(order.ordretoJson());
+      await supabase.from('orders').insert(order.toJson());
     } catch (e) {
       rethrow;
     }
@@ -17,13 +17,22 @@ class OrderRemoteDatasource {
   Future<List<OrderModel>> customerOrders(String customerId) async {
     try {
       final orders = await supabase
-          .from('order')
+          .from('orders')
           .select()
           .eq('customer_id', customerId)
           .order('created_at', ascending: false);
-      return orders.map((e)=>OrderModel.fromSupabase(e)).toList() ;
+      return orders.map((e) => OrderModel.fromSupabase(e)).toList();
     } catch (e) {
       rethrow;
     }
+  }
+
+  // whatch order status
+  Stream<OrderModel> watchOrderStatus(String orderId) {
+    return supabase
+        .from("orders")
+        .stream(primaryKey: ['id'])
+        .eq('id', orderId)
+        .map((row) => OrderModel.fromSupabase(row.first));
   }
 }

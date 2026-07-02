@@ -5,7 +5,7 @@ class PlaceOrderUsecase {
   final OrderRepositoryImpl orderRepositoryImpl;
   PlaceOrderUsecase({required this.orderRepositoryImpl});
 
-  Future<bool> call(OrderModel order) async {
+  Future<void> call(OrderModel order) async {
     return await orderRepositoryImpl.placeOrder(order) ;
   }
 }

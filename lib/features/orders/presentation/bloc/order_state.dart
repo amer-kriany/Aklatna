@@ -27,3 +27,15 @@ final class OrderFailure extends OrderState {
   @override
   List<Object> get props => [error];
 }
+final class OrderStatusUpdated extends OrderState {
+  final OrderStatus status;
+  const OrderStatusUpdated({required this.status});
+  @override
+  List<Object> get props => [status];
+}
+final class OrderStatusError extends OrderState {
+  final String error;
+  const OrderStatusError({required this.error});
+  @override
+  List<Object> get props => [error];
+}

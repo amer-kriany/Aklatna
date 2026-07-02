@@ -7,25 +7,30 @@ class OrderRepositoryImpl implements OrderRepository {
   final OrderRemoteDatasource orderRemoteDatasource;
   OrderRepositoryImpl({required this.orderRemoteDatasource});
   @override
-  Future<bool> placeOrder(OrderModel order) async {
-    return await orderRemoteDatasource.placeOrder(order);
+  Future<void> placeOrder(OrderModel order) async {
+    await orderRemoteDatasource.placeOrder(order);
   }
 
   @override
   Future<List<OrderEntity>> customerOrders(String customerId) async {
     final orders = await orderRemoteDatasource.customerOrders(customerId);
-    return orders.map((e)=>mapToEntity(e)).toList() ;
+    return orders.map((e) => mapToEntity(e)).toList();
+  }
+
+  @override
+  Stream<OrderEntity> watchOrderStatus(String orderId) {
+   return orderRemoteDatasource.watchOrderStatus(orderId).map((e)=>mapToEntity(e)) ;
   }
 }
 
- OrderEntity mapToEntity(OrderModel order) {
+OrderEntity mapToEntity(OrderModel order) {
   return OrderEntity(
     businessId: order.businessId,
     customerId: order.customerId,
-    customerUsername: order.customerUsername,
+    customername: order.customername,
     customerPhone: order.customerPhone,
     items: order.items,
     totalPrice: order.totalPrice,
-    orderType: order.orderType,
+    orderType: order.orderType, id: order.id  , orderNumber: order.orderNumber, createdAt: order.createdAt, orderStatus: order.orderStatus,
   );
 }
