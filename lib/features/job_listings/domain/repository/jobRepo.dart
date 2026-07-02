@@ -1,4 +1,3 @@
-import 'package:aklatna/features/job_listings/data/models/jobModel.dart';
 import 'package:aklatna/features/job_listings/domain/entities/jobEntity.dart';
 
  abstract class Jobrepo {
