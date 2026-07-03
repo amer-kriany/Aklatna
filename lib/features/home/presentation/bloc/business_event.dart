@@ -8,6 +8,4 @@ sealed class BusinessEvent extends Equatable {
 }
 
 class GetBusinesses extends BusinessEvent {
-  final BusinessEntity businesses;
-   const GetBusinesses({required this.businesses});
 }
