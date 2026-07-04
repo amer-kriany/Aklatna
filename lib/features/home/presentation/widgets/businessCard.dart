@@ -3,7 +3,6 @@ import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_spacing.dart';
 
-
 /// Reusable business card — used in Trending and Open Now sections.
 ///
 /// Deliberately takes plain typed params instead of a Business entity
@@ -21,7 +20,7 @@ class BusinessCard extends StatelessWidget {
     required this.isOpen,
     this.description,
     this.onTap,
-    this.width = 140,
+    this.width = 390,
   });
 
   final String name;
@@ -37,69 +36,47 @@ class BusinessCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        padding: EdgeInsets.all(6),
         width: width,
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Color.fromRGBO(0, 0, 0, 0.25),
+              offset: Offset(0, 0),
+              spreadRadius: 4,
+              blurRadius: 0,
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.md)),
-                  child: Image.network(
-                    imageUrl,
-                    height: 90,
-                    width: width,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 90,
-                      width: width,
-                      color: AppColors.surfaceVariant,
-                      child: const Icon(Icons.storefront_outlined, color: AppColors.textHint),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  top: AppSpacing.xxs,
-                  right: AppSpacing.xxs, // RTL-friendly: badge sits at the leading edge visually
-                  child: _OpenBadge(isOpen: isOpen),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.xs),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: AppTextStyles.bodyMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    typeLabel,
-                    style: AppTextStyles.caption,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (description != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      description!,
-                      style: AppTextStyles.caption,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ],
+            // business photo later
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                "assets/images/profile.jpg",
+                width: 379,
+                height: 159,
               ),
             ),
+            SizedBox(height: 7),
+            // business name later
+            Text(
+              "Sushi Master - Tokyo Bites",
+              style: AppTextStyles.bodyLarge.copyWith(color: Colors.black),
+            ),
+            SizedBox(height: 3,),
+            // business location
+            Text("Japanese Cuisine,Shushi Segfood",style:AppTextStyles.caption ,),
+            SizedBox(height: 15,),
+            Row(children: [
+              // stars thing don't know how the fuck we will do it
+              
+            ],)
           ],
         ),
       ),

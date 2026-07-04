@@ -53,15 +53,7 @@ class _HomePageState extends State<HomePage> {
                   // TODO: navigate to Search screen if you add one
                 },
               ),
-              const SizedBox(height: AppSpacing.md),
-              BusinessTypeFilter(
-                selected: _selectedFilter,
-                onSelected: (option) {
-                  setState(() => _selectedFilter = option);
-                  // TODO: if this should trigger a re-fetch, dispatch a
-                  // HomeBloc event here instead of only local setState.
-                },
-              ),
+           
               const SizedBox(height: AppSpacing.lg),
               TrendingSection(
                 items: const <TrendingCardData>[], // TODO: state.trending from HomeBloc
