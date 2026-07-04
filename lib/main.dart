@@ -9,6 +9,7 @@ import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart'
 import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
 import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
+import 'package:aklatna/features/home/presentation/pages/homePage.dart';
 import 'package:aklatna/features/menu/data/data_source/menuDataSource.dart';
 import 'package:aklatna/features/menu/data/repository/menuRepoImp.dart';
 import 'package:aklatna/features/menu/domain/usecases/getCategoriesUseCase.dart';
@@ -95,7 +96,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Aklatna',
       theme: AppTheme.lightTheme,
-      home: Scaffold(body: Container()),
+      home: Scaffold(body: HomePage()),
     );
   }
 }
