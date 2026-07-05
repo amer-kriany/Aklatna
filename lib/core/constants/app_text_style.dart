@@ -120,8 +120,8 @@ class AppTextStyles {
     color: AppColors.textOnPrimary,
   );
   static TextStyle buttonSmall = _base(
-    fontSize: 12,
-    fontWeight: FontWeight.w600,
+    fontSize: 9,
+    fontWeight: FontWeight.w500,
     color: AppColors.textOnPrimary,
   );
 
