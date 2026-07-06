@@ -12,13 +12,18 @@ class Menucategorymodel {
     required this.sortOrder,
   });
   factory Menucategorymodel.fromSupabase(Map<String, dynamic> menuCategory) {
-    return Menucategorymodel(
-      id: menuCategory['id'],
-      businessId: menuCategory['business_id'],
-      nameAr: menuCategory['name_ar'],
-      sortOrder: menuCategory['sort_order'],
-    );
+    String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
 
-    
+    int asIntOrZero(dynamic value) {
+      if (value is num) return value.toInt();
+      return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    return Menucategorymodel(
+      id: asStringOrEmpty(menuCategory['id']),
+      businessId: asStringOrEmpty(menuCategory['business_id']),
+      nameAr: asStringOrEmpty(menuCategory['name_ar']),
+      sortOrder: asIntOrZero(menuCategory['sort_order']),
+    );
   }
 }

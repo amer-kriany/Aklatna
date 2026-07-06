@@ -14,19 +14,34 @@ class Promotionmodel {
     required this.businessId,
     required this.startTime,
     required this.endTime,
-    this.imageUrl, required this.createdAt,
+    this.imageUrl,
+    required this.createdAt,
   });
 
   factory Promotionmodel.fromJson(Map<String, dynamic> json) {
+    String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
+    String? asNullableString(dynamic value) => value?.toString();
+
+    int asIntOrZero(dynamic value) {
+      if (value is num) return value.toInt();
+      return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    DateTime asDateOrEpoch(dynamic value) {
+      if (value is DateTime) return value;
+      return DateTime.tryParse(value?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+    }
+
     return Promotionmodel(
-      id: json['id'],
-      label: json['label'],
-      discountPercentage: json['discountPercentage'],
-      businessId: json['businessId'],
-      imageUrl: json['imageUrl'],
-      startTime: DateTime.parse(json['start_time']),
-      endTime:DateTime.parse(json['end_time']) ,
-      createdAt: DateTime.parse(json['created_at'])
+      id: asStringOrEmpty(json['id']),
+      label: asStringOrEmpty(json['label']),
+      discountPercentage: asIntOrZero(json['discountPercentage']),
+      businessId: asStringOrEmpty(json['businessId']),
+      imageUrl: asNullableString(json['imageUrl']),
+      startTime: asDateOrEpoch(json['start_time']),
+      endTime: asDateOrEpoch(json['end_time']),
+      createdAt: asDateOrEpoch(json['created_at']),
     );
   }
 }

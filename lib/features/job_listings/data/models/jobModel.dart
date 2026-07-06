@@ -22,16 +22,18 @@ class Jobmodel {
   });
 
   factory Jobmodel.fromJson(Map<String, dynamic> json) {
+    String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
+
     return Jobmodel(
-      title: json['title'] ?? '',
-      description: json['description'] ?? '',
-      location: json['location'] ?? '',
-      businessId: json['businessId'] ?? '',
-      requirements: json['requirements'] ?? '',
-      contactPhone: json['contactPhone'] ?? '',
-      isApproved: json['isApproved'] ?? '',
-      isActive: json['isActive'] ?? '',
-      businessName: json['businessName'] ?? '',
+      title: asStringOrEmpty(json['title']),
+      description: asStringOrEmpty(json['description']),
+      location: asStringOrEmpty(json['location']),
+      businessId: asStringOrEmpty(json['businessId']),
+      requirements: asStringOrEmpty(json['requirements']),
+      contactPhone: asStringOrEmpty(json['contactPhone']),
+      isApproved: asStringOrEmpty(json['isApproved']),
+      isActive: asStringOrEmpty(json['isActive']),
+      businessName: asStringOrEmpty(json['businessName']),
     );
   }
 }

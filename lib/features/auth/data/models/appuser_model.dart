@@ -9,7 +9,7 @@ class AppuserModel {
   AppuserModel({
     required this.id,
     required this.userName,
-     this.email,
+    this.email,
     required this.phone,
     required this.isPhoneverified,
   });
@@ -18,11 +18,24 @@ class AppuserModel {
     User user,
     Map<String, dynamic> profileData,
   ) {
-    return AppuserModel(id: user.id,
-     userName: profileData['username'],
-      email: user.email,
-       phone: profileData['phone_number'],
-       isPhoneverified: profileData['is_phone_verified'] ?? false,
-       ); 
+    String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
+    String? asNullableString(dynamic value) => value?.toString();
+
+    bool asBoolOrFalse(dynamic value) {
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      final normalized = value?.toString().toLowerCase();
+      if (normalized == 'true' || normalized == '1') return true;
+      if (normalized == 'false' || normalized == '0') return false;
+      return false;
+    }
+
+    return AppuserModel(
+      id: user.id,
+      userName: asStringOrEmpty(profileData['username']),
+      email: asNullableString(user.email),
+      phone: asNullableString(profileData['phone_number']),
+      isPhoneverified: asBoolOrFalse(profileData['is_phone_verified']),
+    );
   }
 }

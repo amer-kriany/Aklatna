@@ -26,10 +26,11 @@ class OrderModel {
     required this.orderType,
     required this.id,
     required this.orderNumber,
-    required this.createdAt, required this.orderStatus,
+    required this.createdAt,
+    required this.orderStatus,
   });
 
-  Map<String, dynamic>toJson() {
+  Map<String, dynamic> toJson() {
     return {
       'business_id': businessId,
       'customer_id': customerId,
@@ -44,21 +45,59 @@ class OrderModel {
   }
 
   factory OrderModel.fromSupabase(Map<String, dynamic> orders) {
+    String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
+    String? asNullableString(dynamic value) => value?.toString();
+
+    double asDoubleOrZero(dynamic value) {
+      if (value is num) return value.toDouble();
+      return double.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    DateTime asDateOrEpoch(dynamic value) {
+      if (value is DateTime) return value;
+      return DateTime.tryParse(value?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+    }
+
+    OrderType asOrderType(dynamic value) {
+      final normalized = value?.toString();
+      if (normalized == null) return OrderType.delivery;
+      return OrderType.values.firstWhere(
+        (type) => type.name == normalized,
+        orElse: () => OrderType.delivery,
+      );
+    }
+
+    OrderStatus asOrderStatus(dynamic value) {
+      final normalized = value?.toString();
+      if (normalized == null) return OrderStatus.pending;
+      return OrderStatus.values.firstWhere(
+        (status) => status.name == normalized,
+        orElse: () => OrderStatus.pending,
+      );
+    }
+
+    List<CartItem> asCartItems(dynamic value) {
+      if (value is! List) return <CartItem>[];
+      return value
+          .whereType<Map>()
+          .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+
     return OrderModel(
-      id: orders['id'],
-      businessId: orders['business_id'],
-      customerId: orders['customer_id'],
-      customername: orders['customer_username'],
-      customerPhone: orders['customer_phone'],
-      items: (orders['items'] as List)
-          .map((e) => CartItem.fromJson(e))
-          .toList(),
-      totalPrice: (orders['total_price'] as num).toDouble(),
-      orderType: OrderType.values.byName(orders['order_type']),
-deliveryAddress: orders['delviery_address'],
-      orderNumber: orders['order_number'],
-      createdAt: DateTime.parse(orders['created_at']),
-      orderStatus: OrderStatus.values.byName(orders['order_status'])
+      id: asStringOrEmpty(orders['id']),
+      businessId: asStringOrEmpty(orders['business_id']),
+      customerId: asStringOrEmpty(orders['customer_id']),
+      customername: asStringOrEmpty(orders['customer_username']),
+      customerPhone: asStringOrEmpty(orders['customer_phone']),
+      items: asCartItems(orders['items']),
+      totalPrice: asDoubleOrZero(orders['total_price']),
+      orderType: asOrderType(orders['order_type']),
+      deliveryAddress: asNullableString(orders['delviery_address']),
+      orderNumber: asStringOrEmpty(orders['order_number']),
+      createdAt: asDateOrEpoch(orders['created_at']),
+      orderStatus: asOrderStatus(orders['order_status']),
     );
   }
 }

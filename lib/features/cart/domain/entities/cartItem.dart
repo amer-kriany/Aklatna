@@ -37,12 +37,24 @@ class CartItem {
   }
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
+    String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
+
+    double asDoubleOrZero(dynamic value) {
+      if (value is num) return value.toDouble();
+      return double.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    int asIntOrZero(dynamic value) {
+      if (value is num) return value.toInt();
+      return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
     return CartItem(
-      itemId: json['item_id'],
-      nameAr: json['name_ar'],
-      price: json['price'],
-      quantity: json['quantity'],
-      businessId: json['business_id'],
+      itemId: asStringOrEmpty(json['item_id']),
+      nameAr: asStringOrEmpty(json['name_ar']),
+      price: asDoubleOrZero(json['price']),
+      quantity: asIntOrZero(json['quantity']),
+      businessId: asStringOrEmpty(json['business_id']),
     );
   }
 }

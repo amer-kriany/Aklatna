@@ -12,17 +12,30 @@ class Profilemodel {
     required this.phoneNumber,
     required this.isPhoneVerified,
     required this.email,
-    this.profilePhoto, required this.address,
+    this.profilePhoto,
+    required this.address,
   });
   factory Profilemodel.fromSupabase(Map<String, dynamic> profile) {
+    String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
+    String? asNullableString(dynamic value) => value?.toString();
+
+    bool asBoolOrFalse(dynamic value) {
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      final normalized = value?.toString().toLowerCase();
+      if (normalized == 'true' || normalized == '1') return true;
+      if (normalized == 'false' || normalized == '0') return false;
+      return false;
+    }
+
     return Profilemodel(
-      id: profile['id'],
-      userName: profile['username'] ?? "غير محدد",
-      phoneNumber: profile['phone_number'] ?? "0000000000",
-      isPhoneVerified: profile['is_phone_verified'] ?? "false",
-      email: profile['email'] ?? "not_defined@gmail.com",
-      profilePhoto: profile['photo'],
-      address: profile['address']
+      id: asStringOrEmpty(profile['id']),
+      userName: asStringOrEmpty(profile['username']),
+      phoneNumber: asStringOrEmpty(profile['phone_number']),
+      isPhoneVerified: asBoolOrFalse(profile['is_phone_verified']),
+      email: asStringOrEmpty(profile['email']),
+      profilePhoto: asNullableString(profile['photo']),
+      address: asStringOrEmpty(profile['address']),
     );
   }
 }
