@@ -7,7 +7,10 @@ class ProfileDatasource {
   // get profile data
   Future<List<Profilemodel>> getProfiles() async {
     try {
-      final profiles = await supabase.from("profile").select();
+      final profiles = await supabase.from("profiles").select();
+      print(profiles);
+      print(profiles.runtimeType);
+      print(Supabase.instance.client.auth.currentUser?.id);
       return profiles.map((e) => Profilemodel.fromSupabase(e)).toList();
     } catch (e) {
       rethrow;
@@ -23,7 +26,7 @@ class ProfileDatasource {
   ) async {
     try {
       await supabase
-          .from('profile')
+          .from('profiles')
           .update({'username': username, 'adress': address, 'photo': photo})
           .eq('id', userId);
     } catch (e) {

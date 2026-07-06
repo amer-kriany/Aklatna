@@ -18,9 +18,9 @@ class BusinessModel {
   final String? ownerId;
   final double rating;
   final int ratingCount;
-   bool get isOpen=> BusinessTimeUtils.isOpenNow(openingTime, closingTime)
-   
-   ;
+  final DateTime expiresAt;
+  final DateTime? renewalRequestedAt;
+  bool get isOpen => BusinessTimeUtils.isOpenNow(openingTime, closingTime);
 
   BusinessModel({
     required this.id,
@@ -39,27 +39,72 @@ class BusinessModel {
     required this.isActive,
     required this.rating,
     required this.ratingCount,
+    required this.expiresAt,
+    required this.renewalRequestedAt,
   });
   factory BusinessModel.fromSupabase(Map<String, dynamic> business) {
-    return BusinessModel(
-      id: business['id'],
+    String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
+    String? asNullableString(dynamic value) => value?.toString();
 
-      name: business['name'],
-      nameAr: business['name_ar'],
-      phone: business['phone'],
-      openingTime: business['opening_time'],
-      closingTime: business['closing_time'],
-      logoUrl: business['logo_url'],
-      adress: business['adress'],
-      description: business['description'],
-      createdAt: business['created_at'],
-      ownerId: business['owner_user_id'],
-      coverUrl: business['cover_url'],
-      isActive: business['is_Active'],
-      rating: business['rating'],
-      ratingCount: business['rating_count'],
-      type: BusinessType.values.byName(business['type']),
+    bool asBoolOrFalse(dynamic value) {
+      if (value is bool) return value;
+      if (value is num) return value != 0;
+      final normalized = value?.toString().toLowerCase();
+      if (normalized == 'true' || normalized == '1') return true;
+      if (normalized == 'false' || normalized == '0') return false;
+      return false;
+    }
+
+    double asDoubleOrZero(dynamic value) {
+      if (value is num) return value.toDouble();
+      return double.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    int asIntOrZero(dynamic value) {
+      if (value is num) return value.toInt();
+      return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    DateTime asDateOrEpoch(dynamic value) {
+      if (value is DateTime) return value;
+      return DateTime.tryParse(value?.toString() ?? '') ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+    }
+
+    DateTime? asDateOrNull(dynamic value) {
+      if (value == null) return null;
+      if (value is DateTime) return value;
+      return DateTime.tryParse(value.toString());
+    }
+
+    BusinessType asBusinessType(dynamic value) {
+      final normalized = value?.toString();
+      if (normalized == null) return BusinessType.restaurant;
+      return BusinessType.values.firstWhere(
+        (type) => type.name == normalized,
+        orElse: () => BusinessType.restaurant,
+      );
+    }
+
+    return BusinessModel(
+      id: asStringOrEmpty(business['id']),
+      name: asNullableString(business['name']),
+      nameAr: asStringOrEmpty(business['name_ar']),
+      phone: asStringOrEmpty(business['phone']),
+      openingTime: asStringOrEmpty(business['opening_time']),
+      closingTime: asStringOrEmpty(business['closing_time']),
+      logoUrl: asNullableString(business['logo_url']),
+      adress: asStringOrEmpty(business['adress'] ?? business['address']),
+      description: asNullableString(business['description']),
+      createdAt: asNullableString(business['created_at']),
+      ownerId: asNullableString(business['owner_user_id'] ?? business['owner_user_id']),
+      coverUrl: asNullableString(business['cover_url']),
+      isActive: asBoolOrFalse(business['is_active']),
+      rating: asDoubleOrZero(business['rating']),
+      ratingCount: asIntOrZero(business['rating_count']),
+      type: asBusinessType(business['type']),
+      expiresAt: asDateOrEpoch(business['expires_at']),
+      renewalRequestedAt: asDateOrNull(business['renewal_requested_at']),
     );
   }
-  
 }

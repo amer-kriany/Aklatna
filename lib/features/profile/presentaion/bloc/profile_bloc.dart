@@ -18,26 +18,35 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<UpdateProfileEvent>(_updateProfileData);
   }
   // get profile data
-  Future<void> _getProfiles(    GetProfilesEvent event,
-Emitter<ProfileState> emit,) async {
+  Future<void> _getProfiles(
+    GetProfilesEvent event,
+    Emitter<ProfileState> emit,
+  ) async {
     emit(ProfileLoading());
     try {
+      print("profile staring");
       final profiles = await getProfilesUsecase();
       emit(ProfileLoaded(profiles: profiles));
+      print("profile loaded");
     } catch (e) {
       emit(ProfileError(message: e.toString()));
+      print("profile failed");
     }
   }
 
   // update profile data
   Future<void> _updateProfileData(
     UpdateProfileEvent event,
-Emitter<ProfileState> emit,
-    
+    Emitter<ProfileState> emit,
   ) async {
     emit(ProfileLoading());
     try {
-      await updateProfileUsecase(event.userId, event.username, event.address, event.photo);
+      await updateProfileUsecase(
+        event.userId,
+        event.username,
+        event.address,
+        event.photo,
+      );
       emit(ProfileUpdated());
     } catch (e) {
       emit(ProfileError(message: e.toString()));

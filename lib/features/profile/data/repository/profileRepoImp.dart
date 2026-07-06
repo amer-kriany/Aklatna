@@ -30,6 +30,7 @@ Profileentity mapToEntity(Profilemodel model) {
     phoneNumber: model.phoneNumber,
     isPhoneVerified: model.isPhoneVerified,
     email: model.email,
+    address: model.address
   );
   
 }
