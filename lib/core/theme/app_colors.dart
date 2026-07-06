@@ -1,31 +1,73 @@
 import 'package:flutter/material.dart';
 
+/// Aklatna (أكلتنا) — App-wide color palette.
+/// Single source of truth for all colors used across the app.
+/// Never hardcode a Color(...) in a widget — add it here instead.
 class AppColors {
-  AppColors._();
+  AppColors._(); // prevent instantiation
 
+  // ---------------------------------------------------------------------
+  // Brand
+  // ---------------------------------------------------------------------
   static const Color primary = Color(0xFFED3D2F);
-  static const Color primaryLight = Color(0xFFFF6B5E);
-  static const Color primaryDark = Color(0xFFA93101);
+  static const Color primaryDark = Color(0xFFC42E22);
+  static const Color primaryLight = Color(0xFFFCE9E7);
 
-  static const Color secondary = Color(0xFFF0F0F0);
-  static const Color neutral = Color(0xFF87726D);
+  // ---------------------------------------------------------------------
+  // Neutrals
+  // ---------------------------------------------------------------------
+  static const Color background = Color(0xFFFFFFFF);
+  static const Color surface = Color(0xFFF7F7F8);
+  static const Color surfaceVariant = Color(0xFFF0F0F2);
+  static const Color border = Color(0xFFE7E7EA);
+  static const Color divider = Color(0xFFEDEDEF);
+  static const Color location = Color(0xFF6C7278);
+  static const Color greeting = Color(0xFFE96100);
 
-  static const Color background = Color(0xFFFFF8F6);
-  static const Color surface = Color(0xFFFFFFFF);
+  // ---------------------------------------------------------------------
+  // Text
+  // ---------------------------------------------------------------------
+  static const Color textPrimary = Color(0xFF1A1A1E);
+  static const Color textSecondary = Color(0xFF797979);
+  static const Color textHint = Color(0xFFA1A1A8);
+  static const Color textOnPrimary = Color(0xFFFFFFFF);
 
-  static const Color textPrimary = Color(0xFF261815);
-  static const Color textSecondary = Color(0xFF59413A);
-  static const Color textMuted = Color(0xFF5D5F5F);
-  static const Color textHint = Color(0xFF6B7280);
+  // ---------------------------------------------------------------------
+  // Status / Semantic
+  // ---------------------------------------------------------------------
+  static const Color success = Color(0xFF2E9E5B);
+  static const Color successBg = Color(0xFFE6F5EC);
 
-  static const Color success = Color(0xFF4CAF50);
-  static const Color warning = Color(0xFFFF9800);
-  static const Color error = Color(0xFFED3D2F);
+  static const Color warning = Color(0xFFE9A23B);
+  static const Color warningBg = Color(0xFFFBF0DE);
 
-  static const Color cardBorder = Color(0xFFE1BFB6);
-  static const Color divider = Color(0xFFF5F5F5);
-  static const Color tagBackground = Color(0xFFFFE9E3);
+  static const Color error = Color(0xFFD32F2F);
+  static const Color errorBg = Color(0xFFFCE9E9);
 
-  static const Color openBadge = Color(0xFF22C55E);
-  static const Color closedBadge = Color(0xFF9E9E9E);
+  static const Color info = Color(0xFF3B82E9);
+  static const Color infoBg = Color(0xFFE8F0FC);
+
+  // ---------------------------------------------------------------------
+  // Order status specific (matches OrderStatus enum)
+  // ---------------------------------------------------------------------
+  static const Color statusPending = warning;
+  static const Color statusPreparing = info;
+  static const Color statusReady = success;
+  static const Color statusCompleted = Color(0xFF6B6B72);
+  static const Color statusCancelled = error;
+
+  // ---------------------------------------------------------------------
+  // Business state
+  // ---------------------------------------------------------------------
+  static const Color openBadge = success;
+  static const Color closedBadge = Color(0xFF9B9BA1);
+
+  // ---------------------------------------------------------------------
+  // Misc / Overlays
+  // ---------------------------------------------------------------------
+  static const Color shadow = Color(0x1A000000); // 10% black
+  static const Color overlay = Color(0x66000000); // 40% black
+  static const Color disabled = Color(0xFFD1D1D6);
+  static const Color shimmerBase = Color(0xFFEAEAEC);
+  static const Color shimmerHighlight = Color(0xFFF5F5F6);
 }

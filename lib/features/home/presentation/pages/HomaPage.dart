@@ -1,0 +1,241 @@
+import 'package:aklatna/core/constants/app_spacing.dart';
+import 'package:aklatna/features/home/domain/entity/businessEntity.dart';
+import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
+import 'package:aklatna/features/home/presentation/widgets/BusinessCard.dart';
+import 'package:aklatna/features/home/presentation/widgets/HomeDeliveryHeader.dart';
+import 'package:aklatna/features/home/presentation/widgets/HomeGreeting.dart';
+import 'package:aklatna/features/home/presentation/widgets/HomeSearchBar.dart';
+import 'package:aklatna/features/home/presentation/widgets/SectionHeader.dart';
+import 'package:aklatna/features/home/presentation/widgets/SponseredBanner.dart';
+import 'package:aklatna/features/profile/domain/entities/profileEntity.dart';
+import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/theme/app_colors.dart';
+
+// TODO(Amer): fix these import paths to match your real project structure
+// import '../../business/presentation/bloc/business_bloc.dart';
+// import '../../business/domain/entities/business_entity.dart';
+// import '../../profile/presentation/bloc/profile_bloc.dart';
+// import '../../../../core/routes/app_routes.dart';
+
+/// Home page - wired to real BusinessBloc + ProfileBloc.
+///
+/// Profile gates the whole page (header/greeting need it) - shows a
+/// full-page spinner until ProfileLoaded. Once that's ready, the
+/// business sections render independently and collapse to nothing
+/// (not a second spinner) until BusinessFetched arrives, since a
+/// business-load delay shouldn't block the whole page from showing.
+///
+/// "Popular Near You" / "Recommended" aren't separate bloc states -
+/// BusinessFetched only gives one flat list, so this page derives the
+/// split itself: highest-rated business = Popular, the rest = Recommended.
+/// TODO(Amer): confirm this is really how "popular" should be decided
+/// (vs. e.g. admin-picked or a future paid placement).
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  // Approximate - verify against real device render and adjust.
+  static const double _recommendedTileWidth = 160;
+  static const double _recommendedRowHeight = 210;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<BusinessBloc>().add(GetBusinesses());
+    context.read<ProfileBloc>().add(GetProfilesEvent());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: BlocBuilder<ProfileBloc, ProfileState>(
+          builder: (context, profileState) {
+            if (profileState is ProfileLoading ||
+                profileState is ProfileInitial) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (profileState is ProfileError) {
+              return Text(profileState.message);
+            }
+             List<Profileentity> profiles=[];
+            final Profileentity profile;
+            if (profileState is ProfileLoaded) {
+               profiles = profileState.profiles;
+            }
+            print(profiles.length);
+            if (profiles.isNotEmpty) {
+              profile = profiles.first;
+            } else {
+              return Center(child: Text("no profile found"));
+            }
+///////////////////////////////////////////////////////////////////////////////////////
+            return BlocBuilder<BusinessBloc, BusinessState>(
+              builder: (context, businessState) {
+                if (businessState is BusinessLoading) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if (businessState is BusinessError) {
+                  return Center(child: Text(businessState.message+"fuck tramp"));
+                }
+                List<BusinessEntity> businesses = <BusinessEntity>[];
+                if (businessState is BusinessFetched) {
+                  businesses = businessState.businesses;
+                }
+
+                final sorted = [...businesses]
+                  ..sort((a, b) => b.rating.compareTo(a.rating));
+                final popularBusiness = sorted.isNotEmpty ? sorted.first : null;
+                final recommendedBusinesses = sorted.length > 1
+                    ? sorted.sublist(1)
+                    : <BusinessEntity>[];
+
+                // TODO(Amer): sponsored_banners table doesn't exist yet -
+                // wire this once it's built.
+                const String? sponsoredBannerImageUrl = "null";
+
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.pageHorizontal,
+                        ),
+                        child: HomeDeliveryHeader(
+                          // TODO(Amer): resolve real address source (deferred)
+                          addressLabel: profile.address,
+                          avatarUrl: profile.profilePhoto,
+                          onAvatarTap: () {
+                            // TODO(Amer): context.push(AppRoutes.profile);
+                          },
+                          onAddressTap: () {
+                            // TODO(Amer): context.push(AppRoutes.addressSelect);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.pageHorizontal,
+                        ),
+                        child: HomeGreeting(userName: profile.userName),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.pageHorizontal,
+                        ),
+                        child: HomeSearchBar(
+                          onTap: () {
+                            // TODO(Amer): context.push(AppRoutes.search);
+                          },
+                          onMicTap: null, // visual only, not wired in Phase 1
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+
+                      if (popularBusiness != null) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.pageHorizontal,
+                          ),
+                          child: const SectionHeader(title: 'الأكثر طلبًا'),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.pageHorizontal,
+                          ),
+                          child: BusinessCard(
+                            businessName: popularBusiness.nameAr,
+                            coverUrl: popularBusiness.coverUrl,
+                            rating: popularBusiness.rating,
+                            ratingCount: popularBusiness.ratingCount,
+                            onTap: () {
+                              // TODO(Amer): context.push('${AppRoutes.business}/${popularBusiness.id}');
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
+
+                      if (recommendedBusinesses.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.pageHorizontal,
+                          ),
+                          child: const SectionHeader(title: 'موصى لك'),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        SizedBox(
+                          height: _recommendedRowHeight,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.only(
+                              left: AppSpacing.pageHorizontal,
+                              right: AppSpacing.sm,
+                            ),
+                            itemCount: recommendedBusinesses.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: AppSpacing.sm),
+                            itemBuilder: (context, index) {
+                              final business = recommendedBusinesses[index];
+                              return BusinessCard(
+                                width: _recommendedTileWidth,
+                                businessName: business.nameAr,
+                                coverUrl: business.coverUrl,
+                                rating: business.rating,
+                                ratingCount: business.ratingCount,
+                                onTap: () {
+                                  // TODO(Amer): context.push('${AppRoutes.business}/${business.id}');
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
+
+                      if (sponsoredBannerImageUrl != null) ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.pageHorizontal,
+                          ),
+                          child: const SectionHeader(title: 'إعلانات'),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.pageHorizontal,
+                          ),
+                          child: SponsoredBanner(
+                            imageUrl: sponsoredBannerImageUrl,
+                            onTap: () {
+                              // TODO(Amer): decide destination once sponsored_banners table exists
+                            },
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+}

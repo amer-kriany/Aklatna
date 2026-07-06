@@ -17,6 +17,7 @@ class AuthDatasource {
       data: {
     'username': username,
     'phone_number': phone,
+    'role':"user"
   },);
 
       final user = response.user;
