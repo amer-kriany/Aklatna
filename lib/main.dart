@@ -1,3 +1,4 @@
+import 'package:aklatna/core/router/app_router.dart';
 import 'package:aklatna/features/auth/data/datasources/auth_datasource.dart';
 import 'package:aklatna/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:aklatna/features/auth/domain/usecases/currentuser_usecase.dart';
@@ -93,11 +94,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
+      routerConfig: appRouter,
       debugShowCheckedModeBanner: false,
       title: 'Aklatna',
       theme: AppTheme.lightTheme,
-    home: HomePage()
     );
   }
 }

@@ -12,10 +12,10 @@ final class ProfileInitial extends ProfileState {}
 final class ProfileLoading extends ProfileState {}
 
 final class ProfileLoaded extends ProfileState {
-  final List<Profileentity> profiles;
-  const ProfileLoaded({required this.profiles});
+  final Profileentity profile;
+  const ProfileLoaded({required this.profile});
   @override
-  List<Object> get props => [profiles];
+  List<Object> get props => [profile];
 }
 final class ProfileUpdated extends ProfileState {}
 

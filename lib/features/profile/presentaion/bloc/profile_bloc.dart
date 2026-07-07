@@ -26,7 +26,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     try {
       print("profile staring");
       final profiles = await getProfilesUsecase();
-      emit(ProfileLoaded(profiles: profiles));
+     if(profiles.isNotEmpty){
+
+      emit(ProfileLoaded(profile: profiles.first));
+     }
       print("profile loaded");
     } catch (e) {
       emit(ProfileError(message: e.toString()));

@@ -55,7 +55,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: AppBottomNavBar(currentIndex: 0, onTap: (_) {}),
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: BlocBuilder<ProfileBloc, ProfileState>(
@@ -66,19 +65,67 @@ class _HomePageState extends State<HomePage> {
             }
 
             if (profileState is ProfileError) {
-              return Text(profileState.message);
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.orange,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Profile not found",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        context.read<ProfileBloc>().add(GetProfilesEvent());
+                      },
+                      child: const Text("Retry"),
+                    ),
+                  ],
+                ),
+              );
             }
-            List<Profileentity> profiles = [];
             final Profileentity profile;
             if (profileState is ProfileLoaded) {
-              profiles = profileState.profiles;
+              profile = profileState.profile;
+            }else{
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.orange,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Profile not found",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () {
+                        context.read<ProfileBloc>().add(GetProfilesEvent());
+                      },
+                      child: const Text("Retry"),
+                    ),
+                  ],
+                ),
+              );
             }
-            print(profiles.length);
-            if (profiles.isNotEmpty) {
-              profile = profiles.first;
-            } else {
-              return Center(child: Text("no profile found"));
-            }
+            
             ///////////////////////////////////////////////////////////////////////////////////////
             return BlocBuilder<BusinessBloc, BusinessState>(
               builder: (context, businessState) {

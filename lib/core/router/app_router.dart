@@ -1,4 +1,5 @@
 import 'package:aklatna/core/router/MainShell.dart';
+import 'package:aklatna/features/home/presentation/pages/HomaPage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,7 +27,7 @@ final GoRouter appRouter = GoRouter(
             GoRoute(
               path: '/home',
               // TODO(Amer): replace with your real HomePage widget.
-              builder: (context, state) => const _PlaceholderScreen(label: 'Home'),
+              builder: (context, state) => const HomePage(),
             ),
           ],
         ),
