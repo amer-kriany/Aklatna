@@ -17,4 +17,7 @@ final class BusinessError extends BusinessState {
   final String message;
   const BusinessError({required this.message});
 }
+final class BusinessUnfound extends BusinessState{
+  
+}
 

@@ -1,6 +1,6 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_colors.dart';
 
 /// A single sponsored/advertising banner (paid placement).
 /// Pure presentation - doesn't know or care where the image URL comes from,

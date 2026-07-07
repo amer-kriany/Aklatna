@@ -1,6 +1,6 @@
 import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_colors.dart';
 
 /// Greets the user by name with a time-of-day appropriate phrase.
 /// Time bucket is computed from the device clock at build time - this is

@@ -9,8 +9,8 @@ import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart';
 import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
 import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
+import 'package:aklatna/features/home/domain/usecases/searchBusinessesUseCase.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
-import 'package:aklatna/features/home/presentation/pages/HomaPage.dart';
 
 import 'package:aklatna/features/menu/data/data_source/menuDataSource.dart';
 import 'package:aklatna/features/menu/data/repository/menuRepoImp.dart';
@@ -55,6 +55,7 @@ void main() async {
   final currentUserUsecase = CurrentuserUsecase(repository: repository);
   final signOutUsecase = SingoutUsecase(repository: repository);
   final getBusinessUsecase = GetbusinessUsecase(repository: businessRepository);
+  final searchBusinessesusecase = Searchbusinessesusecase(businessrepoimp: businessRepository);
   final getcategoriesusecase = Getcategoriesusecase(repo: menuRepo);
   final getitemsusecase = Getitemsusecase(repo: menuRepo);
   final getprofilesusecase = Getprofilesusecase(repo: profileRepo);
@@ -72,7 +73,7 @@ void main() async {
         ),
         BlocProvider(
           create: (context) =>
-              BusinessBloc(getBusinessUsecase: getBusinessUsecase),
+              BusinessBloc(getBusinessUsecase: getBusinessUsecase, searchbusinessesusecase: searchBusinessesusecase),
         ),
         BlocProvider(
           create: (context) => MenuBloc(

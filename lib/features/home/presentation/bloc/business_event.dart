@@ -7,5 +7,9 @@ sealed class BusinessEvent extends Equatable {
   List<Object> get props => [];
 }
 
-class GetBusinesses extends BusinessEvent {
+class GetBusinesses extends BusinessEvent {}
+
+class SearchBusinesses extends BusinessEvent {
+  final String query;
+ const SearchBusinesses({required this.query});
 }
