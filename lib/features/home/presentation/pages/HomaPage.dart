@@ -1,4 +1,5 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
+import 'package:aklatna/core/widgets/AppBottomNavBar.dart';
 import 'package:aklatna/features/home/domain/entity/businessEntity.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/home/presentation/widgets/BusinessCard.dart';
@@ -54,6 +55,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: AppBottomNavBar(currentIndex: 0, onTap: (_) {}),
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: BlocBuilder<ProfileBloc, ProfileState>(
@@ -66,10 +68,10 @@ class _HomePageState extends State<HomePage> {
             if (profileState is ProfileError) {
               return Text(profileState.message);
             }
-             List<Profileentity> profiles=[];
+            List<Profileentity> profiles = [];
             final Profileentity profile;
             if (profileState is ProfileLoaded) {
-               profiles = profileState.profiles;
+              profiles = profileState.profiles;
             }
             print(profiles.length);
             if (profiles.isNotEmpty) {
@@ -77,14 +79,14 @@ class _HomePageState extends State<HomePage> {
             } else {
               return Center(child: Text("no profile found"));
             }
-///////////////////////////////////////////////////////////////////////////////////////
+            ///////////////////////////////////////////////////////////////////////////////////////
             return BlocBuilder<BusinessBloc, BusinessState>(
               builder: (context, businessState) {
                 if (businessState is BusinessLoading) {
                   return Center(child: CircularProgressIndicator());
                 }
                 if (businessState is BusinessError) {
-                  return Center(child: Text(businessState.message+"fuck tramp"));
+                  return Center(child: Text(businessState.message));
                 }
                 List<BusinessEntity> businesses = <BusinessEntity>[];
                 if (businessState is BusinessFetched) {
@@ -100,7 +102,8 @@ class _HomePageState extends State<HomePage> {
 
                 // TODO(Amer): sponsored_banners table doesn't exist yet -
                 // wire this once it's built.
-                const String? sponsoredBannerImageUrl = "null";
+                const String? sponsoredBannerImageUrl =
+                    "assets/images/profile.jpg";
 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -146,31 +149,26 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: AppSpacing.xl),
 
-                      if (popularBusiness != null) ...[
+                      if (sponsoredBannerImageUrl != null) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: const SectionHeader(title: 'الأكثر طلبًا'),
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: BusinessCard(
-                            businessName: popularBusiness.nameAr,
-                            coverUrl: popularBusiness.coverUrl,
-                            rating: popularBusiness.rating,
-                            ratingCount: popularBusiness.ratingCount,
+                          child: SponsoredBanner(
+                            imageUrl: sponsoredBannerImageUrl,
                             onTap: () {
-                              // TODO(Amer): context.push('${AppRoutes.business}/${popularBusiness.id}');
+                              // TODO(Amer): decide destination once sponsored_banners table exists
                             },
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                       ],
-
                       if (recommendedBusinesses.isNotEmpty) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
@@ -208,25 +206,29 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
-                      if (sponsoredBannerImageUrl != null) ...[
+                      if (popularBusiness != null) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: const SectionHeader(title: 'إعلانات'),
+                          child: const SectionHeader(title: 'الأكثر طلبًا'),
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: SponsoredBanner(
-                            imageUrl: sponsoredBannerImageUrl,
+                          child: BusinessCard(
+                            businessName: popularBusiness.nameAr,
+                            coverUrl: popularBusiness.coverUrl,
+                            rating: popularBusiness.rating,
+                            ratingCount: popularBusiness.ratingCount,
                             onTap: () {
-                              // TODO(Amer): decide destination once sponsored_banners table exists
+                              // TODO(Amer): context.push('${AppRoutes.business}/${popularBusiness.id}');
                             },
                           ),
                         ),
+                        const SizedBox(height: AppSpacing.xl),
                       ],
                     ],
                   ),

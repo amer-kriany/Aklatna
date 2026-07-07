@@ -37,5 +37,6 @@ class Profilemodel {
       profilePhoto: asNullableString(profile['photo']),
       address: asStringOrEmpty(profile['address']),
     );
+    
   }
 }
