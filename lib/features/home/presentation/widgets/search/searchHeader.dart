@@ -9,7 +9,8 @@ import 'package:flutter/material.dart';
 /// ProfileEntity via BlocBuilder. This widget doesn't know ProfileEntity
 /// or ProfileBloc exist.
 class SearchHeader extends StatelessWidget {
-  const SearchHeader({super.key, required this.imageUrl});
+  final String? category;
+  const SearchHeader({super.key, required this.imageUrl, this.category});
 
   /// Nullable — falls back to a person icon if the profile has no photo yet.
   final String? imageUrl;
@@ -18,14 +19,15 @@ class SearchHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        Container(width: 115),
         Expanded(
           child: RichText(
             text: TextSpan(
               style: AppTextStyles.h2,
               children: [
-                const TextSpan(text: 'يلا نطلب '),
+                TextSpan(text: category != null ? "قريبة عليك" : 'يلا نطلب '),
                 TextSpan(
-                  text: 'أكل!',
+                  text: category ?? 'أكل',
                   style: AppTextStyles.h2.copyWith(color: AppColors.greeting),
                 ),
               ],
