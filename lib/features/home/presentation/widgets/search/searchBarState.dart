@@ -15,7 +15,7 @@ import 'package:flutter/material.dart';
 /// (Android manifest) + NSMicrophoneUsageDescription/
 /// NSSpeechRecognitionUsageDescription (iOS Info.plist).
 class SearchBar extends StatefulWidget {
-  const SearchBar({super.key, required this.onQueryChanged});
+  const SearchBar({super.key, required this.onQueryChanged, required TextEditingController controller});
 
   final ValueChanged<String> onQueryChanged;
 

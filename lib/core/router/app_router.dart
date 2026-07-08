@@ -1,5 +1,6 @@
 import 'package:aklatna/core/router/MainShell.dart';
 import 'package:aklatna/features/home/presentation/pages/HomaPage.dart';
+import 'package:aklatna/features/home/presentation/pages/SearchPage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,7 +27,6 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/home',
-              // TODO(Amer): replace with your real HomePage widget.
               builder: (context, state) => const HomePage(),
             ),
           ],
@@ -36,8 +36,7 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/search',
-              // TODO(Amer): replace with real Search page (owns business_type_filter).
-              builder: (context, state) => const _PlaceholderScreen(label: 'Search'),
+              builder: (context, state) => const SearchPage(),
             ),
           ],
         ),
