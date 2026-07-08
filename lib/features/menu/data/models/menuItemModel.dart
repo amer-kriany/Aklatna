@@ -47,8 +47,11 @@ class Menuitemmodel {
       id: asStringOrEmpty(menuItem['id']),
       businessId: asStringOrEmpty(menuItem['business_id']),
       categoryId: asStringOrEmpty(menuItem['category_id']),
+      name: menuItem['name']?.toString(),
       nameAr: asStringOrEmpty(menuItem['name_ar']),
+      description: menuItem['description']?.toString(),
       price: asDoubleOrZero(menuItem['price']),
+      photoUrl: menuItem['photo_url']?.toString(),
       isAvailable: asBoolOrFalse(menuItem['is_available']),
       sortOrder: asIntOrZero(menuItem['sort_order']),
     );

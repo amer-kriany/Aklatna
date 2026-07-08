@@ -11,6 +11,7 @@ import 'package:aklatna/features/home/presentation/widgets/search/searchBarState
 import 'package:aklatna/features/home/presentation/widgets/search/searchHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/search/searchResultCard.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
+import 'package:aklatna/features/menu/domain/entity/menuItemEntity.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 
 import 'package:flutter/material.dart';
@@ -45,7 +46,12 @@ class _SearchPageState extends State<SearchPage> {
   @override
   void initState() {
     super.initState();
-    // context.read<MenuBloc>().add(GetMenu());
+    if (context.read<MenuBloc>().state is MenuInitial) {
+      context.read<MenuBloc>().add(const GetMenu());
+    }
+    if (context.read<BusinessBloc>().state is BusinessInitial) {
+      context.read<BusinessBloc>().add(GetBusinesses());
+    }
     _loadRecent();
   }
 
@@ -66,7 +72,8 @@ class _SearchPageState extends State<SearchPage> {
   void _onRecentKeywordTap(String keyword) {
     _controller.text = keyword;
     setState(() => _query = keyword);
-    // TODO(Amer): dispatch search event with `keyword`, same as above.
+    if (keyword.trim().isEmpty) return;
+    context.read<BusinessBloc>().add(SearchBusinesses(query: keyword.trim()));
   }
 
   @override
@@ -104,9 +111,21 @@ class _SearchPageState extends State<SearchPage> {
               ),
               const SizedBox(height: AppSpacing.lg),
               Expanded(
-                child: _query.trim().isEmpty
-                    ? _buildIdleContent()
-                    : _buildResults(),
+                child: ListView(
+                  children: [
+                    if (_query.trim().isEmpty &&
+                        _recentKeywords.isNotEmpty) ...[
+                      RecentKeywords(
+                        keywords: _recentKeywords,
+                        onTap: _onRecentKeywordTap,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+                    if (_query.trim().isNotEmpty) _buildResults(),
+                    const SizedBox(height: AppSpacing.lg),
+                    _buildIdleContent(),
+                  ],
+                ),
               ),
             ],
           ),
@@ -115,33 +134,81 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  /// Shown when there's no active query — recent keywords + popular dishes.
+  /// Always shown at the bottom — popular dishes horizontal slider.
   Widget _buildIdleContent() {
-    return ListView(
-      children: [
-        if (_recentKeywords.isNotEmpty) ...[
-          RecentKeywords(keywords: _recentKeywords, onTap: _onRecentKeywordTap),
-          const SizedBox(height: AppSpacing.lg),
-        ],
-        // Popular dishes — menu_items joined to businesses, ordered by
-        // businesses.rating desc. Query/Bloc not built yet, so itemCount
-        // is 0 until wired — no dummy data, section just collapses.
-        const SizedBox(height: AppSpacing.md),
-        SizedBox(
-          height: 180,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            // TODO(Amer): itemCount: state.dishes.length once the Bloc exists.
-            itemCount: 0,
-            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
-            itemBuilder: (context, index) => const PopularDishCard(
-              photoUrl: '',
-              dishNameAr: '',
-              businessNameAr: '',
-            ),
-          ),
-        ),
-      ],
+    return BlocBuilder<MenuBloc, MenuState>(
+      builder: (context, state) {
+        final List<Menuitementity> menuItems = state is MenuLoaded
+            ? state.items
+            : const <Menuitementity>[];
+        final businessState = context.watch<BusinessBloc>().state;
+        final Map<String, double> businessRatingsById =
+            businessState is BusinessFetched
+            ? {
+                for (final business in businessState.businesses)
+                  business.id: business.rating,
+              }
+            : const <String, double>{};
+        final Map<String, String> businessNamesById =
+            businessState is BusinessFetched
+            ? {
+                for (final business in businessState.businesses)
+                  business.id: business.nameAr,
+              }
+            : const <String, String>{};
+        final rankedItems = [...menuItems]
+          ..sort((a, b) {
+            final ratingA = businessRatingsById[a.businessId] ?? 0;
+            final ratingB = businessRatingsById[b.businessId] ?? 0;
+            final byRating = ratingB.compareTo(ratingA);
+            if (byRating != 0) return byRating;
+            return a.sortOrder.compareTo(b.sortOrder);
+          });
+        final popularItems = rankedItems.take(10).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('أطباق شائعة', style: AppTextStyles.h4),
+            const SizedBox(height: AppSpacing.md),
+            if (state is MenuLoading)
+              const SizedBox(
+                height: 210,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            if (state is MenuError)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: Text(state.message, style: AppTextStyles.bodyMedium),
+              ),
+            if (state is! MenuLoading && popularItems.isNotEmpty) ...[
+              SizedBox(
+                height: 210,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: popularItems.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppSpacing.sm),
+                  itemBuilder: (context, index) {
+                    final item = popularItems[index];
+                    return PopularDishCard(
+                      photoUrl: item.photoUrl ?? '',
+                      dishNameAr: item.nameAr,
+                      dishPrice: item.price,
+                      businessNameAr: businessNamesById[item.businessId] ?? '',
+                    );
+                  },
+                ),
+              ),
+            ],
+            if (state is! MenuLoading && popularItems.isEmpty)
+              const SizedBox(
+                height: 210,
+                child: Center(child: Text('لا توجد أطباق حالياً')),
+              ),
+          ],
+        );
+      },
     );
   }
 
@@ -166,6 +233,8 @@ class _SearchPageState extends State<SearchPage> {
         }
         if (state is BusinessFetched) {
           return ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: state.businesses.length,
             separatorBuilder: (_, __) =>
                 const Divider(color: AppColors.divider),

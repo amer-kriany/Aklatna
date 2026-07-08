@@ -62,8 +62,8 @@ class AppTextStyles {
     height: 1.4,
   );
   static TextStyle bodyMedium = _base(
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
     height: 1.4,
   );
   static TextStyle bodySmall = _base(

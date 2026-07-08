@@ -12,6 +12,7 @@ import 'package:aklatna/features/profile/domain/entities/profileEntity.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 
 // TODO(Amer): fix these import paths to match your real project structure
@@ -96,7 +97,7 @@ class _HomePageState extends State<HomePage> {
             final Profileentity profile;
             if (profileState is ProfileLoaded) {
               profile = profileState.profile;
-            }else{
+            } else {
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -125,7 +126,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               );
             }
-            
+
             ///////////////////////////////////////////////////////////////////////////////////////
             return BlocBuilder<BusinessBloc, BusinessState>(
               builder: (context, businessState) {
@@ -189,6 +190,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: HomeSearchBar(
                           onTap: () {
+                            context.go("/search");
                             // TODO(Amer): context.push(AppRoutes.search);
                           },
                           onMicTap: null, // visual only, not wired in Phase 1

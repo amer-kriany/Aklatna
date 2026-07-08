@@ -11,11 +11,20 @@ class PopularDishCard extends StatelessWidget {
     required this.photoUrl,
     required this.dishNameAr,
     required this.businessNameAr,
+    required this.dishPrice,
   });
 
   final String photoUrl;
   final String dishNameAr;
   final String businessNameAr;
+  final double dishPrice;
+
+  bool get _hasValidImageUrl {
+    final uri = Uri.tryParse(photoUrl.trim());
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +41,62 @@ class PopularDishCard extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.md),
-            child: Image.network(
-              photoUrl,
-              height: 100,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+            child: _hasValidImageUrl
+                ? Image.network(
+                    photoUrl,
+                    height: 100,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                    height: 100,
+                    width: double.infinity,
+                    color: AppColors.surface,
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.fastfood,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          Text(dishNameAr, style: AppTextStyles.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text(
-            businessNameAr,
-            style: AppTextStyles.caption,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                dishPrice.toString(),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              Column(
+                spacing: 4,
+                children: [
+                  Text(
+                    dishNameAr,
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  Text(
+                    businessNameAr,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+            ],
           ),
         ],
       ),

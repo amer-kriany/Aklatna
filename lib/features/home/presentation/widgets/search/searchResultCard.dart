@@ -11,18 +11,37 @@ class SearchResultCard extends StatelessWidget {
 
   final BusinessEntity business;
 
+  bool get _hasValidCoverUrl {
+    final coverUrl = business.coverUrl?.trim() ?? '';
+    final uri = Uri.tryParse(coverUrl);
+    return uri != null &&
+        (uri.scheme == 'http' || uri.scheme == 'https') &&
+        uri.host.isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.md),
-          child: Image.network(
-            business.coverUrl??'',
-            width: AppSizes.avatarLg,
-            height: AppSizes.avatarLg,
-            fit: BoxFit.cover,
-          ),
+          child: _hasValidCoverUrl
+              ? Image.network(
+                  business.coverUrl!.trim(),
+                  width: AppSizes.avatarLg,
+                  height: AppSizes.avatarLg,
+                  fit: BoxFit.cover,
+                )
+              : Container(
+                  width: AppSizes.avatarLg,
+                  height: AppSizes.avatarLg,
+                  color: AppColors.surface,
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.storefront,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
         ),
         const SizedBox(width: AppSpacing.sm),
         Expanded(

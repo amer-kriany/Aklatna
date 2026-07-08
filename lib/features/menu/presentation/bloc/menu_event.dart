@@ -8,7 +8,5 @@ sealed class MenuEvent extends Equatable {
 }
 
 class GetMenu extends MenuEvent {
-  final Menucategoryentity menucategoryentity;
-  final Menuitementity menuitementity;
- const GetMenu({required this.menucategoryentity, required this.menuitementity});
+  const GetMenu();
 }
