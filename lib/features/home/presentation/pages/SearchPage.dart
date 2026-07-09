@@ -49,7 +49,7 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
     if (context.read<MenuBloc>().state is MenuInitial) {
-      context.read<MenuBloc>().add(const GetMenu());
+      context.read<MenuBloc>().add(const GetAllMenu());
     }
     if (context.read<BusinessBloc>().state is BusinessInitial) {
       context.read<BusinessBloc>().add(GetBusinesses());
@@ -140,7 +140,7 @@ class _SearchPageState extends State<SearchPage> {
   Widget _buildIdleContent() {
     return BlocBuilder<MenuBloc, MenuState>(
       builder: (context, state) {
-        final List<Menuitementity> menuItems = state is MenuLoaded
+        final List<Menuitementity> menuItems = state is MenuAllLoaded
             ? state.items
             : const <Menuitementity>[];
         final businessState = context.watch<BusinessBloc>().state;

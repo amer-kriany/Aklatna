@@ -1,8 +1,14 @@
 import 'package:aklatna/core/router/MainShell.dart';
 import 'package:aklatna/features/home/presentation/pages/HomaPage.dart';
 import 'package:aklatna/features/home/presentation/pages/SearchPage.dart';
+import 'package:aklatna/features/menu/data/data_source/menuDataSource.dart';
+import 'package:aklatna/features/menu/data/repository/menuRepoImp.dart';
+import 'package:aklatna/features/menu/domain/usecases/getCategoriesUseCase.dart';
+import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
+import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/menu/presentation/pages/FoodDetailsPage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 // TODO(Amer): Fix these imports to match your actual file paths/class names.
@@ -47,7 +53,8 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/jobs',
-              builder: (context, state) => const _PlaceholderScreen(label: 'Jobs'),
+              builder: (context, state) =>
+                  const _PlaceholderScreen(label: 'Jobs'),
             ),
           ],
         ),
@@ -56,7 +63,8 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/orders',
-              builder: (context, state) => const _PlaceholderScreen(label: 'Orders'),
+              builder: (context, state) =>
+                  const _PlaceholderScreen(label: 'Orders'),
             ),
           ],
         ),
@@ -65,22 +73,28 @@ final GoRouter appRouter = GoRouter(
           routes: [
             GoRoute(
               path: '/profile',
-              builder: (context, state) => const _PlaceholderScreen(label: 'Profile'),
+              builder: (context, state) =>
+                  const _PlaceholderScreen(label: 'Profile'),
             ),
           ],
         ),
       ],
     ),
     GoRoute(
-  path: '/food/:id',
-  parentNavigatorKey: MainShell.rootNavigatorKey,
-  builder: (context, state) => FoodDetailsPage(
-    itemId: state.pathParameters['id']!,
-  ),
-),
-    
-
-    
+      path: '/food/:id',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) {
+         final menuDatasource = Menudatasource();
+    final menuRepo = Menurepoimp(menudatasource: menuDatasource);
+    return BlocProvider(
+      create: (_) => MenuBloc(
+        menuCategoriesusecase: Getcategoriesusecase(repo: menuRepo),
+        menuItemsusecase: Getitemsusecase(repo: menuRepo),
+      ),
+      child: Foodetailspage(itemId: state.pathParameters['id']!),
+    );
+      },
+    ),
   ],
 );
 
@@ -93,8 +107,6 @@ class _PlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: Text('$label — TODO: wire real page')),
-    );
+    return Scaffold(body: Center(child: Text('$label — TODO: wire real page')));
   }
 }

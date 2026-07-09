@@ -9,17 +9,11 @@ class FoodDetailsInfo extends StatelessWidget {
     super.key,
     required this.title,
     required this.category,
-    required this.rating,
-    required this.deliveryFee,
-    required this.deliveryTime,
     required this.description,
   });
 
   final String title;
   final String category;
-  final double rating;
-  final String deliveryFee;
-  final String deliveryTime;
   final String description;
 
   @override
@@ -31,72 +25,25 @@ class FoodDetailsInfo extends StatelessWidget {
         children: [
           Text(
             title,
-            style: AppTextStyles.h2.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+            style: AppTextStyles.h2,
           ),
 
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: AppSpacing.sm),
 
           Row(
             children: [
-              const CircleAvatar(
-                radius: 14,
-                backgroundColor: Colors.amber,
-                child: Icon(
+              CircleAvatar(
+                radius: AppSizes.iconMd / 2 + 4,
+                backgroundColor: AppColors.primaryLight,
+                child: const Icon(
                   Icons.fastfood,
-                  size: 16,
-                  color: Colors.white,
+                  size: AppSizes.iconSm,
+                  color: AppColors.primary,
                 ),
               ),
-
               const SizedBox(width: AppSpacing.sm),
-
               Text(
                 category,
-                style: AppTextStyles.bodyMedium,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: AppSpacing.md),
-
-          Row(
-            children: [
-              const Icon(
-                Icons.star,
-                color: Colors.amber,
-                size: 18,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                rating.toStringAsFixed(1),
-                style: AppTextStyles.bodyMedium,
-              ),
-
-              const SizedBox(width: AppSpacing.lg),
-
-              const Icon(
-                Icons.delivery_dining,
-                color: AppColors.primary,
-                size: 18,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                deliveryFee,
-                style: AppTextStyles.bodyMedium,
-              ),
-
-              const SizedBox(width: AppSpacing.lg),
-
-              const Icon(
-                Icons.access_time,
-                color: Colors.orange,
-                size: 18,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                deliveryTime,
                 style: AppTextStyles.bodyMedium,
               ),
             ],
@@ -106,8 +53,8 @@ class FoodDetailsInfo extends StatelessWidget {
 
           Text(
             description,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: Colors.grey.shade600,
+            style: AppTextStyles.regularMedium.copyWith(
+              color: AppColors.textSecondary,
               height: 1.7,
             ),
           ),

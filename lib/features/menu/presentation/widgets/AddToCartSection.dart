@@ -26,9 +26,7 @@ class AddToCartSection extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: const BoxDecoration(
         color: Color(0xFFF4F6FB),
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(28),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -36,34 +34,24 @@ class AddToCartSection extends StatelessWidget {
           Row(
             children: [
               Text(
-                price,
-                style: AppTextStyles.h2.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                "$price ل.س",
+                style: AppTextStyles.h2.copyWith(fontWeight: FontWeight.w600),
               ),
 
               const Spacer(),
 
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 5,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
                 decoration: BoxDecoration(
                   color: const Color(0xFF231A3C),
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Row(
                   children: [
-                    _CircleButton(
-                      icon: Icons.remove,
-                      onTap: onDecrement,
-                    ),
+                    _CircleButton(icon: Icons.remove, onTap: onDecrement),
 
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
                       child: Text(
                         quantity.toString(),
                         style: AppTextStyles.bodyMedium.copyWith(
@@ -73,10 +61,7 @@ class AddToCartSection extends StatelessWidget {
                       ),
                     ),
 
-                    _CircleButton(
-                      icon: Icons.add,
-                      onTap: onIncrement,
-                    ),
+                    _CircleButton(icon: Icons.add, onTap: onIncrement),
                   ],
                 ),
               ),
@@ -96,9 +81,7 @@ class AddToCartSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Text(
-                "Add to Cart",
-              ),
+              child: const Text("Add to Cart"),
             ),
           ),
         ],
@@ -108,10 +91,7 @@ class AddToCartSection extends StatelessWidget {
 }
 
 class _CircleButton extends StatelessWidget {
-  const _CircleButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _CircleButton({required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback onTap;
@@ -128,11 +108,7 @@ class _CircleButton extends StatelessWidget {
           color: Color(0xFF4C4561),
           shape: BoxShape.circle,
         ),
-        child: Icon(
-          icon,
-          color: Colors.white,
-          size: 18,
-        ),
+        child: Icon(icon, color: Colors.white, size: 18),
       ),
     );
   }

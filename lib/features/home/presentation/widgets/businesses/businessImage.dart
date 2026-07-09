@@ -1,7 +1,8 @@
+import 'package:aklatna/core/constants/app_spacing.dart';
+import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
+
 
 class FoodDetailsImage extends StatelessWidget {
   const FoodDetailsImage({
@@ -36,9 +37,7 @@ class FoodDetailsImage extends StatelessWidget {
             height: 260,
             width: double.infinity,
             decoration: const BoxDecoration(
-              // NOTE: Figma uses a yellow (#FFC869) not present in AppColors.
-              // Substituting primaryLight to stay inside the token system —
-              // swap this if you add the exact tone to app_colors.dart.
+            
               color: AppColors.primaryLight,
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(AppRadius.xl),
@@ -81,11 +80,7 @@ class FoodDetailsImage extends StatelessWidget {
                     icon: Icons.arrow_back_ios_new_rounded,
                     onPressed: onBack,
                   ),
-                  _CircleIconButton(
-                    icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-                    iconColor: isFavorite ? AppColors.primary : AppColors.textPrimary,
-                    onPressed: onFavorite,
-                  ),
+                 
                 ],
               ),
             ),
