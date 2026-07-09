@@ -1,6 +1,7 @@
 import 'package:aklatna/core/router/MainShell.dart';
 import 'package:aklatna/features/home/presentation/pages/HomaPage.dart';
 import 'package:aklatna/features/home/presentation/pages/SearchPage.dart';
+import 'package:aklatna/features/menu/presentation/pages/FoodDetailsPage.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -16,6 +17,7 @@ import 'package:go_router/go_router.dart';
 /// have.
 final GoRouter appRouter = GoRouter(
   initialLocation: '/home',
+  navigatorKey: MainShell.rootNavigatorKey,
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
@@ -69,6 +71,16 @@ final GoRouter appRouter = GoRouter(
         ),
       ],
     ),
+    GoRoute(
+  path: '/food/:id',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) => FoodDetailsPage(
+    itemId: state.pathParameters['id']!,
+  ),
+),
+    
+
+    
   ],
 );
 

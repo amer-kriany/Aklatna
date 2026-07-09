@@ -7,7 +7,9 @@ import '../../../../core/constants/app_spacing.dart';
 
 
 class FoodDetailsPage extends StatelessWidget {
-  const FoodDetailsPage({super.key});
+    final String itemId;
+
+  const FoodDetailsPage({super.key, required this.itemId});
 
   @override
   Widget build(BuildContext context) {

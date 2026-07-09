@@ -12,10 +12,12 @@ import 'package:aklatna/features/home/presentation/widgets/search/searchHeader.d
 import 'package:aklatna/features/home/presentation/widgets/search/searchResultCard.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/menu/domain/entity/menuItemEntity.dart';
+import 'package:aklatna/features/menu/presentation/pages/FoodDetailsPage.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 // TODO(Amer): fix these imports to your real bloc file paths/class names —
 // I'm assuming BusinessBloc/BusinessState and ProfileBloc/ProfileState
@@ -192,6 +194,8 @@ class _SearchPageState extends State<SearchPage> {
                   itemBuilder: (context, index) {
                     final item = popularItems[index];
                     return PopularDishCard(
+                      onTap: () => 
+                      context.push("/food/${item.id}"),
                       photoUrl: item.photoUrl ?? '',
                       dishNameAr: item.nameAr,
                       dishPrice: item.price,

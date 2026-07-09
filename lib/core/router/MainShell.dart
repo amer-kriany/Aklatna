@@ -9,9 +9,11 @@ import 'package:go_router/go_router.dart';
 /// therefore each branch's Bloc state / scroll position) alive when
 /// switching tabs — switching tabs does NOT rebuild the other branches.
 class MainShell extends StatelessWidget {
-  const MainShell({super.key, required this.navigationShell});
+  const  MainShell({super.key, required this.navigationShell});
 
   final StatefulNavigationShell navigationShell;
+   static final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 
   void _onTap(int index) {
     // goBranch with initialLocation: true pops back to the branch's root
