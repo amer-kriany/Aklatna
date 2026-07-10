@@ -19,3 +19,11 @@ final class GetMenu extends MenuEvent {
 final class GetAllMenu extends MenuEvent {
   const GetAllMenu();
 }
+// NEW — fetches categories + items scoped to one business
+final class GetMenuForBusiness extends MenuEvent {
+  final String businessId;
+  const GetMenuForBusiness({required this.businessId});
+
+  @override
+  List<Object> get props => [businessId];
+}

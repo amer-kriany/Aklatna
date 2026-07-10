@@ -25,6 +25,15 @@ final class MenuAllLoaded extends MenuState {
   @override
   List<Object> get props => [items, categories];
 }
+// NEW — business-scoped categories + items, for BusinessDetailsPage
+final class MenuByBusinessLoaded extends MenuState {
+  final List<Menuitementity> items;
+  final List<Menucategoryentity> categories;
+  const MenuByBusinessLoaded({required this.items, required this.categories});
+
+  @override
+  List<Object> get props => [items, categories];
+}
 
 final class MenuError extends MenuState {
   final String message;

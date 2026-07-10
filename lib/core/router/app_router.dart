@@ -1,4 +1,10 @@
 import 'package:aklatna/core/router/MainShell.dart';
+import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart';
+import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
+import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
+import 'package:aklatna/features/home/domain/usecases/searchBusinessesUseCase.dart';
+import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
+import 'package:aklatna/features/home/presentation/pages/BusinessDetailsPage.dart';
 import 'package:aklatna/features/home/presentation/pages/HomaPage.dart';
 import 'package:aklatna/features/home/presentation/pages/SearchPage.dart';
 import 'package:aklatna/features/menu/data/data_source/menuDataSource.dart';
@@ -40,14 +46,26 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
         // Branch 1 — Search
-        StatefulShellBranch(
-          routes: [
-            GoRoute(
-              path: '/search',
-              builder: (context, state) => const SearchPage(),
-            ),
-          ],
-        ),
+       // Branch 1 — Search
+StatefulShellBranch(
+  routes: [
+    GoRoute(
+      path: '/search',
+      builder: (context, state) {
+        final businessDatasource = BusinessDatasrouce();
+        final businessRepo = Businessrepoimp(businessDatasrouce: businessDatasource);
+
+        return BlocProvider(
+          create: (_) => BusinessBloc(
+            getBusinessUsecase: GetbusinessUsecase(repository: businessRepo),
+            searchbusinessesusecase: Searchbusinessesusecase(businessrepoimp: businessRepo),
+          ),
+          child: const SearchPage(),
+        );
+      },
+    ),
+  ],
+),
         // Branch 2 — Jobs (no Figma design — added outside original scope)
         StatefulShellBranch(
           routes: [
@@ -95,6 +113,35 @@ final GoRouter appRouter = GoRouter(
     );
       },
     ),
+    GoRoute(
+  path: '/business/:id',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) {
+    final businessDatasource = BusinessDatasrouce();
+    final businessRepo = Businessrepoimp(businessDatasrouce: businessDatasource);
+    final menuDatasource = Menudatasource();
+    final menuRepo = Menurepoimp(menudatasource: menuDatasource);
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => BusinessBloc(
+            getBusinessUsecase: GetbusinessUsecase(repository: businessRepo),
+            searchbusinessesusecase: Searchbusinessesusecase(businessrepoimp: businessRepo),
+          ),
+        ),
+        BlocProvider(
+          create: (_) => MenuBloc(
+            menuCategoriesusecase: Getcategoriesusecase(repo: menuRepo),
+            menuItemsusecase: Getitemsusecase(repo: menuRepo),
+          ),
+        ),
+      ],
+      child: BusinessDetailsPage(businessId: state.pathParameters['id']!),
+    );
+  },
+),
+    
   ],
 );
 

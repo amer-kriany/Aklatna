@@ -22,12 +22,7 @@ import 'package:go_router/go_router.dart';
 // TODO(Amer): fix these imports to your real bloc file paths/class names —
 // I'm assuming BusinessBloc/BusinessState and ProfileBloc/ProfileState
 // live where memory says, but I haven't seen the real import paths.
-// import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
-// import 'package:aklatna/features/profile/presentation/bloc/profile_bloc.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:aklatna/presentation/search/widgets/search_result_card.dart';
-// import 'package:aklatna/core/theme/app_colors.dart';
-// import 'package:aklatna/core/constants/app_text_style.dart';
+
 
 /// No constructor params — matches your HomePage convention. All data via
 /// context.read / BlocBuilder.
@@ -194,8 +189,7 @@ class _SearchPageState extends State<SearchPage> {
                   itemBuilder: (context, index) {
                     final item = popularItems[index];
                     return PopularDishCard(
-                      onTap: () => 
-                      context.push("/food/${item.id}"),
+                      onTap: () => context.push("/food/${item.id}"),
                       photoUrl: item.photoUrl ?? '',
                       dishNameAr: item.nameAr,
                       dishPrice: item.price,
@@ -246,7 +240,7 @@ class _SearchPageState extends State<SearchPage> {
               final business = state.businesses[index];
               return GestureDetector(
                 onTap: () {
-                  // TODO(Amer): navigate to restaurant detail with business.id
+                  context.push("/business/${business.id}");
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),

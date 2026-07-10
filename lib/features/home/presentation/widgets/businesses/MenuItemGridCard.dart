@@ -78,22 +78,28 @@ class MenuItemGridCard extends StatelessWidget {
                   ),
                 ),
                 InkWell(
-                  onTap: onAdd,
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                  child: Container(
-                    width: AppSizes.iconLg,
-                    height: AppSizes.iconLg,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: AppColors.textOnPrimary,
-                      size: AppSizes.iconSm,
-                    ),
-                  ),
-                ),
+  onTap: () {
+    // TODO(Amer): wire to CartBloc — add(itemId, nameAr, price, businessId).
+    // Must check cart is empty OR already scoped to this businessId before
+    // adding (cart is locked to one restaurant at a time per your rules) —
+    // if it holds items from a different business, this needs to prompt
+    // "clear cart and start new order?" rather than silently mixing.
+  },
+  borderRadius: BorderRadius.circular(AppRadius.full),
+  child: Container(
+    width: AppSizes.iconLg,
+    height: AppSizes.iconLg,
+    decoration: const BoxDecoration(
+      color: AppColors.primary,
+      shape: BoxShape.circle,
+    ),
+    child: const Icon(
+      Icons.add,
+      color: AppColors.textOnPrimary,
+      size: AppSizes.iconSm,
+    ),
+  ),
+),
               ],
             ),
           ],

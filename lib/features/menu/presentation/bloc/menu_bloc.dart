@@ -18,6 +18,7 @@ class MenuBloc extends Bloc<MenuEvent, MenuState> {
   }) : super(MenuInitial()) {
     on<GetMenu>(_getMenu);
     on<GetAllMenu>(_getAllMenu);
+    on<GetMenuForBusiness>(_getMenuForBusiness);
   }
   // get menu categories and items
   Future<void> _getMenu(GetMenu event, Emitter<MenuState> emit) async {
@@ -58,4 +59,24 @@ Future<void> _getAllMenu(GetAllMenu event, Emitter<MenuState> emit) async {
       emit(MenuError(message: e.toString()));
     }
   }
+
+
+
+  Future<void> _getMenuForBusiness(
+  GetMenuForBusiness event,
+  Emitter<MenuState> emit,
+) async {
+  emit(MenuLoading());
+  try {
+    final categories = await menuCategoriesusecase();
+    final items = await menuItemsusecase();
+    final businessCategories =
+        categories.where((c) => c.businessId == event.businessId).toList();
+    final businessItems =
+        items.where((i) => i.businessId == event.businessId).toList();
+    emit(MenuByBusinessLoaded(items: businessItems, categories: businessCategories));
+  } catch (e) {
+    emit(MenuError(message: e.toString()));
+  }
+}
 }

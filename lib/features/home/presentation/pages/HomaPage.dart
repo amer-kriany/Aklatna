@@ -191,7 +191,6 @@ class _HomePageState extends State<HomePage> {
                         child: HomeSearchBar(
                           onTap: () {
                             context.go("/search");
-                            // TODO(Amer): context.push(AppRoutes.search);
                           },
                           onMicTap: null, // visual only, not wired in Phase 1
                         ),
@@ -246,7 +245,8 @@ class _HomePageState extends State<HomePage> {
                                 rating: business.rating,
                                 ratingCount: business.ratingCount,
                                 onTap: () {
-                                  // TODO(Amer): context.push('${AppRoutes.business}/${business.id}');
+                                  ///////////////////
+                                  context.push("/business/${business.id}");
                                 },
                               );
                             },
@@ -264,7 +264,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Padding(
-                          padding: const EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
                           child: BusinessCard(
@@ -273,7 +273,8 @@ class _HomePageState extends State<HomePage> {
                             rating: popularBusiness.rating,
                             ratingCount: popularBusiness.ratingCount,
                             onTap: () {
-                              // TODO(Amer): context.push('${AppRoutes.business}/${popularBusiness.id}');
+                              ////////////////////
+                              context.push("/business/${popularBusiness.id}");
                             },
                           ),
                         ),
