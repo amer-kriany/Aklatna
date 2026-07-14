@@ -1,3 +1,5 @@
+import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
+import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/menu/presentation/widgets/AddToCartSection.dart';
 import 'package:aklatna/features/menu/presentation/widgets/FoodDetailsImage.dart';
@@ -16,6 +18,8 @@ class Foodetailspage extends StatefulWidget {
 }
 
 class _FoodetailspageState extends State<Foodetailspage> {
+  int _quantity = 1; // NEW — local UI state, not yet added to cart
+
   @override
   void initState() {
     context.read<MenuBloc>().add(GetMenu(id: widget.itemId));
@@ -30,25 +34,18 @@ class _FoodetailspageState extends State<Foodetailspage> {
         child: BlocBuilder<MenuBloc, MenuState>(
           builder: (context, state) {
             if (state is MenuLoading) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
             if (state is MenuError) {
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.orange,
-                    ),
+                    const Icon(Icons.error_outline, size: 64, color: Colors.orange),
                     const SizedBox(height: 16),
                     const Text(
                       "food not found",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                   ],
@@ -68,16 +65,12 @@ class _FoodetailspageState extends State<Foodetailspage> {
                             onFavorite: () {},
                             isFavorite: false,
                           ),
-
                           const SizedBox(height: AppSpacing.lg),
-
                           FoodDetailsInfo(
                             title: state.item.nameAr,
                             category: state.category.nameAr,
-
                             description: state.item.description ?? '',
                           ),
-
                           const SizedBox(height: AppSpacing.xl),
                         ],
                       ),
@@ -85,16 +78,33 @@ class _FoodetailspageState extends State<Foodetailspage> {
                   ),
 
                   AddToCartSection(
-                    price: state.item.price.toString(),
-                    quantity: 1,
-                    onIncrement: () {},
-                    onDecrement: () {},
-                    onAddToCart: () {},
+                    price: (state.item.price * _quantity).toString(),
+                    quantity: _quantity,
+                    onIncrement: () => setState(() => _quantity++),
+                    onDecrement: () {
+                      if (_quantity > 1) setState(() => _quantity--);
+                    },
+                    onAddToCart: () {
+                      context.read<CartBloc>().add(
+                        AddItemEvent(
+                          item: CartItem(
+                            itemId: state.item.id,
+                            nameAr: state.item.nameAr,
+                            description: state.item.description ?? '',
+                            photoUrl: state.item.photoUrl,
+                            price: state.item.price,
+                            quantity: _quantity,
+                            businessId: state.item.businessId,
+                          ),
+                        ),
+                      );
+                      Navigator.pop(context);
+                    },
                   ),
                 ],
               );
             }
-            return SizedBox.shrink();
+            return const SizedBox.shrink();
           },
         ),
       ),

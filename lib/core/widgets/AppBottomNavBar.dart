@@ -42,7 +42,7 @@ class AppBottomNavBar extends StatelessWidget {
     _NavItem(
       icon: Icons.receipt_long_outlined,
       activeIcon: Icons.receipt_long_rounded,
-      label: 'الطلبات',
+      label: 'السلة',
     ),
     _NavItem(
       icon: Icons.person_outline_rounded,

@@ -1,19 +1,27 @@
 class CartItem {
   final String itemId;
   final String nameAr;
+  final String description;
+  final String? photoUrl; // NEW
   final double price;
   final int quantity;
   final String businessId;
+
   CartItem({
     required this.itemId,
     required this.nameAr,
+    required this.description,
+    this.photoUrl,
     required this.price,
     required this.quantity,
     required this.businessId,
   });
+
   CartItem copyWith({
     String? itemId,
     String? nameAr,
+    String? description,
+    String? photoUrl,
     double? price,
     int? quantity,
     String? businessId,
@@ -21,6 +29,8 @@ class CartItem {
     return CartItem(
       itemId: itemId ?? this.itemId,
       nameAr: nameAr ?? this.nameAr,
+      description: description ?? this.description,
+      photoUrl: photoUrl ?? this.photoUrl,
       price: price ?? this.price,
       quantity: quantity ?? this.quantity,
       businessId: businessId ?? this.businessId,
@@ -29,10 +39,13 @@ class CartItem {
 
   Map<String, dynamic> toJson() {
     return {
-      'itemId': itemId,
-      'nameAr': nameAr,
+      'item_id': itemId,
+      'name_ar': nameAr,
+      'description': description,
+      'photo_url': photoUrl,
       'price': price,
       'quantity': quantity,
+      'business_id': businessId,
     };
   }
 
@@ -52,6 +65,8 @@ class CartItem {
     return CartItem(
       itemId: asStringOrEmpty(json['item_id']),
       nameAr: asStringOrEmpty(json['name_ar']),
+      description: asStringOrEmpty(json['description']),
+      photoUrl: json['photo_url'] as String?,
       price: asDoubleOrZero(json['price']),
       quantity: asIntOrZero(json['quantity']),
       businessId: asStringOrEmpty(json['business_id']),

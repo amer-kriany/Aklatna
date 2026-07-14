@@ -1,3 +1,5 @@
+import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
+import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/home/presentation/widgets/businesses/BusinessCategoryChips.dart';
 import 'package:aklatna/features/home/presentation/widgets/businesses/MenuItemGridCard.dart';
@@ -25,7 +27,9 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
   void initState() {
     super.initState();
     context.read<BusinessBloc>().add(GetBusinessById(id: widget.businessId));
-    context.read<MenuBloc>().add(GetMenuForBusiness(businessId: widget.businessId));
+    context.read<MenuBloc>().add(
+      GetMenuForBusiness(businessId: widget.businessId),
+    );
   }
 
   @override
@@ -35,7 +39,8 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
         bottom: false,
         child: BlocBuilder<BusinessBloc, BusinessState>(
           builder: (context, businessState) {
-            if (businessState is BusinessLoading || businessState is BusinessInitial) {
+            if (businessState is BusinessLoading ||
+                businessState is BusinessInitial) {
               return const Center(child: CircularProgressIndicator());
             }
             if (businessState is BusinessError) {
@@ -56,8 +61,13 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child: business.coverUrl != null && business.coverUrl!.isNotEmpty
-                            ? Image.network(business.coverUrl!, fit: BoxFit.cover)
+                        child:
+                            business.coverUrl != null &&
+                                business.coverUrl!.isNotEmpty
+                            ? Image.network(
+                                business.coverUrl!,
+                                fit: BoxFit.cover,
+                              )
                             : Container(color: const Color(0xFFEDEDEF)),
                       ),
                       SafeArea(
@@ -74,7 +84,10 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                                 child: const SizedBox(
                                   width: 42,
                                   height: 42,
-                                  child: Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                                  child: Icon(
+                                    Icons.arrow_back_ios_new_rounded,
+                                    size: 20,
+                                  ),
                                 ),
                               ),
                             ),
@@ -91,7 +104,7 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                   nameAr: business.nameAr,
                   rating: business.rating,
                   ratingCount: business.ratingCount,
-                  description: business.description??'',
+                  description: business.description ?? '',
                 ),
 
                 const SizedBox(height: AppSpacing.lg),
@@ -107,10 +120,15 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                       }
                       if (menuState is MenuByBusinessLoaded) {
                         if (menuState.categories.isEmpty) {
-                          return const Center(child: Text('لا يوجد قائمة طعام حالياً'));
+                          return const Center(
+                            child: Text('لا يوجد قائمة طعام حالياً'),
+                          );
                         }
-                        final categoryNames = menuState.categories.map((c) => c.nameAr).toList();
-                        final selectedCategory = menuState.categories[_selectedIndex];
+                        final categoryNames = menuState.categories
+                            .map((c) => c.nameAr)
+                            .toList();
+                        final selectedCategory =
+                            menuState.categories[_selectedIndex];
                         final itemsInCategory = menuState.items
                             .where((i) => i.categoryId == selectedCategory.id)
                             .toList();
@@ -121,11 +139,14 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                             BusinessCategoryChips(
                               categoryNames: categoryNames,
                               selectedIndex: _selectedIndex,
-                              onSelected: (index) => setState(() => _selectedIndex = index),
+                              onSelected: (index) =>
+                                  setState(() => _selectedIndex = index),
                             ),
                             const SizedBox(height: AppSpacing.md),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.lg,
+                              ),
                               child: Text(
                                 '${selectedCategory.nameAr} (${itemsInCategory.length})',
                                 style: Theme.of(context).textTheme.titleLarge,
@@ -134,18 +155,21 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                             const SizedBox(height: AppSpacing.sm),
                             Expanded(
                               child: itemsInCategory.isEmpty
-                                  ? const Center(child: Text('لا توجد أطباق في هذا القسم'))
+                                  ? const Center(
+                                      child: Text('لا توجد أطباق في هذا القسم'),
+                                    )
                                   : GridView.builder(
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: AppSpacing.lg,
                                         vertical: AppSpacing.sm,
                                       ),
-                                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        mainAxisSpacing: AppSpacing.sm,
-                                        crossAxisSpacing: AppSpacing.sm,
-                                        childAspectRatio: 0.75,
-                                      ),
+                                      gridDelegate:
+                                          const SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 2,
+                                            mainAxisSpacing: AppSpacing.sm,
+                                            crossAxisSpacing: AppSpacing.sm,
+                                            childAspectRatio: 0.75,
+                                          ),
                                       itemCount: itemsInCategory.length,
                                       itemBuilder: (context, index) {
                                         final item = itemsInCategory[index];
@@ -153,9 +177,22 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                                           photoUrl: item.photoUrl,
                                           nameAr: item.nameAr,
                                           price: item.price,
-                                          onTap: () => context.push('/food/${item.id}'),
+                                          onTap: () =>
+                                              context.push('/food/${item.id}'),
                                           onAdd: () {
-                                            // TODO(Amer): wire to CartBloc.
+                                            context.read<CartBloc>().add(
+                                              AddItemEvent(
+                                                item: CartItem(
+                                                  itemId: item.id,
+                                                  nameAr: item.nameAr,
+                                                  description:
+                                                      item.description ?? '',
+                                                  price: item.price,
+                                                  quantity: 1,
+                                                  businessId: item.businessId,
+                                                ),
+                                              ),
+                                            );
                                           },
                                         );
                                       },

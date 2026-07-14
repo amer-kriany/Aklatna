@@ -6,6 +6,7 @@ import 'package:aklatna/features/auth/domain/usecases/signin_usecase.dart';
 import 'package:aklatna/features/auth/domain/usecases/signup_usecase.dart';
 import 'package:aklatna/features/auth/domain/usecases/singout_usecase.dart';
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
+import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart';
 import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
 import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
@@ -82,6 +83,9 @@ void main() async {
         ),
         BlocProvider(
           create: (context) => ProfileBloc(getProfilesUsecase: getprofilesusecase, updateProfileUsecase: updateprofileusecase),
+        ),
+        BlocProvider(
+          create: (context) => CartBloc(),
         )
       ],
       child: MyApp(),

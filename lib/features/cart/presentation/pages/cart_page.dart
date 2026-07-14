@@ -1,0 +1,134 @@
+import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
+import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:aklatna/features/cart/presentation/bloc/cart_state.dart';
+import 'package:aklatna/features/cart/presentation/widgets/CartCheckoutButton.dart';
+import 'package:aklatna/features/cart/presentation/widgets/CartDeliveryAddressSection.dart';
+import 'package:aklatna/features/cart/presentation/widgets/CartSummarySection.dart';
+import 'package:aklatna/features/cart/presentation/widgets/cartItemCard.dart';
+import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_text_style.dart';
+
+
+/// No constructor params — matches HomePage/SearchPage convention.
+class CartPage extends StatelessWidget {
+  const CartPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pageHorizontal),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: AppSpacing.md),
+              Text('سلتي', style: AppTextStyles.h2), // "My Cart"
+              const SizedBox(height: AppSpacing.lg),
+
+              Expanded(
+                child: BlocBuilder<CartBloc, CartState>(
+                  builder: (context, cartState) {
+                    if (cartState.items.isEmpty) {
+                      return Center(
+                        child: Text('السلة فارغة', style: AppTextStyles.bodyMedium),
+                      );
+                    }
+
+                    return ListView(
+                      children: [
+                        ...cartState.items.map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                            child: CartItemCard(
+                              photoUrl: item.photoUrl, 
+                              nameAr: item.nameAr,
+                              description: item.description,
+                              price: item.price,
+                              quantity: item.quantity,
+                              onIncrement: () => context.read<CartBloc>().add(
+                                    AddItemEvent(item: item.copyWith(quantity: 1)),
+                                  ),
+                              onDecrement: () => context.read<CartBloc>().add(
+                                    RemoveItemEvent(itemId: item.itemId),
+                                  ),
+                              onRemove: () {
+                                // Removes fully regardless of quantity — dispatch
+                                // RemoveItemEvent repeatedly, or add a dedicated
+                                // "remove all of this item" event if preferred.
+                                for (int i = 0; i < item.quantity; i++) {
+                                  context.read<CartBloc>().add(
+                                        RemoveItemEvent(itemId: item.itemId),
+                                      );
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: AppSpacing.md),
+                        const Divider(),
+                        const SizedBox(height: AppSpacing.md),
+
+                        CartSummarySection(subTotal: cartState.totalPrice),
+
+                        const SizedBox(height: AppSpacing.lg),
+                        const Divider(),
+                        const SizedBox(height: AppSpacing.lg),
+
+                        BlocBuilder<ProfileBloc, ProfileState>(
+                          builder: (context, profileState) {
+                            final address = profileState is ProfileLoaded
+                                ? profileState.profile.address
+                                : '';
+
+                            // TODO(Amer): order_type hardcoded to delivery
+                            // until a picker exists.
+                            const orderType = 'delivery';
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (orderType == 'delivery') ...[
+                                  CartDeliveryAddressSection(
+                                    address: address.isNotEmpty
+                                        ? address
+                                        : 'لا يوجد عنوان محفوظ',
+                                    onEdit: () {
+                                      // TODO(Amer): navigate to profile edit / address field
+                                    },
+                                  ),
+                                  const SizedBox(height: AppSpacing.lg),
+                                ],
+                                CartCheckoutButton(
+                                  onPressed: () {
+                                    // TODO(Amer): build order payload from
+                                    // cartState.items, address, orderType,
+                                    // call order placement usecase.
+                                    // Remember locked rule: confirm button
+                                    // disabled on first tap, closed
+                                    // restaurants block ordering.
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: AppSpacing.lg),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

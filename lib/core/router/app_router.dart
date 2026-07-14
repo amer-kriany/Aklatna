@@ -1,4 +1,5 @@
 import 'package:aklatna/core/router/MainShell.dart';
+import 'package:aklatna/features/cart/presentation/pages/cart_page.dart';
 import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart';
 import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
 import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
@@ -80,9 +81,9 @@ StatefulShellBranch(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: '/orders',
+              path: '/cart',
               builder: (context, state) =>
-                  const _PlaceholderScreen(label: 'Orders'),
+                  CartPage(),
             ),
           ],
         ),
