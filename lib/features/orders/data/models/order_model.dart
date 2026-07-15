@@ -3,9 +3,9 @@ import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:aklatna/features/orders/order_type.dart';
 
 class OrderModel {
-  final String id;
-  final String orderNumber;
-  final DateTime createdAt;
+ final String? id;
+  final String? orderNumber;
+  final DateTime? createdAt;
   final String businessId;
   final String customerId;
   final String customername;
@@ -16,6 +16,9 @@ class OrderModel {
   final OrderType orderType;
   final OrderStatus orderStatus;
   OrderModel({
+    this.id,
+    this.orderNumber,
+    this.createdAt,
     required this.businessId,
     required this.customerId,
     required this.customername,
@@ -24,25 +27,23 @@ class OrderModel {
     this.deliveryAddress,
     required this.totalPrice,
     required this.orderType,
-    required this.id,
-    required this.orderNumber,
-    required this.createdAt,
     required this.orderStatus,
   });
 
-  Map<String, dynamic> toJson() {
-    return {
-      'business_id': businessId,
-      'customer_id': customerId,
-      'customer_name': customername,
-      'customer_phone': customerPhone,
-      'items': items.map((e) => e.toJson()).toList(),
-      'delivery_address': deliveryAddress,
-      'total_price': totalPrice,
-      'order_type': orderType.name,
-      'order_status': 'pending',
-    };
-  }
+ Map<String, dynamic> toJson() {
+  return {
+    'business_id': businessId,
+    'customer_id': customerId,
+    'customer_name': customername,
+    'customer_phone': customerPhone,
+    'items': items.map((e) => e.toJson()).toList(),
+    'delivery_address': deliveryAddress,
+    'total_price': totalPrice,
+    'order_type': orderType.name,
+    'order_status': 'pending',
+    // id, created_at, order_number — DB-generated, not sent from client
+  };
+}
 
   factory OrderModel.fromSupabase(Map<String, dynamic> orders) {
     String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
@@ -89,12 +90,12 @@ class OrderModel {
       id: asStringOrEmpty(orders['id']),
       businessId: asStringOrEmpty(orders['business_id']),
       customerId: asStringOrEmpty(orders['customer_id']),
-      customername: asStringOrEmpty(orders['customer_username']),
+      customername: asStringOrEmpty(orders['customer_name']),
       customerPhone: asStringOrEmpty(orders['customer_phone']),
       items: asCartItems(orders['items']),
       totalPrice: asDoubleOrZero(orders['total_price']),
       orderType: asOrderType(orders['order_type']),
-      deliveryAddress: asNullableString(orders['delviery_address']),
+      deliveryAddress: asNullableString(orders['delivery_address']),
       orderNumber: asStringOrEmpty(orders['order_number']),
       createdAt: asDateOrEpoch(orders['created_at']),
       orderStatus: asOrderStatus(orders['order_status']),

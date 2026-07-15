@@ -1,4 +1,5 @@
 import 'package:aklatna/core/router/MainShell.dart';
+import 'package:aklatna/features/cart/presentation/pages/CheckoutPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/cart_page.dart';
 import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart';
 import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
@@ -14,6 +15,12 @@ import 'package:aklatna/features/menu/domain/usecases/getCategoriesUseCase.dart'
 import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/menu/presentation/pages/FoodDetailsPage.dart';
+import 'package:aklatna/features/orders/data/datasources/order_remote_datasource.dart';
+import 'package:aklatna/features/orders/data/repositories/order_repository_impl.dart';
+import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
+import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
+import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -114,6 +121,25 @@ StatefulShellBranch(
     );
       },
     ),
+    GoRoute(
+  path: '/checkout',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) {
+    final orderRepo = OrderRepositoryImpl(
+      orderRemoteDatasource: OrderRemoteDatasource(),
+    );
+
+    return BlocProvider(
+      
+      create: (_) => OrderBloc(
+        PlaceOrderUsecase(orderRepository: orderRepo, orderRepositoryImpl: orderRepo),
+        GetCustomerOrdersUseCase(orderRepository: orderRepo, orderRepositoryImpl: orderRepo), // confirm actual param name
+        watchOrderStatusUsecase: Orderstatususecase(orderRepository: orderRepo, orderRepositoryImpl: orderRepo), // confirm actual param name
+      ),
+      child: const CheckoutPage(),
+    );
+  },
+),
     GoRoute(
   path: '/business/:id',
   parentNavigatorKey: MainShell.rootNavigatorKey,

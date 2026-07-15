@@ -17,7 +17,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   OrderBloc(
     this.placeOrderUsecase,
     this.customerOrdersUsecase, {
-    required this.watchOrderStatusUsecase,
+    required this.watchOrderStatusUsecase, 
   }) : super(OrderInitial()) {
     on<PlaceOrderEvent>(_placeOrder);
     on<GetCustomerOrdersEvent>(_getCustomerOrders);
@@ -32,10 +32,10 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     try {
       await placeOrderUsecase(event.order);
 
-      emit(OrderSuccess(message: 'Order placed successfully'));
+      emit(OrderPlaced());
 
     } catch (e) {
-      emit(OrderFailure(error: e.toString()));
+      emit(OrderError(message: e.toString() ));
     }
   }
 

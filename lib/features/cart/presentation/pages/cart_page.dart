@@ -1,17 +1,18 @@
 import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_state.dart';
-import 'package:aklatna/features/cart/presentation/widgets/CartCheckoutButton.dart';
-import 'package:aklatna/features/cart/presentation/widgets/CartDeliveryAddressSection.dart';
-import 'package:aklatna/features/cart/presentation/widgets/CartSummarySection.dart';
-import 'package:aklatna/features/cart/presentation/widgets/cartItemCard.dart';
+import 'package:aklatna/features/cart/presentation/pages/CheckoutPage.dart';
+import 'package:aklatna/features/cart/presentation/widgets/cart/CartCheckoutButton.dart';
+import 'package:aklatna/features/cart/presentation/widgets/cart/CartDeliveryAddressSection.dart';
+import 'package:aklatna/features/cart/presentation/widgets/cart/CartSummarySection.dart';
+import 'package:aklatna/features/cart/presentation/widgets/cart/cartItemCard.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
-
 
 /// No constructor params — matches HomePage/SearchPage convention.
 class CartPage extends StatelessWidget {
@@ -22,7 +23,9 @@ class CartPage extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.pageHorizontal),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.pageHorizontal,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -35,7 +38,10 @@ class CartPage extends StatelessWidget {
                   builder: (context, cartState) {
                     if (cartState.items.isEmpty) {
                       return Center(
-                        child: Text('السلة فارغة', style: AppTextStyles.bodyMedium),
+                        child: Text(
+                          'السلة فارغة',
+                          style: AppTextStyles.bodyMedium,
+                        ),
                       );
                     }
 
@@ -43,27 +49,29 @@ class CartPage extends StatelessWidget {
                       children: [
                         ...cartState.items.map(
                           (item) => Padding(
-                            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.md,
+                            ),
                             child: CartItemCard(
-                              photoUrl: item.photoUrl, 
+                              photoUrl: item.photoUrl,
                               nameAr: item.nameAr,
                               description: item.description,
                               price: item.price,
                               quantity: item.quantity,
                               onIncrement: () => context.read<CartBloc>().add(
-                                    AddItemEvent(item: item.copyWith(quantity: 1)),
-                                  ),
+                                AddItemEvent(item: item.copyWith(quantity: 1)),
+                              ),
                               onDecrement: () => context.read<CartBloc>().add(
-                                    RemoveItemEvent(itemId: item.itemId),
-                                  ),
+                                RemoveItemEvent(itemId: item.itemId),
+                              ),
                               onRemove: () {
                                 // Removes fully regardless of quantity — dispatch
                                 // RemoveItemEvent repeatedly, or add a dedicated
                                 // "remove all of this item" event if preferred.
                                 for (int i = 0; i < item.quantity; i++) {
                                   context.read<CartBloc>().add(
-                                        RemoveItemEvent(itemId: item.itemId),
-                                      );
+                                    RemoveItemEvent(itemId: item.itemId),
+                                  );
                                 }
                               },
                             ),
@@ -106,6 +114,7 @@ class CartPage extends StatelessWidget {
                                 ],
                                 CartCheckoutButton(
                                   onPressed: () {
+                                    context.push("/checkout");
                                     // TODO(Amer): build order payload from
                                     // cartState.items, address, orderType,
                                     // call order placement usecase.

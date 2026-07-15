@@ -3,9 +3,9 @@ import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:aklatna/features/orders/order_type.dart';
 
 class OrderEntity {
-   final String id;
-  final String orderNumber;
-  final DateTime createdAt;
+  final String? id;
+  final String? orderNumber;
+  final DateTime? createdAt;
   final String businessId;
   final String customerId;
   final String customername;
@@ -15,7 +15,11 @@ class OrderEntity {
   final double totalPrice;
   final OrderType orderType;
   final OrderStatus orderStatus;
+
   OrderEntity({
+    this.id,
+    this.orderNumber,
+    this.createdAt,
     required this.businessId,
     required this.customerId,
     required this.customername,
@@ -23,6 +27,7 @@ class OrderEntity {
     required this.items,
     this.deliveryAddress,
     required this.totalPrice,
-    required this.orderType, required this.id, required this.orderNumber, required this.createdAt,required this.orderStatus,
+    required this.orderType,
+    required this.orderStatus,
   });
 }
