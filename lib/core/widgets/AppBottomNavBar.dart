@@ -8,10 +8,8 @@ import 'package:flutter/material.dart';
 /// Pure presentation widget: knows nothing about go_router or Bloc.
 /// The page/shell layer owns `currentIndex` and passes `onTap` to switch tabs.
 ///
-/// NOTE: The "Jobs" tab has no Figma design reference (added outside the
-/// original design scope). Icons below are a placeholder best-guess match —
-/// swap `_NavItem.icon` / `.activeIcon` for the Jobs entry if you want
-/// something else.
+/// Order: Home, Search, Cart, Orders, Jobs.
+/// Profile dropped from bottom nav — needs a new home (e.g. header icon).
 class AppBottomNavBar extends StatelessWidget {
   const AppBottomNavBar({
     super.key,
@@ -34,20 +32,20 @@ class AppBottomNavBar extends StatelessWidget {
       label: 'بحث',
     ),
     _NavItem(
-      // Placeholder — no Figma reference for this tab.
-      icon: Icons.work_outline_rounded,
-      activeIcon: Icons.work_rounded,
-      label: 'وظائف',
+      icon: Icons.shopping_cart_outlined,
+      activeIcon: Icons.shopping_cart_rounded,
+      label: 'السلة',
     ),
     _NavItem(
       icon: Icons.receipt_long_outlined,
       activeIcon: Icons.receipt_long_rounded,
-      label: 'السلة',
+      label: 'طلباتي',
     ),
     _NavItem(
-      icon: Icons.person_outline_rounded,
-      activeIcon: Icons.person_rounded,
-      label: 'حسابي',
+      // Placeholder — no Figma reference for this tab.
+      icon: Icons.work_outline_rounded,
+      activeIcon: Icons.work_rounded,
+      label: 'وظائف',
     ),
   ];
 

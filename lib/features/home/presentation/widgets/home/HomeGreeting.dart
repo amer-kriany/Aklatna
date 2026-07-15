@@ -9,10 +9,7 @@ import '../../../../../core/theme/app_colors.dart';
 class HomeGreeting extends StatelessWidget {
   final String userName;
 
-  const HomeGreeting({
-    super.key,
-    required this.userName,
-  });
+  const HomeGreeting({super.key, required this.userName});
 
   String get _greetingPhrase {
     final hour = DateTime.now().hour;

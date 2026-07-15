@@ -13,6 +13,7 @@ import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 // TODO: Import your constant files
 // import 'package:your_app/core/constants/app_colors.dart';
 // import 'package:your_app/core/constants/app_spacing.dart';
@@ -66,6 +67,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
             listener: (context, state) {
               if (state is OrderPlaced) {
                 context.read<CartBloc>().add(ClearCartEvent());
+                  context.go('/order-placed'); // was: Navigator.pop(context)
+
                 Navigator.pop(context); // TODO(Amer): navigate to confirmation screen?
               }
               if (state is OrderError) {
