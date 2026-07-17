@@ -22,6 +22,7 @@ import 'package:aklatna/features/profile/data/repository/profileRepoImp.dart';
 import 'package:aklatna/features/profile/domain/usecases/getProfilesUsecase.dart';
 import 'package:aklatna/features/profile/domain/usecases/updateProfileUsecase.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
+import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -37,6 +38,7 @@ void main() async {
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
+  setupInjection();
   // data sources
   final authDatasource = AuthDatasource();
   final getBusinessDatasource = BusinessDatasrouce();
@@ -55,7 +57,9 @@ void main() async {
   final currentUserUsecase = CurrentuserUsecase(repository: repository);
   final signOutUsecase = SingoutUsecase(repository: repository);
   final getBusinessUsecase = GetbusinessUsecase(repository: businessRepository);
-  final searchBusinessesusecase = Searchbusinessesusecase(businessrepoimp: businessRepository);
+  final searchBusinessesusecase = Searchbusinessesusecase(
+    businessrepoimp: businessRepository,
+  );
   final getcategoriesusecase = Getcategoriesusecase(repo: menuRepo);
   final getitemsusecase = Getitemsusecase(repo: menuRepo);
   final getprofilesusecase = Getprofilesusecase(repo: profileRepo);
@@ -63,17 +67,12 @@ void main() async {
   runApp(
     MultiBlocProvider(
       providers: [
+BlocProvider.value(value: sl<AuthBloc>(),),
         BlocProvider(
-          create: (context) => AuthBloc(
-            signUpUsecase: signUpUsecase,
-            signInUsecase: signInUsecase,
-            currentUserUsecase: currentUserUsecase,
-            signOutUsecase: signOutUsecase,
+          create: (context) => BusinessBloc(
+            getBusinessUsecase: getBusinessUsecase,
+            searchbusinessesusecase: searchBusinessesusecase,
           ),
-        ),
-        BlocProvider(
-          create: (context) =>
-              BusinessBloc(getBusinessUsecase: getBusinessUsecase, searchbusinessesusecase: searchBusinessesusecase),
         ),
         BlocProvider(
           create: (context) => MenuBloc(
@@ -82,11 +81,12 @@ void main() async {
           ),
         ),
         BlocProvider(
-          create: (context) => ProfileBloc(getProfilesUsecase: getprofilesusecase, updateProfileUsecase: updateprofileusecase),
+          create: (context) => ProfileBloc(
+            getProfilesUsecase: getprofilesusecase,
+            updateProfileUsecase: updateprofileusecase,
+          ),
         ),
-        BlocProvider(
-          create: (context) => CartBloc(),
-        )
+        BlocProvider(create: (context) => CartBloc()),
       ],
       child: MyApp(),
     ),

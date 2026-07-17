@@ -1,4 +1,8 @@
 import 'package:aklatna/core/router/MainShell.dart';
+import 'package:aklatna/core/router/go_router_refresh_stream.dart';
+import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
+import 'package:aklatna/features/auth/presentation/pages/SignInPage.dart';
+import 'package:aklatna/features/auth/presentation/pages/signUpPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/CheckoutPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/cart_page.dart';
 import 'package:aklatna/features/cart/presentation/pages/orderPlacedPage.dart';
@@ -22,29 +26,41 @@ import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usec
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
+import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+
 final GoRouter appRouter = GoRouter(
   initialLocation: '/home',
   navigatorKey: MainShell.rootNavigatorKey,
+  refreshListenable: GoRouterRefreshStream(sl<AuthBloc>().stream),
+  redirect: (context, state) {
+    final authState = sl<AuthBloc>().state;
+    final isGoingToAuth = state.matchedLocation == '/signin' || state.matchedLocation == '/signup';
+
+    // Still checking session on cold start — don't redirect yet, avoids
+    // bouncing a genuinely logged-in user to /signin for a frame.
+    if (authState is AuthInitial || authState is AuthLoading) return null;
+
+    final isAuthenticated = authState is AuthAuthenticated;
+
+    if (!isAuthenticated && !isGoingToAuth) return '/signin';
+    if (isAuthenticated && isGoingToAuth) return '/home';
+    return null;
+  },
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return MainShell(navigationShell: navigationShell);
       },
       branches: [
-        // Branch 0 — Home
         StatefulShellBranch(
           routes: [
-            GoRoute(
-              path: '/home',
-              builder: (context, state) => const HomePage(),
-            ),
+            GoRoute(path: '/home', builder: (context, state) => const HomePage()),
           ],
         ),
-        // Branch 1 — Search
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -52,7 +68,6 @@ final GoRouter appRouter = GoRouter(
               builder: (context, state) {
                 final businessDatasource = BusinessDatasrouce();
                 final businessRepo = Businessrepoimp(businessDatasrouce: businessDatasource);
-
                 return BlocProvider(
                   create: (_) => BusinessBloc(
                     getBusinessUsecase: GetbusinessUsecase(repository: businessRepo),
@@ -64,33 +79,19 @@ final GoRouter appRouter = GoRouter(
             ),
           ],
         ),
-        // Branch 2 — Cart
         StatefulShellBranch(
           routes: [
-            GoRoute(
-              path: '/cart',
-              builder: (context, state) => CartPage(),
-            ),
+            GoRoute(path: '/cart', builder: (context, state) => CartPage()),
           ],
         ),
-        // Branch 3 — Orders (real order history/tracking — placeholder until built)
         StatefulShellBranch(
           routes: [
-            GoRoute(
-              path: '/orders',
-              builder: (context, state) =>
-                  const _PlaceholderScreen(label: 'Orders'),
-            ),
+            GoRoute(path: '/orders', builder: (context, state) => const _PlaceholderScreen(label: 'Orders')),
           ],
         ),
-        // Branch 4 — Jobs (no Figma design — added outside original scope)
         StatefulShellBranch(
           routes: [
-            GoRoute(
-              path: '/jobs',
-              builder: (context, state) =>
-                  const _PlaceholderScreen(label: 'Jobs'),
-            ),
+            GoRoute(path: '/jobs', builder: (context, state) => const _PlaceholderScreen(label: 'Jobs')),
           ],
         ),
       ],
@@ -114,10 +115,7 @@ final GoRouter appRouter = GoRouter(
       path: '/checkout',
       parentNavigatorKey: MainShell.rootNavigatorKey,
       builder: (context, state) {
-        final orderRepo = OrderRepositoryImpl(
-          orderRemoteDatasource: OrderRemoteDatasource(),
-        );
-
+        final orderRepo = OrderRepositoryImpl(orderRemoteDatasource: OrderRemoteDatasource());
         return BlocProvider(
           create: (_) => OrderBloc(
             PlaceOrderUsecase(orderRepository: orderRepo, orderRepositoryImpl: orderRepo),
@@ -129,10 +127,10 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
-  path: '/order-placed',
-  parentNavigatorKey: MainShell.rootNavigatorKey,
-  builder: (context, state) => const OrderPlacedPage(),
-),
+      path: '/order-placed',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) => const OrderPlacedPage(),
+    ),
     GoRoute(
       path: '/business/:id',
       parentNavigatorKey: MainShell.rootNavigatorKey,
@@ -141,7 +139,6 @@ final GoRouter appRouter = GoRouter(
         final businessRepo = Businessrepoimp(businessDatasrouce: businessDatasource);
         final menuDatasource = Menudatasource();
         final menuRepo = Menurepoimp(menudatasource: menuDatasource);
-
         return MultiBlocProvider(
           providers: [
             BlocProvider(
@@ -161,12 +158,21 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+    GoRoute(
+      path: '/signin',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) => const SignInPage(),
+    ),
+    GoRoute(
+      path: '/signup',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) => const SignUpPage(),
+    ),
   ],
 );
 
 class _PlaceholderScreen extends StatelessWidget {
   const _PlaceholderScreen({required this.label});
-
   final String label;
 
   @override
