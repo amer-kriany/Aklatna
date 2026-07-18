@@ -26,7 +26,10 @@ class ProfileMenuRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm, horizontal: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.sm,
+          horizontal: AppSpacing.md,
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -34,17 +37,20 @@ class ProfileMenuRow extends StatelessWidget {
               width: _iconCircleSize,
               height: _iconCircleSize,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                border: Border.all(color: AppColors.border),
+                color: AppColors.background,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
               child: Icon(icon, color: iconColor, size: AppSizes.iconMd),
             ),
             const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Text(label, style: AppTextStyles.bodyMedium),
+            Expanded(child: Text(label, style: AppTextStyles.bodyMedium)),
+            const Icon(
+              Icons.chevron_left,
+              color: AppColors.textHint,
+              size: AppSizes.iconMd,
             ),
-            const Icon(Icons.chevron_left, color: AppColors.textHint, size: AppSizes.iconMd),
           ],
         ),
       ),

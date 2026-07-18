@@ -21,6 +21,12 @@ import 'package:aklatna/features/menu/data/repository/menuRepoImp.dart';
 import 'package:aklatna/features/menu/domain/usecases/getCategoriesUseCase.dart';
 import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
+import 'package:aklatna/features/orders/data/datasources/order_remote_datasource.dart';
+import 'package:aklatna/features/orders/data/repositories/order_repository_impl.dart';
+import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
+import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
+import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:aklatna/features/profile/data/datasource/profile_datasource.dart';
 import 'package:aklatna/features/profile/data/repository/profileRepoImp.dart';
 import 'package:aklatna/features/profile/domain/usecases/getProfilesUsecase.dart';
@@ -49,10 +55,13 @@ void main() async {
   final getMenuDataSource = Menudatasource();
   final profileDatasource = ProfileDatasource();
   final favoriteDatasource = FavoriteDatasource();
+  final orderRemoteDatasource = OrderRemoteDatasource();
 
   // repositories
-  final repository = AuthRepositoryImpl(datasource: authDatasource);
   final favoriteRepo = FavoriteRepositoryImpl(datasource: favoriteDatasource);
+  final orderRepo = OrderRepositoryImpl(
+    orderRemoteDatasource: orderRemoteDatasource,
+  );
 
   final businessRepository = Businessrepoimp(
     businessDatasrouce: getBusinessDatasource,
@@ -60,10 +69,12 @@ void main() async {
   final menuRepo = Menurepoimp(menudatasource: getMenuDataSource);
   final profileRepo = Profilerepoimp(profileDatasource: profileDatasource);
   //use cases
-  final signUpUsecase = SignUpUsecase(repository: repository);
-  final signInUsecase = SigninUsecase(repository: repository);
-  final currentUserUsecase = CurrentuserUsecase(repository: repository);
-  final signOutUsecase = SingoutUsecase(repository: repository);
+  final getCostomerOrdersUseCase = GetCustomerOrdersUseCase(
+    orderRepositoryImpl: orderRepo,
+  );
+  final orderstatususecase = Orderstatususecase(orderRepositoryImpl: orderRepo);
+  final placeOrderUsecase = PlaceOrderUsecase(orderRepositoryImpl: orderRepo);
+
   final getBusinessUsecase = GetbusinessUsecase(repository: businessRepository);
   final searchBusinessesusecase = Searchbusinessesusecase(
     businessrepoimp: businessRepository,
@@ -88,13 +99,13 @@ void main() async {
           ),
         ),
         BlocProvider(
-  create: (context) => FavoriteBloc(
-    addFavoriteUsecase: addFavoriteUseCase,
-    removeFavoriteUsecase: removeFavoriteUseCase,
-    getFavoriteIdsUsecase: getFavoriteIdUseCase,
-    getFavoriteItemsUsecase: getFavoriteItemUseCase,
-  ),
-),
+          create: (context) => FavoriteBloc(
+            addFavoriteUsecase: addFavoriteUseCase,
+            removeFavoriteUsecase: removeFavoriteUseCase,
+            getFavoriteIdsUsecase: getFavoriteIdUseCase,
+            getFavoriteItemsUsecase: getFavoriteItemUseCase,
+          ),
+        ),
         BlocProvider(
           create: (context) => MenuBloc(
             menuCategoriesusecase: getcategoriesusecase,
@@ -108,6 +119,13 @@ void main() async {
           ),
         ),
         BlocProvider(create: (context) => CartBloc()),
+        BlocProvider(
+          create: (context) => OrderBloc(
+            watchOrderStatusUsecase: orderstatususecase,
+            placeOrderUsecase: placeOrderUsecase,
+            customerOrdersUsecase: getCostomerOrdersUseCase,
+          ),
+        ),
       ],
       child: MyApp(),
     ),
@@ -119,7 +137,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return   BlocListener<ProfileBloc, ProfileState>(
+    return BlocListener<ProfileBloc, ProfileState>(
       listener: (context, state) {
         if (state is ProfileLoaded) {
           context.read<FavoriteBloc>().add(
@@ -134,6 +152,5 @@ class MyApp extends StatelessWidget {
         theme: AppTheme.lightTheme,
       ),
     );
-    
   }
 }

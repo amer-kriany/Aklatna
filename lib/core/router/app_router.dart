@@ -27,6 +27,7 @@ import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usec
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
+import 'package:aklatna/features/orders/presentation/pages/myOrderPage.dart';
 import 'package:aklatna/features/profile/presentaion/pages/profilePage.dart';
 import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
@@ -88,7 +89,7 @@ final GoRouter appRouter = GoRouter(
         ),
         StatefulShellBranch(
           routes: [
-            GoRoute(path: '/orders', builder: (context, state) => const _PlaceholderScreen(label: 'Orders')),
+            GoRoute(path: '/orders', builder: (context, state) => const MyOrdersPage()),
           ],
         ),
         StatefulShellBranch(
@@ -120,9 +121,9 @@ final GoRouter appRouter = GoRouter(
         final orderRepo = OrderRepositoryImpl(orderRemoteDatasource: OrderRemoteDatasource());
         return BlocProvider(
           create: (_) => OrderBloc(
-            PlaceOrderUsecase(orderRepository: orderRepo, orderRepositoryImpl: orderRepo),
-            GetCustomerOrdersUseCase(orderRepository: orderRepo, orderRepositoryImpl: orderRepo),
-            watchOrderStatusUsecase: Orderstatususecase(orderRepository: orderRepo, orderRepositoryImpl: orderRepo),
+         placeOrderUsecase:   PlaceOrderUsecase( orderRepositoryImpl: orderRepo),
+         customerOrdersUsecase:   GetCustomerOrdersUseCase( orderRepositoryImpl: orderRepo),
+            watchOrderStatusUsecase: Orderstatususecase( orderRepositoryImpl: orderRepo), 
           ),
           child: const CheckoutPage(),
         );
@@ -165,6 +166,7 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: MainShell.rootNavigatorKey,
       builder: (context, state) => const SignInPage(),
     ),
+    
     GoRoute(
   path: '/favorites',
   parentNavigatorKey: MainShell.rootNavigatorKey,

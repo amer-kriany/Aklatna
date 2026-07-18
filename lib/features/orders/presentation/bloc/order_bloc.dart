@@ -14,9 +14,9 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   final Orderstatususecase watchOrderStatusUsecase;
   final PlaceOrderUsecase placeOrderUsecase;
   final GetCustomerOrdersUseCase customerOrdersUsecase;
-  OrderBloc(
-    this.placeOrderUsecase,
-    this.customerOrdersUsecase, {
+  OrderBloc( {
+   required this.placeOrderUsecase,
+   required this.customerOrdersUsecase, 
     required this.watchOrderStatusUsecase, 
   }) : super(OrderInitial()) {
     on<PlaceOrderEvent>(_placeOrder);

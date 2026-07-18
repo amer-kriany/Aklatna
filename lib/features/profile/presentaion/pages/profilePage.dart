@@ -91,18 +91,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                 builder: (_) => const PersonalInfoPage(),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                      ProfileMenuRow(
+                          ),ProfileMenuRow(
                         icon: Icons.favorite_border,
                         iconColor: Colors.pink,
                         label: 'المفضلة',
                         onTap: () => context.push('/favorites'),
                       ),
-
-                      ProfileMenuCard(
-                        children: [
                           ProfileMenuRow(
                             icon: Icons.logout,
                             iconColor: AppColors.error,
@@ -112,6 +106,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ],
                       ),
+                      
+
+                      
+                       
                     ],
                   ),
                 );
