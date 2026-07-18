@@ -167,7 +167,7 @@ class _HomePageState extends State<HomePage> {
                           addressLabel: profile.address,
                           avatarUrl: profile.profilePhoto,
                           onAvatarTap: () {
-                            // TODO(Amer): context.push(AppRoutes.profile);
+                            context.push("/profile");
                           },
                           onAddressTap: () {
                             // TODO(Amer): context.push(AppRoutes.addressSelect);

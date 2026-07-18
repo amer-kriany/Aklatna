@@ -6,6 +6,7 @@ import 'package:aklatna/features/auth/presentation/pages/signUpPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/CheckoutPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/cart_page.dart';
 import 'package:aklatna/features/cart/presentation/pages/orderPlacedPage.dart';
+import 'package:aklatna/features/favorit/presentation/pages/favoritPage.dart';
 import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart';
 import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
 import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
@@ -26,6 +27,7 @@ import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usec
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
+import 'package:aklatna/features/profile/presentaion/pages/profilePage.dart';
 import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -164,10 +166,20 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const SignInPage(),
     ),
     GoRoute(
+  path: '/favorites',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) => const FavoritesPage(),
+),
+    GoRoute(
       path: '/signup',
       parentNavigatorKey: MainShell.rootNavigatorKey,
       builder: (context, state) => const SignUpPage(),
     ),
+    GoRoute(
+  path: '/profile',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) => const ProfilePage(),
+),
   ],
 );
 

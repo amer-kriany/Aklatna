@@ -37,40 +37,50 @@ class AuthDatasource {
     }
   }
 
-  // sign in
-  Future<AppuserModel?> signIn(
-    String? email,
-    String? phone,
-    String password,
-  ) async {
-    try {
-      String? authEmail = email;
-      if (phone != null && email == null) {
-        final emailResponse = await supabase
-            .from("profiles")
-            .select("email")
-            .eq("phone_number", phone)
-            .single();
-        authEmail = emailResponse["email"];
-      }
-      final response = await supabase.auth.signInWithPassword(
-        email: authEmail,
-        password: password,
+ Future<AppuserModel?> signIn(
+  String? email,
+  String? phone,
+  String password,
+) async {
+  try {
+    String? authEmail = email;
+    if (phone != null && email == null) {
+      final foundEmail = await supabase.rpc(
+        'get_email_by_phone',
+        params: {'input_phone': phone},
       );
-      final user = response.user;
-      if (user != null) {
-        final profileData = await supabase
-            .from("profiles")
-            .select()
-            .eq('id', user.id)
-            .single();
-        return AppuserModel.fromSupabase(user, profileData);
+
+      if (foundEmail == null) {
+        throw Exception('رقم الهاتف غير مسجل');
       }
-      return null;
-    } catch (e) {
-      rethrow;
+      authEmail = foundEmail as String;
     }
+
+    final response = await supabase.auth.signInWithPassword(
+      email: authEmail,
+      password: password,
+    );
+
+    final user = response.user;
+    if (user != null) {
+      final profileData = await supabase
+          .from("profiles")
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (profileData == null) {
+        throw Exception('تعذر العثور على الملف الشخصي');
+      }
+
+      return AppuserModel.fromSupabase(user, profileData);
+    }
+    return null;
+  } catch (e) {
+    rethrow;
   }
+}
+ 
 
   // log out
   Future<void> signOut() async {

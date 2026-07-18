@@ -7,6 +7,10 @@ import 'package:aklatna/features/auth/domain/usecases/signup_usecase.dart';
 import 'package:aklatna/features/auth/domain/usecases/singout_usecase.dart';
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:aklatna/features/favorit/data/ReposityrImp.dart/favoritRepoImp.dart';
+import 'package:aklatna/features/favorit/data/datasource/favoriteDataSource.dart';
+import 'package:aklatna/features/favorit/domain/useCases/favoriteUseCase.dart';
+import 'package:aklatna/features/favorit/presentation/bloc/favorite_bloc.dart';
 import 'package:aklatna/features/home/data/datasources/business_datasrouce.dart';
 import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
 import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
@@ -44,8 +48,12 @@ void main() async {
   final getBusinessDatasource = BusinessDatasrouce();
   final getMenuDataSource = Menudatasource();
   final profileDatasource = ProfileDatasource();
+  final favoriteDatasource = FavoriteDatasource();
+
   // repositories
   final repository = AuthRepositoryImpl(datasource: authDatasource);
+  final favoriteRepo = FavoriteRepositoryImpl(datasource: favoriteDatasource);
+
   final businessRepository = Businessrepoimp(
     businessDatasrouce: getBusinessDatasource,
   );
@@ -64,16 +72,29 @@ void main() async {
   final getitemsusecase = Getitemsusecase(repo: menuRepo);
   final getprofilesusecase = Getprofilesusecase(repo: profileRepo);
   final updateprofileusecase = Updateprofileusecase(repo: profileRepo);
+  final addFavoriteUseCase = AddFavoriteUsecase(repo: favoriteRepo);
+  final removeFavoriteUseCase = RemoveFavoriteUsecase(repo: favoriteRepo);
+  final getFavoriteIdUseCase = GetFavoriteIdsUsecase(repo: favoriteRepo);
+  final getFavoriteItemUseCase = GetFavoriteItemsUsecase(repo: favoriteRepo);
+
   runApp(
     MultiBlocProvider(
       providers: [
-BlocProvider.value(value: sl<AuthBloc>(),),
+        BlocProvider.value(value: sl<AuthBloc>()),
         BlocProvider(
           create: (context) => BusinessBloc(
             getBusinessUsecase: getBusinessUsecase,
             searchbusinessesusecase: searchBusinessesusecase,
           ),
         ),
+        BlocProvider(
+  create: (context) => FavoriteBloc(
+    addFavoriteUsecase: addFavoriteUseCase,
+    removeFavoriteUsecase: removeFavoriteUseCase,
+    getFavoriteIdsUsecase: getFavoriteIdUseCase,
+    getFavoriteItemsUsecase: getFavoriteItemUseCase,
+  ),
+),
         BlocProvider(
           create: (context) => MenuBloc(
             menuCategoriesusecase: getcategoriesusecase,
@@ -98,11 +119,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: appRouter,
-      debugShowCheckedModeBanner: false,
-      title: 'Aklatna',
-      theme: AppTheme.lightTheme,
+    return   BlocListener<ProfileBloc, ProfileState>(
+      listener: (context, state) {
+        if (state is ProfileLoaded) {
+          context.read<FavoriteBloc>().add(
+            LoadFavoritesEvent(userId: state.profile.id),
+          );
+        }
+      },
+      child: MaterialApp.router(
+        routerConfig: appRouter,
+        debugShowCheckedModeBanner: false,
+        title: 'Aklatna',
+        theme: AppTheme.lightTheme,
+      ),
     );
+    
   }
 }
