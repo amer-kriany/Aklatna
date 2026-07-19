@@ -15,6 +15,7 @@ import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/home/presentation/pages/BusinessDetailsPage.dart';
 import 'package:aklatna/features/home/presentation/pages/HomaPage.dart';
 import 'package:aklatna/features/home/presentation/pages/SearchPage.dart';
+import 'package:aklatna/features/job_listings/presentation/pages/jobs_page.dart';
 import 'package:aklatna/features/menu/data/data_source/menuDataSource.dart';
 import 'package:aklatna/features/menu/data/repository/menuRepoImp.dart';
 import 'package:aklatna/features/menu/domain/usecases/getCategoriesUseCase.dart';
@@ -94,7 +95,7 @@ final GoRouter appRouter = GoRouter(
         ),
         StatefulShellBranch(
           routes: [
-            GoRoute(path: '/jobs', builder: (context, state) => const _PlaceholderScreen(label: 'Jobs')),
+            GoRoute(path: '/jobs', builder: (context, state) => const JobsPage()),
           ],
         ),
       ],

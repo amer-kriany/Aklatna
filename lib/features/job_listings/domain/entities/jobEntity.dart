@@ -1,23 +1,25 @@
 class JobEntity {
+  final String id;
   final String title;
   final String description;
-  final String location;
   final String businessId;
+  final String businessName;
+  final String location;
   final String requirements;
   final String contactPhone;
-  final String isApproved;
-  final String isActive;
-  final String businessName;
+  final bool isApproved;
+  final bool isActive;
 
   JobEntity({
+    required this.id,
     required this.title,
     required this.description,
-    required this.location,
     required this.businessId,
+    required this.businessName,
+    required this.location,
     required this.requirements,
     required this.contactPhone,
     required this.isApproved,
     required this.isActive,
-    required this.businessName,
   });
 }

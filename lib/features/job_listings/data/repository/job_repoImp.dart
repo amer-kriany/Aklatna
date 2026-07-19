@@ -13,17 +13,17 @@ class JobRepoimp implements Jobrepo{
     return jobs.map((e)=>mapToEntity(e)).toList() ;
   }
 }
-
 JobEntity mapToEntity(Jobmodel model) {
   return JobEntity(
+    id: model.id,
     title: model.title,
     description: model.description,
-    location: model.location,
     businessId: model.businessId,
+    businessName: model.businessName,
+    location: model.location,
     requirements: model.requirements,
     contactPhone: model.contactPhone,
     isApproved: model.isApproved,
     isActive: model.isActive,
-    businessName: model.businessName,
   );
 }

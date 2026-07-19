@@ -1,10 +1,4 @@
 import 'package:aklatna/core/router/app_router.dart';
-import 'package:aklatna/features/auth/data/datasources/auth_datasource.dart';
-import 'package:aklatna/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:aklatna/features/auth/domain/usecases/currentuser_usecase.dart';
-import 'package:aklatna/features/auth/domain/usecases/signin_usecase.dart';
-import 'package:aklatna/features/auth/domain/usecases/signup_usecase.dart';
-import 'package:aklatna/features/auth/domain/usecases/singout_usecase.dart';
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/favorit/data/ReposityrImp.dart/favoritRepoImp.dart';
@@ -16,6 +10,10 @@ import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
 import 'package:aklatna/features/home/domain/usecases/getbusiness_usecase.dart';
 import 'package:aklatna/features/home/domain/usecases/searchBusinessesUseCase.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
+import 'package:aklatna/features/job_listings/data/dataSource/job_datasource.dart';
+import 'package:aklatna/features/job_listings/data/repository/job_repoImp.dart';
+import 'package:aklatna/features/job_listings/domain/usecases/get_jobs_usecase.dart';
+import 'package:aklatna/features/job_listings/presentation/bloc/job_bloc.dart';
 import 'package:aklatna/features/menu/data/data_source/menuDataSource.dart';
 import 'package:aklatna/features/menu/data/repository/menuRepoImp.dart';
 import 'package:aklatna/features/menu/domain/usecases/getCategoriesUseCase.dart';
@@ -50,19 +48,19 @@ void main() async {
   );
   setupInjection();
   // data sources
-  final authDatasource = AuthDatasource();
   final getBusinessDatasource = BusinessDatasrouce();
   final getMenuDataSource = Menudatasource();
   final profileDatasource = ProfileDatasource();
   final favoriteDatasource = FavoriteDatasource();
   final orderRemoteDatasource = OrderRemoteDatasource();
+  final jobDatasource = JobDatasource();
 
   // repositories
   final favoriteRepo = FavoriteRepositoryImpl(datasource: favoriteDatasource);
   final orderRepo = OrderRepositoryImpl(
     orderRemoteDatasource: orderRemoteDatasource,
   );
-
+  final jobRepo = JobRepoimp(jobDatasource: jobDatasource);
   final businessRepository = Businessrepoimp(
     businessDatasrouce: getBusinessDatasource,
   );
@@ -72,6 +70,7 @@ void main() async {
   final getCostomerOrdersUseCase = GetCustomerOrdersUseCase(
     orderRepositoryImpl: orderRepo,
   );
+  final getJobsUsecase = GetJobsUsecase(jobRepoimp: jobRepo);
   final orderstatususecase = Orderstatususecase(orderRepositoryImpl: orderRepo);
   final placeOrderUsecase = PlaceOrderUsecase(orderRepositoryImpl: orderRepo);
 
@@ -97,6 +96,9 @@ void main() async {
             getBusinessUsecase: getBusinessUsecase,
             searchbusinessesusecase: searchBusinessesusecase,
           ),
+        ),
+        BlocProvider(
+          create: (context) => JobBloc(getJobsUsecase: getJobsUsecase),
         ),
         BlocProvider(
           create: (context) => FavoriteBloc(

@@ -61,7 +61,7 @@ dependencies:
   flutter_svg: ^2.0.17
   shimmer: ^3.0.0              # loading skeletons
   fluttertoast: ^8.2.12        # toast messages
-  url_launcher: ^6.3.1         # open phone / whatsapp
+  url_launcher: ^6.3.2         # open phone / whatsapp
   intl: ^0.20.2                # date + number formatting
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━
