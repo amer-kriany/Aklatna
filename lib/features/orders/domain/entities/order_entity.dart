@@ -15,6 +15,7 @@ class OrderEntity {
   final double totalPrice;
   final OrderType orderType;
   final OrderStatus orderStatus;
+  final DateTime? scheduledFor;
 
   OrderEntity({
     this.id,
@@ -28,6 +29,6 @@ class OrderEntity {
     this.deliveryAddress,
     required this.totalPrice,
     required this.orderType,
-    required this.orderStatus,
+    required this.orderStatus, this.scheduledFor,
   });
 }

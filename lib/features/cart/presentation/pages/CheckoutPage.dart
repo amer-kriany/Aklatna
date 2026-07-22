@@ -1,4 +1,5 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
+import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/cart/presentation/widgets/checkout/CheckoutAppBar.dart';
@@ -28,32 +29,73 @@ class CheckoutPage extends StatefulWidget {
 class _CheckoutPageState extends State<CheckoutPage> {
   String selectedDeliveryOption = 'توصيل';
   String selectedOrderType = 'طلب عادي';
+  DateTime? _scheduledFor;
+
+  Future<void> _pickScheduleTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked == null) return;
+
+    final now = DateTime.now();
+    final scheduled = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      picked.hour,
+      picked.minute,
+    );
+
+    if (scheduled.isBefore(now)) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('الوقت المختار مضى بالفعل')));
+      return;
+    }
+
+    setState(() => _scheduledFor = scheduled);
+  }
 
   void _onConfirm() {
+    final orderState = context.read<OrderBloc>().state;
+    if (orderState is OrderPlacing) return;
+
     final cartState = context.read<CartBloc>().state;
     final profileState = context.read<ProfileBloc>().state;
-    
 
-    if (cartState.items.isEmpty || profileState is! ProfileLoaded || cartState.businessId == null) {
-      return; // TODO(Amer): show real error
+    if (cartState.items.isEmpty ||
+        profileState is! ProfileLoaded ||
+        cartState.businessId == null) {
+      return;
+    }
+
+    if (selectedOrderType == 'طلب مسبق' && _scheduledFor == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('اختر وقت الجدولة أولاً')));
+      return;
     }
 
     final profile = profileState.profile;
 
-   final order = OrderEntity(
-  businessId: cartState.businessId!,
-  customerId: profile.id,
-  customername: profile.userName,
-  customerPhone: profile.phoneNumber,
-  items: cartState.items,
-  deliveryAddress: selectedDeliveryOption == 'توصيل' ? profile.address : null,
-  totalPrice: cartState.totalPrice,
-  orderType: selectedDeliveryOption == 'توصيل' ? OrderType.delivery : OrderType.pickup,
-  orderStatus: OrderStatus.pending,
-);
+    final order = OrderEntity(
+      businessId: cartState.businessId!,
+      customerId: profile.id,
+      customername: profile.userName,
+      customerPhone: profile.phoneNumber,
+      items: cartState.items,
+      deliveryAddress: selectedDeliveryOption == 'توصيل'
+          ? profile.address
+          : null,
+      totalPrice: cartState.totalPrice,
+      orderType: selectedDeliveryOption == 'توصيل'
+          ? OrderType.delivery
+          : OrderType.pickup,
+      orderStatus: OrderStatus.pending,
+scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : DateTime.now(),    );
 
     context.read<OrderBloc>().add(PlaceOrderEvent(order: order));
-     if (OrderState is OrderPlacing) return;
   }
 
   @override
@@ -67,14 +109,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
             listener: (context, state) {
               if (state is OrderPlaced) {
                 context.read<CartBloc>().add(ClearCartEvent());
-                  context.go('/order-placed'); // was: Navigator.pop(context)
-
-                Navigator.pop(context); // TODO(Amer): navigate to confirmation screen?
+                context.go('/order-placed');
               }
               if (state is OrderError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.message)),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(state.message)));
               }
             },
             child: Padding(
@@ -89,18 +129,49 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   const Spacer(flex: 1),
                   DeliveryOptionSection(
                     selectedOption: selectedDeliveryOption,
-                    onOptionChanged: (v) => setState(() => selectedDeliveryOption = v),
+                    onOptionChanged: (v) =>
+                        setState(() => selectedDeliveryOption = v),
                   ),
                   const Spacer(flex: 1),
                   OrderTypeSection(
                     selectedOption: selectedOrderType,
-                    onOptionChanged: (v) => setState(() => selectedOrderType = v),
+                    onOptionChanged: (v) {
+                      setState(() => selectedOrderType = v);
+                      if (v == 'طلب مسبق') _pickScheduleTime();
+                    },
                   ),
+                  if (selectedOrderType == 'طلب مسبق' && _scheduledFor != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.schedule,
+                            size: AppSizes.iconSm,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          Text(
+                            'موعد الجدولة: ${TimeOfDay.fromDateTime(_scheduledFor!).format(context)}',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: _pickScheduleTime,
+                            child: const Text('تغيير'),
+                          ),
+                        ],
+                      ),
+                    ),
                   const Spacer(flex: 4),
                   BlocBuilder<OrderBloc, OrderState>(
                     builder: (context, state) {
                       return ConfirmButton(
-                        onConfirm: state is OrderPlacing ? (){} : _onConfirm,
+                        onConfirm: state is OrderPlacing ? () {} : _onConfirm,
                       );
                     },
                   ),

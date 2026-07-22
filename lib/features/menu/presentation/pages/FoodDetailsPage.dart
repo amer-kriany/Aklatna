@@ -24,12 +24,19 @@ class Foodetailspage extends StatefulWidget {
 class _FoodetailspageState extends State<Foodetailspage> {
   int _quantity = 1;
   Set<String> _selectedAddonIds = {};
+  final TextEditingController _noteController = TextEditingController();
 
   @override
   void initState() {
     context.read<MenuBloc>().add(GetMenu(id: widget.itemId));
     context.read<AddonBloc>().add(GetAddonsEvent(itemId: widget.itemId));
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
   }
 
   double _addonsTotal(List<AddonEntity> addons) => addons
@@ -116,6 +123,22 @@ class _FoodetailspageState extends State<Foodetailspage> {
                                     ],
                                   ),
                                 ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: AppSpacing.lg),
+                                    Text('ملاحظات', style: AppTextStyles.h4),
+                                    const SizedBox(height: AppSpacing.xs),
+                                    TextField(
+                                      controller: _noteController,
+                                      maxLines: 2,
+                                      decoration: const InputDecoration(hintText: 'مثال: بدون بصل'),
+                                    ),
+                                  ],
+                                ),
+                              ),
                               const SizedBox(height: AppSpacing.xl),
                             ],
                           ),
@@ -129,6 +152,11 @@ class _FoodetailspageState extends State<Foodetailspage> {
                           if (_quantity > 1) setState(() => _quantity--);
                         },
                         onAddToCart: () {
+                          final selectedAddons = addons
+                              .where((a) => _selectedAddonIds.contains(a.id))
+                              .map((a) => {'id': a.id, 'name': a.name, 'price': a.price})
+                              .toList();
+
                           context.read<CartBloc>().add(
                             AddItemEvent(
                               item: CartItem(
@@ -139,6 +167,8 @@ class _FoodetailspageState extends State<Foodetailspage> {
                                 price: state.item.price + addonsTotal,
                                 quantity: _quantity,
                                 businessId: state.item.businessId,
+                                note: _noteController.text.trim(),
+                                selectedAddons: selectedAddons,
                               ),
                             ),
                           );

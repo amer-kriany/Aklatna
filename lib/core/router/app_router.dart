@@ -110,8 +110,8 @@ final GoRouter appRouter = GoRouter(
   builder: (context, state) {
     final menuDatasource = Menudatasource();
     final menuRepo = Menurepoimp(menudatasource: menuDatasource);
-    final addonDatasource = Addonesdatasource();
-    final addonRepo = AddonRepositoryImpl(datasource: addonDatasource);
+    final addonDatasource = Addonesdatasource(); // adjust to your real class name
+    final addonRepo = AddonRepositoryImpl(datasource: addonDatasource); // adjust to your real class name
 
     return MultiBlocProvider(
       providers: [

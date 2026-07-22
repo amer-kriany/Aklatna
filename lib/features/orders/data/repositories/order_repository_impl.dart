@@ -8,7 +8,7 @@ class OrderRepositoryImpl implements OrderRepository {
   OrderRepositoryImpl({required this.orderRemoteDatasource});
   @override
   Future<void> placeOrder(OrderEntity order) async {
-      await orderRemoteDatasource.placeOrder(entityToModel(order)) ;
+    await orderRemoteDatasource.placeOrder(entityToModel(order));
   }
 
   @override
@@ -38,6 +38,7 @@ OrderEntity mapToEntity(OrderModel order) {
     orderNumber: order.orderNumber,
     createdAt: order.createdAt,
     orderStatus: order.orderStatus,
+    scheduledFor: order.scheduledFor,
   );
 }
 
@@ -54,5 +55,6 @@ OrderModel entityToModel(OrderEntity entity) {
     orderNumber: entity.orderNumber,
     createdAt: entity.createdAt,
     orderStatus: entity.orderStatus,
+    scheduledFor: entity.scheduledFor,
   );
 }

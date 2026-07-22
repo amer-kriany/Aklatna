@@ -15,6 +15,7 @@ class OrderModel {
   final double totalPrice;
   final OrderType orderType;
   final OrderStatus orderStatus;
+  final DateTime? scheduledFor;
   OrderModel({
     this.id,
     this.orderNumber,
@@ -27,7 +28,7 @@ class OrderModel {
     this.deliveryAddress,
     required this.totalPrice,
     required this.orderType,
-    required this.orderStatus,
+    required this.orderStatus, this.scheduledFor,
   });
 
  Map<String, dynamic> toJson() {
@@ -41,6 +42,7 @@ class OrderModel {
     'total_price': totalPrice,
     'order_type': orderType.name,
     'order_status': 'pending',
+'scheduled_for': scheduledFor?.toIso8601String(),
     // id, created_at, order_number — DB-generated, not sent from client
   };
 }
@@ -59,6 +61,10 @@ class OrderModel {
       return DateTime.tryParse(value?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0);
     }
+    DateTime? asNullableDate(dynamic value) {
+  if (value == null) return null;
+  return DateTime.tryParse(value.toString());
+}
 
     OrderType asOrderType(dynamic value) {
       final normalized = value?.toString();
@@ -99,6 +105,9 @@ class OrderModel {
       orderNumber: asStringOrEmpty(orders['order_number']),
       createdAt: asDateOrEpoch(orders['created_at']),
       orderStatus: asOrderStatus(orders['order_status']),
+      scheduledFor: asNullableDate(orders['scheduled_for']),
+      
+      
     );
   }
 }

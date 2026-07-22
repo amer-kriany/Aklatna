@@ -2,10 +2,12 @@ class CartItem {
   final String itemId;
   final String nameAr;
   final String description;
-  final String? photoUrl; // NEW
+  final String? photoUrl;
   final double price;
   final int quantity;
   final String businessId;
+  final String note;
+  final List<Map<String, dynamic>> selectedAddons;
 
   CartItem({
     required this.itemId,
@@ -15,6 +17,8 @@ class CartItem {
     required this.price,
     required this.quantity,
     required this.businessId,
+    this.note = '',
+    this.selectedAddons = const [],
   });
 
   CartItem copyWith({
@@ -25,6 +29,8 @@ class CartItem {
     double? price,
     int? quantity,
     String? businessId,
+    String? note,
+    List<Map<String, dynamic>>? selectedAddons,
   }) {
     return CartItem(
       itemId: itemId ?? this.itemId,
@@ -34,6 +40,8 @@ class CartItem {
       price: price ?? this.price,
       quantity: quantity ?? this.quantity,
       businessId: businessId ?? this.businessId,
+      note: note ?? this.note,
+      selectedAddons: selectedAddons ?? this.selectedAddons,
     );
   }
 
@@ -46,6 +54,8 @@ class CartItem {
       'price': price,
       'quantity': quantity,
       'business_id': businessId,
+      'note': note,
+      'addons': selectedAddons,
     };
   }
 
@@ -62,6 +72,11 @@ class CartItem {
       return int.tryParse(value?.toString() ?? '') ?? 0;
     }
 
+    List<Map<String, dynamic>> asAddonsOrEmpty(dynamic value) {
+      if (value is! List) return [];
+      return value.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    }
+
     return CartItem(
       itemId: asStringOrEmpty(json['item_id']),
       nameAr: asStringOrEmpty(json['name_ar']),
@@ -70,6 +85,8 @@ class CartItem {
       price: asDoubleOrZero(json['price']),
       quantity: asIntOrZero(json['quantity']),
       businessId: asStringOrEmpty(json['business_id']),
+      note: asStringOrEmpty(json['note']),
+      selectedAddons: asAddonsOrEmpty(json['addons']),
     );
   }
 }
