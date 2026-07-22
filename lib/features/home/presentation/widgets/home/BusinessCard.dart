@@ -1,9 +1,13 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/constants/app_text_style.dart';
+import 'package:aklatna/features/favorit/presentation/bloc/favorite_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/theme/app_colors.dart';
 
 class BusinessCard extends StatelessWidget {
+  final String businessId;
   final String businessName;
   final String? coverUrl;
   final double? rating;
@@ -11,17 +15,15 @@ class BusinessCard extends StatelessWidget {
   final VoidCallback onTap;
 
   /// Fixed width for horizontal-list tiles (e.g. "Recommended" row).
-  /// Leave null to let the card fill whatever width the parent gives it
-  /// (grid layouts, full-width lists, etc).
+  /// Leave null to let the card fill whatever width the parent gives it.
   final double? width;
 
-  /// Controls image shape. Defaults to 16:9. Pass a squarer or taller
-  /// ratio (e.g. 1 or 4/3) for different card variants without touching
-  /// this widget's internals.
+  /// Controls image shape. Defaults to 16:9.
   final double imageAspectRatio;
 
   const BusinessCard({
     super.key,
+    required this.businessId,
     required this.businessName,
     required this.onTap,
     this.coverUrl,
@@ -30,6 +32,23 @@ class BusinessCard extends StatelessWidget {
     this.width,
     this.imageAspectRatio = 16 / 9,
   });
+
+  void _onToggleFavorite(BuildContext context) {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('الرجاء تسجيل الدخول لإضافة المفضلة')),
+      );
+      return;
+    }
+
+    context.read<FavoriteBloc>().add(
+          ToggleFavoriteEvent(
+            userId: userId,
+            businessId: businessId,
+          ),
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,9 +69,47 @@ class BusinessCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              AspectRatio(
-                aspectRatio: imageAspectRatio,
-                child: _buildImage(),
+              Stack(
+                children: [
+                  AspectRatio(
+                    aspectRatio: imageAspectRatio,
+                    child: _buildImage(),
+                  ),
+                  // Floating Favorite Heart Button over image
+                  Positioned(
+                    top: AppSpacing.xs,
+                    right: AppSpacing.xs,
+                    child: BlocBuilder<FavoriteBloc, FavoriteState>(
+                      builder: (context, favoriteState) {
+                        final isFavorite = favoriteState is FavoriteLoaded &&
+                            favoriteState.favoriteIds.contains(businessId);
+
+                        return Material(
+                          color: Colors.white.withOpacity(0.9),
+                          shape: const CircleBorder(),
+                          elevation: 2,
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => _onToggleFavorite(context),
+                            child: SizedBox(
+                              width: 34,
+                              height: 34,
+                              child: Icon(
+                                isFavorite
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                color: isFavorite
+                                    ? AppColors.primary
+                                    : Colors.black87,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.sm),

@@ -239,6 +239,7 @@ class _HomePageState extends State<HomePage> {
                             itemBuilder: (context, index) {
                               final business = recommendedBusinesses[index];
                               return BusinessCard(
+                                businessId:business.id ,
                                 width: _recommendedTileWidth,
                                 businessName: business.nameAr,
                                 coverUrl: business.coverUrl,
@@ -268,6 +269,7 @@ class _HomePageState extends State<HomePage> {
                             horizontal: AppSpacing.pageHorizontal,
                           ),
                           child: BusinessCard(
+                            businessId:popularBusiness.id ,
                             businessName: popularBusiness.nameAr,
                             coverUrl: popularBusiness.coverUrl,
                             rating: popularBusiness.rating,

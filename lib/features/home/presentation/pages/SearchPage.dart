@@ -8,24 +8,13 @@ import 'package:aklatna/features/home/presentation/widgets/search/popularDishes.
 import 'package:aklatna/features/home/presentation/widgets/search/recentKeyword.dart';
 import 'package:aklatna/features/home/presentation/widgets/search/searchBarState.dart'
     as app;
-import 'package:aklatna/features/home/presentation/widgets/search/searchHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/search/searchResultCard.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/menu/domain/entity/menuItemEntity.dart';
-import 'package:aklatna/features/menu/presentation/pages/FoodDetailsPage.dart';
-import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-// TODO(Amer): fix these imports to your real bloc file paths/class names —
-// I'm assuming BusinessBloc/BusinessState and ProfileBloc/ProfileState
-// live where memory says, but I haven't seen the real import paths.
-
-
-/// No constructor params — matches your HomePage convention. All data via
-/// context.read / BlocBuilder.
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
@@ -34,7 +23,6 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  // final _recentStorage = RecentSearchStorage(); // TODO(Amer): pull from GetIt (sl()) instead once wired
   final _controller = TextEditingController();
   List<String> _recentKeywords = [];
   String _query = '';
@@ -53,8 +41,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   Future<void> _loadRecent() async {
-    // final recent = await _recentStorage.getRecent();
-    // if (mounted) setState(() => _recentKeywords = recent);
+    // Recent keywords logic if needed
   }
 
   void _onQueryChanged(String value) {
@@ -92,15 +79,24 @@ class _SearchPageState extends State<SearchPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.md),
-              // TODO(Amer): wire real imageUrl from ProfileBloc.
-              BlocBuilder<ProfileBloc, ProfileState>(
-                builder: (context, state) {
-                  final photo = state is ProfileLoaded
-                      ? state.profile.profilePhoto
-                      : null;
-                  return SearchHeader(imageUrl: photo);
-                },
+              
+              // Top Bar: Page Title + Favorites Heart Icon
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('البحث', style: AppTextStyles.h2),
+                  IconButton(
+                    onPressed: () => context.push('/favorites'),
+                    icon: const Icon(
+                      Icons.favorite_border,
+                      color: AppColors.primary,
+                      size: 28,
+                    ),
+                    tooltip: 'المطاعم المفضلة',
+                  ),
+                ],
               ),
+
               const SizedBox(height: AppSpacing.lg),
               app.SearchBar(
                 controller: _controller,
@@ -131,7 +127,7 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  /// Always shown at the bottom — popular dishes horizontal slider.
+  /// Popular dishes slider at the bottom
   Widget _buildIdleContent() {
     return BlocBuilder<MenuBloc, MenuState>(
       builder: (context, state) {
@@ -210,10 +206,8 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  /// Shown once there's an active query — delegates to BusinessBloc state.
+  /// Active query search results
   Widget _buildResults() {
-    // TODO(Amer): replace this stub with your real BlocBuilder:
-    //
     return BlocBuilder<BusinessBloc, BusinessState>(
       builder: (context, state) {
         if (state is BusinessLoading) {

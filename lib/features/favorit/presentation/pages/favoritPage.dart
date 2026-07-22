@@ -21,7 +21,9 @@ class _FavoritesPageState extends State<FavoritesPage> {
     super.initState();
     final profileState = context.read<ProfileBloc>().state;
     if (profileState is ProfileLoaded) {
-      context.read<FavoriteBloc>().add(LoadFavoritesEvent(userId: profileState.profile.id));
+      context.read<FavoriteBloc>().add(
+        LoadFavoritesEvent(userId: profileState.profile.id),
+      );
     }
   }
 
@@ -45,24 +47,32 @@ class _FavoritesPageState extends State<FavoritesPage> {
               }
               if (state.businesses.isEmpty) {
                 return Center(
-                  child: Text('لا توجد مطاعم مفضلة بعد', style: AppTextStyles.bodyMedium),
+                  child: Text(
+                    'لا توجد مطاعم مفضلة بعد',
+                    style: AppTextStyles.bodyMedium,
+                  ),
                 );
               }
 
               return ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.lg,
+                  vertical: AppSpacing.md,
+                ),
                 itemCount: state.businesses.length,
-                separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
-               itemBuilder: (context, index) {
-  final business = state.businesses[index];
-  return BusinessCard(
-    businessName: business.nameAr,
-    coverUrl: business.coverUrl,
-    rating: business.rating,
-    ratingCount: business.ratingCount,
-    onTap: () => context.push('/business/${business.id}'),
-  );
-},
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: AppSpacing.md),
+                itemBuilder: (context, index) {
+                  final business = state.businesses[index];
+                  return BusinessCard(
+                    businessId: business.id,
+                    businessName: business.nameAr,
+                    coverUrl: business.coverUrl,
+                    rating: business.rating,
+                    ratingCount: business.ratingCount,
+                    onTap: () => context.push('/business/${business.id}'),
+                  );
+                },
               );
             },
           ),
