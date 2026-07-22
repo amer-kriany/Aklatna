@@ -24,9 +24,24 @@ class _JobsPageState extends State<JobsPage> {
   }
 
   Future<void> _callNumber(String phone) async {
-    final uri = Uri(scheme: 'tel', path: phone);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+    final cleanedPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri uri = Uri(scheme: 'tel', path: cleanedPhone);
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('تعذر إجراء الاتصال بالرقم $cleanedPhone')),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error launching dialer: $e');
     }
   }
 
@@ -37,7 +52,10 @@ class _JobsPageState extends State<JobsPage> {
       child: Scaffold(
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -56,15 +74,24 @@ class _JobsPageState extends State<JobsPage> {
                         return const SizedBox.shrink();
                       }
                       if (state.jobs.isEmpty) {
-                        return Center(child: Text('لا توجد وظائف متاحة حالياً', style: AppTextStyles.bodyMedium));
+                        return Center(
+                          child: Text(
+                            'لا توجد وظائف متاحة حالياً',
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        );
                       }
 
                       return ListView.separated(
                         itemCount: state.jobs.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: AppSpacing.md),
                         itemBuilder: (context, index) {
                           final job = state.jobs[index];
-                          return JobCard(job: job, onCall: () => _callNumber(job.contactPhone));
+                          return JobCard(
+                            job: job,
+                            onCall: () => _callNumber(job.contactPhone),
+                          );
                         },
                       );
                     },

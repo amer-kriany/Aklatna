@@ -4,6 +4,11 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class OrderStatusHelper {
+  static bool isScheduled(OrderStatus status, DateTime? scheduledFor) {
+    return scheduledFor != null && !isHistory(status);
+  }static bool isRegularOngoing(OrderStatus status, DateTime? scheduledFor) {
+    return scheduledFor == null && isOngoing(status);
+  }
   static Color colorFor(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:

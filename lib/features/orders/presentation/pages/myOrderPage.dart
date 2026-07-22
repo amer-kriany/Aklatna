@@ -1,11 +1,3 @@
-import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:aklatna/features/cart/presentation/bloc/cart_state.dart';
-import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
-import 'package:aklatna/features/orders/orderStatus.dart';
-import 'package:aklatna/features/orders/presentation/widgets/OrderEmptyPlaceholder.dart';
-import 'package:aklatna/features/orders/presentation/widgets/orderCard.dart';
-import 'package:aklatna/features/orders/presentation/widgets/orderStatusHelper.dart';
-import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:aklatna/features/cart/presentation/bloc/cart_state.dart';
+import 'package:aklatna/features/orders/orderStatus.dart';
+import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
+import 'package:aklatna/features/orders/presentation/widgets/orderCard.dart';
+import 'package:aklatna/features/orders/presentation/widgets/orderStatusHelper.dart';
+import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 
 class MyOrdersPage extends StatefulWidget {
   const MyOrdersPage({super.key});
@@ -68,28 +67,43 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                 child: Text('طلباتي', style: AppTextStyles.h2),
               ),
               const SizedBox(height: AppSpacing.md),
-              TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textSecondary,
-                indicatorColor: AppColors.primary,
-                labelStyle: AppTextStyles.bodyMedium,
-                tabs: const [
-                  Tab(text: 'السجل'),
-                  Tab(text: 'جارية'),
-                  Tab(text: 'مجدولة'),
-                ],
+              Center(
+                child: TabBar(
+                  controller: _tabController,
+                  isScrollable:
+                      false, // Disables scrolling so tabs stretch evenly
+                  labelColor: AppColors.primary,
+                  unselectedLabelColor: AppColors.textSecondary,
+                  indicatorColor: AppColors.primary,
+                  labelStyle: AppTextStyles.bodyMedium,
+                  tabs: const [
+                    Tab(text: 'السجل'),
+                    Tab(text: 'جارية'),
+                    Tab(text: 'مجدولة'),
+                  ],
+                ),
               ),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildOrdersList(filter: OrderStatusHelper.isHistory),
+                    // 1. History Tab (Completed / Cancelled)
+                    _buildOrdersList(
+                      emptyMessage: 'لا توجد طلبات في السجل',
+                      filter: (o) => OrderStatusHelper.isHistory(o.orderStatus),
+                    ),
+
+                    // 2. Ongoing Tab
+                    // Shows regular active orders OR scheduled orders that moved to preparing/ready
                     _buildOngoingList(),
-                    const OrderEmptyPlaceholder(
-                      title: 'جدولة الطلبات قريباً',
-                      subtitle: 'لتقدر تجدول طلباتك المفضلة مسبقاً',
+
+                    // 3. Scheduled Tab
+                    // Shows scheduled orders that are STILL strictly in 'pending' status
+                    _buildOrdersList(
+                      emptyMessage: 'لا توجد طلبات مجدولة',
+                      filter: (o) =>
+                          o.scheduledFor != null &&
+                          o.orderStatus == OrderStatus.pending,
                     ),
                   ],
                 ),
@@ -101,8 +115,11 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     );
   }
 
-  // History tab — plain status-filtered list, no draft logic
-  Widget _buildOrdersList({required bool Function(OrderStatus) filter}) {
+  // Generic builder for History and Scheduled tabs
+  Widget _buildOrdersList({
+    required String emptyMessage,
+    required bool Function(dynamic) filter,
+  }) {
     return RefreshIndicator(
       onRefresh: _onRefresh,
       child: BlocBuilder<OrderBloc, OrderState>(
@@ -123,9 +140,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
             return const SizedBox.shrink();
           }
 
-          final filtered = state.orders
-              .where((o) => filter(o.orderStatus))
-              .toList();
+          final filtered = state.orders.where(filter).toList();
 
           if (filtered.isEmpty) {
             return ListView(
@@ -134,10 +149,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
               children: [
                 const SizedBox(height: 100),
                 Center(
-                  child: Text(
-                    'لا توجد طلبات هنا',
-                    style: AppTextStyles.bodyMedium,
-                  ),
+                  child: Text(emptyMessage, style: AppTextStyles.bodyMedium),
                 ),
               ],
             );
@@ -159,7 +171,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     );
   }
 
-  // On-going tab — status-filtered orders + draft cart card at the top, if any
+  // Ongoing Tab logic
   Widget _buildOngoingList() {
     return RefreshIndicator(
       onRefresh: _onRefresh,
@@ -185,9 +197,15 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                 return const SizedBox.shrink();
               }
 
-              final filtered = orderState.orders
-                  .where((o) => OrderStatusHelper.isOngoing(o.orderStatus))
-                  .toList();
+              // Ongoing includes active non-scheduled orders OR scheduled orders that moved to preparing/ready
+              final filtered = orderState.orders.where((o) {
+                final isScheduledPending =
+                    o.scheduledFor != null &&
+                    o.orderStatus == OrderStatus.pending;
+
+                return OrderStatusHelper.isOngoing(o.orderStatus) &&
+                    !isScheduledPending;
+              }).toList();
 
               if (filtered.isEmpty && !hasDraft) {
                 return ListView(
@@ -199,7 +217,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                     const SizedBox(height: 100),
                     Center(
                       child: Text(
-                        'لا توجد طلبات هنا',
+                        'لا توجد طلبات جارية',
                         style: AppTextStyles.bodyMedium,
                       ),
                     ),
