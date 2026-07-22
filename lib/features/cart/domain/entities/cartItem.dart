@@ -49,11 +49,8 @@ class CartItem {
     return {
       'item_id': itemId,
       'name_ar': nameAr,
-      'description': description,
-      'photo_url': photoUrl,
       'price': price,
       'quantity': quantity,
-      'business_id': businessId,
       'note': note,
       'addons': selectedAddons,
     };
@@ -74,7 +71,10 @@ class CartItem {
 
     List<Map<String, dynamic>> asAddonsOrEmpty(dynamic value) {
       if (value is! List) return [];
-      return value.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return value
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     }
 
     return CartItem(

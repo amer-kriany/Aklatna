@@ -3,7 +3,7 @@ import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:aklatna/features/orders/order_type.dart';
 
 class OrderModel {
- final String? id;
+  final String? id;
   final String? orderNumber;
   final DateTime? createdAt;
   final String businessId;
@@ -28,24 +28,25 @@ class OrderModel {
     this.deliveryAddress,
     required this.totalPrice,
     required this.orderType,
-    required this.orderStatus, this.scheduledFor,
+    required this.orderStatus,
+    this.scheduledFor,
   });
 
- Map<String, dynamic> toJson() {
-  return {
-    'business_id': businessId,
-    'customer_id': customerId,
-    'customer_name': customername,
-    'customer_phone': customerPhone,
-    'items': items.map((e) => e.toJson()).toList(),
-    'delivery_address': deliveryAddress,
-    'total_price': totalPrice,
-    'order_type': orderType.name,
-    'order_status': 'pending',
-'scheduled_for': scheduledFor?.toIso8601String(),
-    // id, created_at, order_number — DB-generated, not sent from client
-  };
-}
+  Map<String, dynamic> toJson() {
+    return {
+      'business_id': businessId,
+      'customer_id': customerId,
+      'customer_name': customername,
+      'customer_phone': customerPhone,
+      'items': items.map((e) => e.toJson()).toList(),
+      'delivery_address': deliveryAddress,
+      'total_price': totalPrice,
+      'order_type': orderType.name,
+      'order_status': 'pending',
+      'scheduled_for': scheduledFor?.toIso8601String(),
+      // id, created_at, order_number — DB-generated, not sent from client
+    };
+  }
 
   factory OrderModel.fromSupabase(Map<String, dynamic> orders) {
     String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
@@ -61,10 +62,11 @@ class OrderModel {
       return DateTime.tryParse(value?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0);
     }
+
     DateTime? asNullableDate(dynamic value) {
-  if (value == null) return null;
-  return DateTime.tryParse(value.toString());
-}
+      if (value == null) return null;
+      return DateTime.tryParse(value.toString());
+    }
 
     OrderType asOrderType(dynamic value) {
       final normalized = value?.toString();
@@ -106,8 +108,6 @@ class OrderModel {
       createdAt: asDateOrEpoch(orders['created_at']),
       orderStatus: asOrderStatus(orders['order_status']),
       scheduledFor: asNullableDate(orders['scheduled_for']),
-      
-      
     );
   }
 }
