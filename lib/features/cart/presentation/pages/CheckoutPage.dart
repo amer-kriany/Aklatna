@@ -93,7 +93,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ? OrderType.delivery
           : OrderType.pickup,
       orderStatus: OrderStatus.pending,
-scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : DateTime.now(),    );
+scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,    );
 
     context.read<OrderBloc>().add(PlaceOrderEvent(order: order));
   }

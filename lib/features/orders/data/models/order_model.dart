@@ -1,6 +1,7 @@
 import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:aklatna/features/orders/order_type.dart';
+import 'package:dartz/dartz.dart';
 
 class OrderModel {
   final String? id;
@@ -87,11 +88,17 @@ class OrderModel {
     }
 
     List<CartItem> asCartItems(dynamic value) {
-      if (value is! List) return <CartItem>[];
+      try{
+         if (value is! List) return <CartItem>[];
       return value
           .whereType<Map>()
           .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e)))
           .toList();
+      }catch(e){
+        Println("Error parsing cart items in order: $e");
+    return <CartItem>[];
+      }
+     
     }
 
     return OrderModel(
