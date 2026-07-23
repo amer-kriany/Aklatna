@@ -7,32 +7,12 @@ import 'package:aklatna/features/home/presentation/widgets/home/HomeGreeting.dar
 import 'package:aklatna/features/home/presentation/widgets/home/HomeSearchBar.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SectionHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SponseredBanner.dart';
-import 'package:aklatna/features/profile/domain/entities/profileEntity.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 
-// TODO(Amer): fix these import paths to match your real project structure
-// import '../../business/presentation/bloc/business_bloc.dart';
-// import '../../business/domain/entities/business_entity.dart';
-// import '../../profile/presentation/bloc/profile_bloc.dart';
-// import '../../../../core/routes/app_routes.dart';
-
-/// Home page - wired to real BusinessBloc + ProfileBloc.
-///
-/// Profile gates the whole page (header/greeting need it) - shows a
-/// full-page spinner until ProfileLoaded. Once that's ready, the
-/// business sections render independently and collapse to nothing
-/// (not a second spinner) until BusinessFetched arrives, since a
-/// business-load delay shouldn't block the whole page from showing.
-///
-/// "Popular Near You" / "Recommended" aren't separate bloc states -
-/// BusinessFetched only gives one flat list, so this page derives the
-/// split itself: highest-rated business = Popular, the rest = Recommended.
-/// TODO(Amer): confirm this is really how "popular" should be decided
-/// (vs. e.g. admin-picked or a future paid placement).
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -41,7 +21,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Approximate - verify against real device render and adjust.
   static const double _recommendedTileWidth = 160;
   static const double _recommendedRowHeight = 210;
 
@@ -52,6 +31,17 @@ class _HomePageState extends State<HomePage> {
     context.read<ProfileBloc>().add(GetProfilesEvent());
   }
 
+  /// Extracts only Street and City from full address string
+  String _formatAddress(String? fullAddress) {
+    if (fullAddress == null || fullAddress.trim().isEmpty) return '';
+    final parts = fullAddress.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    if (parts.length >= 2) {
+      // Returns "Street, City" (taking first and last non-empty parts)
+      return '${parts.first}, ${parts.last}';
+    }
+    return fullAddress;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -59,44 +49,11 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, profileState) {
-            if (profileState is ProfileLoading ||
-                profileState is ProfileInitial) {
+            if (profileState is ProfileLoading || profileState is ProfileInitial) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (profileState is ProfileError) {
-              return Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Colors.orange,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      "Profile not found",
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () {
-                        context.read<ProfileBloc>().add(GetProfilesEvent());
-                      },
-                      child: const Text("Retry"),
-                    ),
-                  ],
-                ),
-              );
-            }
-            final Profileentity profile;
-            if (profileState is ProfileLoaded) {
-              profile = profileState.profile;
-            } else {
+            if (profileState is ProfileError || profileState is! ProfileLoaded) {
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -126,15 +83,17 @@ class _HomePageState extends State<HomePage> {
               );
             }
 
-            ///////////////////////////////////////////////////////////////////////////////////////
+            final profile = profileState.profile;
+
             return BlocBuilder<BusinessBloc, BusinessState>(
               builder: (context, businessState) {
                 if (businessState is BusinessLoading) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
                 if (businessState is BusinessError) {
                   return Center(child: Text(businessState.message));
                 }
+
                 List<BusinessEntity> businesses = <BusinessEntity>[];
                 if (businessState is BusinessFetched) {
                   businesses = businessState.businesses;
@@ -143,14 +102,10 @@ class _HomePageState extends State<HomePage> {
                 final sorted = [...businesses]
                   ..sort((a, b) => b.rating.compareTo(a.rating));
                 final popularBusiness = sorted.isNotEmpty ? sorted.first : null;
-                final recommendedBusinesses = sorted.length > 1
-                    ? sorted.sublist(1)
-                    : <BusinessEntity>[];
+                final recommendedBusinesses =
+                    sorted.length > 1 ? sorted.sublist(1) : <BusinessEntity>[];
 
-                // TODO(Amer): sponsored_banners table doesn't exist yet -
-                // wire this once it's built.
-                const String? sponsoredBannerImageUrl =
-                    "assets/images/profile.jpg";
+                const String? sponsoredBannerImageUrl = "assets/images/profile.jpg";
 
                 return SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -162,11 +117,15 @@ class _HomePageState extends State<HomePage> {
                           horizontal: AppSpacing.pageHorizontal,
                         ),
                         child: HomeDeliveryHeader(
-                          // TODO(Amer): resolve real address source (deferred)
-                          addressLabel: profile.address,
+                          // Formatted to display only Street, City
+                          addressLabel: _formatAddress(profile.address),
                           avatarUrl: profile.photo,
-                          onAvatarTap: () {
-                            context.push("/profile");
+                          onAvatarTap: () async {
+                            // Re-fetches profile data when returning from Profile page
+                            await context.push("/profile");
+                            if (context.mounted) {
+                              context.read<ProfileBloc>().add(GetProfilesEvent());
+                            }
                           },
                           onAddressTap: () {
                             // TODO(Amer): context.push(AppRoutes.addressSelect);
@@ -191,7 +150,7 @@ class _HomePageState extends State<HomePage> {
                           onTap: () {
                             context.go("/search");
                           },
-                          onMicTap: null, // visual only, not wired in Phase 1
+                          onMicTap: null,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xl),
@@ -201,21 +160,14 @@ class _HomePageState extends State<HomePage> {
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.pageHorizontal,
-                          ),
                           child: SponsoredBanner(
                             imageUrl: sponsoredBannerImageUrl,
-                            onTap: () {
-                              // TODO(Amer): decide destination once sponsored_banners table exists
-                            },
+                            onTap: () {},
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                       ],
+
                       if (recommendedBusinesses.isNotEmpty) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
@@ -238,14 +190,13 @@ class _HomePageState extends State<HomePage> {
                             itemBuilder: (context, index) {
                               final business = recommendedBusinesses[index];
                               return BusinessCard(
-                                businessId:business.id ,
+                                businessId: business.id,
                                 width: _recommendedTileWidth,
                                 businessName: business.nameAr,
                                 coverUrl: business.coverUrl,
                                 rating: business.rating,
                                 ratingCount: business.ratingCount,
                                 onTap: () {
-                                  ///////////////////
                                   context.push("/business/${business.id}");
                                 },
                               );
@@ -264,17 +215,16 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Padding(
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
                           child: BusinessCard(
-                            businessId:popularBusiness.id ,
+                            businessId: popularBusiness.id,
                             businessName: popularBusiness.nameAr,
                             coverUrl: popularBusiness.coverUrl,
                             rating: popularBusiness.rating,
                             ratingCount: popularBusiness.ratingCount,
                             onTap: () {
-                              ////////////////////
                               context.push("/business/${popularBusiness.id}");
                             },
                           ),

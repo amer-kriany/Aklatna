@@ -94,8 +94,6 @@ class CartPage extends StatelessWidget {
                                 ? profileState.profile.address
                                 : '';
 
-                            // TODO(Amer): order_type hardcoded to delivery
-                            // until a picker exists.
                             const orderType = 'delivery';
 
                             return Column(
@@ -107,7 +105,7 @@ class CartPage extends StatelessWidget {
                                         ? address
                                         : 'لا يوجد عنوان محفوظ',
                                     onEdit: () {
-                                      // TODO(Amer): navigate to profile edit / address field
+                                      context.push("/addresses");
                                     },
                                   ),
                                   const SizedBox(height: AppSpacing.lg),

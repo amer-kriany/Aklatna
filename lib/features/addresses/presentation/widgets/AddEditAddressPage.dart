@@ -11,9 +11,14 @@ import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class AddEditAddressPage extends StatefulWidget {
-  const AddEditAddressPage({super.key, this.existing});
+   const AddEditAddressPage({
+    super.key,
+    this.existing,
+    required this.isFirstAddress,
+  });
 
   final AddressEntity? existing;
+  final bool isFirstAddress;
 
   @override
   State<AddEditAddressPage> createState() => _AddEditAddressPageState();
@@ -36,8 +41,11 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
     _cityController = TextEditingController(text: existing?.city ?? '');
     _apartmentController = TextEditingController(text: existing?.apartment ?? '');
     _selectedLabel = existing?.label ?? 'Home';
-    _isDefault = existing?.isDefault ?? false;
-  }
+if (existing != null) {
+  _isDefault = existing.isDefault;
+} else {
+  _isDefault = widget.isFirstAddress;
+}  }
 
   @override
   void dispose() {
@@ -118,13 +126,17 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
                   }).toList(),
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _isDefault,
-                  onChanged: (v) => setState(() => _isDefault = v ?? false),
-                  title: Text('اجعله العنوان الافتراضي', style: AppTextStyles.bodyMedium),
-                  activeColor: AppColors.primary,
-                ),
+               if (!widget.isFirstAddress)
+  CheckboxListTile(
+    contentPadding: EdgeInsets.zero,
+    value: _isDefault,
+    onChanged: (v) => setState(() => _isDefault = v ?? false),
+    title: Text(
+      'اجعله العنوان الافتراضي',
+      style: AppTextStyles.bodyMedium,
+    ),
+    activeColor: AppColors.primary,
+  ),
                 const SizedBox(height: AppSpacing.xl),
                 BlocBuilder<AddressBloc, AddressState>(
                   builder: (context, state) {

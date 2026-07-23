@@ -101,13 +101,23 @@ class _AddressesPageState extends State<AddressesPage> {
                                     ],
                                   ),
                                 ),
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined, color: AppColors.primary, size: AppSizes.iconSm),
-                                  onPressed: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (_) => AddEditAddressPage(existing: addr)),
-                                  ),
-                                ),
+                                // Edit button
+IconButton(
+  icon: const Icon(
+    Icons.edit_outlined,
+    color: AppColors.primary,
+    size: AppSizes.iconSm,
+  ),
+  onPressed: () => Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => AddEditAddressPage(
+        existing: addr,
+        isFirstAddress: false,
+      ),
+    ),
+  ),
+),
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline, color: AppColors.error, size: AppSizes.iconSm),
                                   onPressed: () {
@@ -127,21 +137,40 @@ class _AddressesPageState extends State<AddressesPage> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                SizedBox(
-                  width: double.infinity,
-                  height: AppSizes.buttonHeight,
-                  child: FilledButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const AddEditAddressPage()),
-                    ),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
-                    ),
-                    child: Text('إضافة عنوان جديد', style: AppTextStyles.buttonLarge),
-                  ),
-                ),
+               SizedBox(
+  width: double.infinity,
+  height: AppSizes.buttonHeight,
+  child: FilledButton(
+    onPressed: () {
+      final state = context.read<AddressBloc>().state;
+
+      bool isFirstAddress = false;
+
+      if (state is AddressLoaded) {
+        isFirstAddress = state.addresses.isEmpty;
+      }
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => AddEditAddressPage(
+            isFirstAddress: isFirstAddress,
+          ),
+        ),
+      );
+    },
+    style: FilledButton.styleFrom(
+      backgroundColor: AppColors.primary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+    ),
+    child: Text(
+      'إضافة عنوان جديد',
+      style: AppTextStyles.buttonLarge,
+    ),
+  ),
+),
               ],
             ),
           ),
