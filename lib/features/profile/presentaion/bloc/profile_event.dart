@@ -12,15 +12,25 @@ class UpdateProfileEvent extends ProfileEvent {
   final String userId;
   final String? username;
   final String? address;
-  final String? photo;
 
   const UpdateProfileEvent({
     required this.userId,
     this.username,
     this.address,
-    this.photo,
   });
 
   @override
-  List<Object> get props => [userId, username ?? '', address ?? '', photo ?? ''];
+  List<Object> get props => [userId, username ?? '', address ?? '', ];
+}
+class UpdateProfilePhotoEvent extends ProfileEvent {
+  final String userId;
+  final String photo;
+
+  const UpdateProfilePhotoEvent({
+    required this.userId,
+    required this.photo,
+  });
+
+  @override
+  List<Object> get props => [userId, photo];
 }

@@ -1,6 +1,5 @@
 import 'package:aklatna/features/favorit/domain/useCases/favoriteUseCase.dart';
 import 'package:aklatna/features/home/domain/entity/businessEntity.dart';
-import 'package:aklatna/features/menu/domain/entity/menuItemEntity.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 

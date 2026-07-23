@@ -4,7 +4,7 @@ class Profilemodel {
   final String phoneNumber;
   final bool isPhoneVerified;
   final String email;
-  final String? profilePhoto;
+  final String? photo;
   final String address;
   Profilemodel({
     required this.id,
@@ -12,7 +12,7 @@ class Profilemodel {
     required this.phoneNumber,
     required this.isPhoneVerified,
     required this.email,
-    this.profilePhoto,
+    this.photo,
     required this.address,
   });
   factory Profilemodel.fromSupabase(Map<String, dynamic> profile) {
@@ -34,7 +34,7 @@ class Profilemodel {
       phoneNumber: asStringOrEmpty(profile['phone_number']),
       isPhoneVerified: asBoolOrFalse(profile['is_phone_verified']),
       email: asStringOrEmpty(profile['email']),
-      profilePhoto: asNullableString(profile['photo']),
+      photo: asNullableString(profile['photo']),
       address: asStringOrEmpty(profile['address']),
     );
     

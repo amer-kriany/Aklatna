@@ -44,7 +44,7 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
         userId: state.profile.id,
         username: _usernameController.text.trim(),
         address: _addressController.text.trim(),
-        photo: state.profile.profilePhoto, // unchanged here — photo edited separately
+       
       ),
     );
   }

@@ -22,13 +22,21 @@ class ProfileDatasource {
     String userId,
     String? username,
     String? address,
-    String? photo,
   ) async {
     try {
       await supabase
           .from('profiles')
-          .update({'username': username, 'adress': address, 'photo': photo})
+          .update({'username': username, 'address': address})
           .eq('id', userId);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // update profile photo
+  Future<void> updateProfilePhoto(String? photo,String userId) async {
+    try {
+      await supabase.from('profiles').update({'photo': photo}).eq('id', userId);
     } catch (e) {
       rethrow;
     }

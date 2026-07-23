@@ -1,5 +1,4 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
-import 'package:aklatna/core/widgets/AppBottomNavBar.dart';
 import 'package:aklatna/features/home/domain/entity/businessEntity.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/BusinessCard.dart';
@@ -165,7 +164,7 @@ class _HomePageState extends State<HomePage> {
                         child: HomeDeliveryHeader(
                           // TODO(Amer): resolve real address source (deferred)
                           addressLabel: profile.address,
-                          avatarUrl: profile.profilePhoto,
+                          avatarUrl: profile.photo,
                           onAvatarTap: () {
                             context.push("/profile");
                           },

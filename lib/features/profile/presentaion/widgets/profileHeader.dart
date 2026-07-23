@@ -22,10 +22,11 @@ class ProfileHeader extends StatelessWidget {
 
   static const double _avatarSize = 96;
 
+  // Clean and reliable URL check
   bool get _hasValidPhotoUrl {
-    final url = photoUrl ?? '';
-    final uri = Uri.tryParse(url);
-    return uri != null && (uri.scheme == 'http' || uri.scheme == 'https') && uri.host.isNotEmpty;
+    if (photoUrl == null || photoUrl!.trim().isEmpty) return false;
+    final cleanUrl = photoUrl!.trim();
+    return cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://');
   }
 
   @override
@@ -45,11 +46,41 @@ class ProfileHeader extends StatelessWidget {
                     width: _avatarSize,
                     height: _avatarSize,
                     child: _hasValidPhotoUrl
-                        ? Image.network(photoUrl!, fit: BoxFit.cover)
+                        ? Image.network(
+                            photoUrl!,
+                            fit: BoxFit.cover,
+                            // Show loading indicator while image downloads
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: AppColors.surface,
+                                child: const Center(
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  ),
+                                ),
+                              );
+                            },
+                            // Fallback if image fails to load from network
+                           errorBuilder: (c, e, s) {
+  debugPrint('Image load failed: $e');
+  return Container(
+    color: AppColors.surface,
+    alignment: Alignment.center,
+    child: const Icon(Icons.person, size: AppSizes.iconXl, color: AppColors.textSecondary),
+  );
+},
+                          )
                         : Container(
                             color: AppColors.surface,
                             alignment: Alignment.center,
-                            child: const Icon(Icons.person, size: AppSizes.iconXl, color: AppColors.textSecondary),
+                            child: const Icon(
+                              Icons.person,
+                              size: AppSizes.iconXl,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                   ),
                 ),
@@ -68,7 +99,11 @@ class ProfileHeader extends StatelessWidget {
                         border: Border.all(color: AppColors.background, width: 2),
                       ),
                       alignment: Alignment.center,
-                      child: const Icon(Icons.edit, color: AppColors.textOnPrimary, size: 14),
+                      child: const Icon(
+                        Icons.edit,
+                        color: AppColors.textOnPrimary,
+                        size: 14,
+                      ),
                     ),
                   ),
                 ),
@@ -80,7 +115,9 @@ class ProfileHeader extends StatelessWidget {
           const SizedBox(height: AppSpacing.xxs),
           Text(
             '$email | $phoneNumber',
-            style: AppTextStyles.regularMedium.copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.regularMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
             textAlign: TextAlign.center,
           ),
         ],

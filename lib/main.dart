@@ -28,6 +28,7 @@ import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:aklatna/features/profile/data/datasource/profile_datasource.dart';
 import 'package:aklatna/features/profile/data/repository/profileRepoImp.dart';
 import 'package:aklatna/features/profile/domain/usecases/getProfilesUsecase.dart';
+import 'package:aklatna/features/profile/domain/usecases/updateProfilePhotoUseCase.dart';
 import 'package:aklatna/features/profile/domain/usecases/updateProfileUsecase.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:aklatna/injection_container.dart';
@@ -82,6 +83,9 @@ void main() async {
   final getitemsusecase = Getitemsusecase(repo: menuRepo);
   final getprofilesusecase = Getprofilesusecase(repo: profileRepo);
   final updateprofileusecase = Updateprofileusecase(repo: profileRepo);
+  final updateProfilePhotoUseCase = Updateprofilephotousecase(
+    repo: profileRepo,
+  );
   final addFavoriteUseCase = AddFavoriteUsecase(repo: favoriteRepo);
   final removeFavoriteUseCase = RemoveFavoriteUsecase(repo: favoriteRepo);
   final getFavoriteIdUseCase = GetFavoriteIdsUsecase(repo: favoriteRepo);
@@ -117,7 +121,7 @@ void main() async {
         BlocProvider(
           create: (context) => ProfileBloc(
             getProfilesUsecase: getprofilesusecase,
-            updateProfileUsecase: updateprofileusecase,
+            updateProfileUsecase: updateprofileusecase, updateprofilephotousecase: updateProfilePhotoUseCase,
           ),
         ),
         BlocProvider(create: (context) => CartBloc()),
