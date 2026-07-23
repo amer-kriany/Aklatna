@@ -4,6 +4,7 @@ import 'package:aklatna/features/addOnes/data/datasource/addOnesDataSource.dart'
 import 'package:aklatna/features/addOnes/data/repository/addOnesRepoImp.dart';
 import 'package:aklatna/features/addOnes/domain/useCases/getAddOnesUseCase.dart';
 import 'package:aklatna/features/addOnes/presentation/bloc/add_ones_bloc.dart';
+import 'package:aklatna/features/addresses/presentation/pages/AddressesPage.dart';
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:aklatna/features/auth/presentation/pages/SignInPage.dart';
 import 'package:aklatna/features/auth/presentation/pages/signUpPage.dart';
@@ -144,6 +145,11 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+    GoRoute(
+  path: '/addresses',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) => const AddressesPage(),
+),
     GoRoute(
       path: '/order-placed',
       parentNavigatorKey: MainShell.rootNavigatorKey,

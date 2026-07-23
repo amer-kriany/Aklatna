@@ -214,6 +214,12 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                           ProfileMenuRow(
+  icon: Icons.location_on_outlined,
+  iconColor: AppColors.info,
+  label: 'العناوين',
+  onTap: () => context.push('/addresses'),
+),
+                          ProfileMenuRow(
                             icon: Icons.favorite_border,
                             iconColor: Colors.pink,
                             label: 'المفضلة',

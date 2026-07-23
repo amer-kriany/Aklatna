@@ -27,6 +27,7 @@ class Businessrepoimp implements Businessrepo {
       type: model.type,
       rating: model.rating,
       ratingCount: model.ratingCount,
+      coverUrl: model.coverUrl,
     );
   }
 

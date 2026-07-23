@@ -5,6 +5,7 @@ class Profileentity {
   final bool isPhoneVerified;
   final String email;
   final String? photo;
+  final String? bio;
     final String address;
 
   Profileentity({
@@ -13,6 +14,6 @@ class Profileentity {
     required this.phoneNumber,
     required this.isPhoneVerified,
     required this.email,
-    this.photo, required this.address,
+    this.photo, required this.address, this.bio,
   });
 }

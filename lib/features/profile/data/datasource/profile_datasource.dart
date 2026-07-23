@@ -22,11 +22,12 @@ class ProfileDatasource {
     String userId,
     String? username,
     String? address,
+    String?bio
   ) async {
     try {
       await supabase
           .from('profiles')
-          .update({'username': username, 'address': address})
+          .update({'username': username, 'bio':bio})
           .eq('id', userId);
     } catch (e) {
       rethrow;

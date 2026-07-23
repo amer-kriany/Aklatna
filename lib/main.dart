@@ -1,4 +1,8 @@
 import 'package:aklatna/core/router/app_router.dart';
+import 'package:aklatna/features/addresses/data/dataSource/addressDataSource.dart';
+import 'package:aklatna/features/addresses/data/repository/addressRepoImp.dart';
+import 'package:aklatna/features/addresses/domain/usecases/useCases.dart';
+import 'package:aklatna/features/addresses/presentation/bloc/address_bloc.dart';
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/favorit/data/ReposityrImp.dart/favoritRepoImp.dart';
@@ -55,12 +59,14 @@ void main() async {
   final favoriteDatasource = FavoriteDatasource();
   final orderRemoteDatasource = OrderRemoteDatasource();
   final jobDatasource = JobDatasource();
+  final addressDatasource = AddressDatasource();
 
   // repositories
   final favoriteRepo = FavoriteRepositoryImpl(datasource: favoriteDatasource);
   final orderRepo = OrderRepositoryImpl(
     orderRemoteDatasource: orderRemoteDatasource,
   );
+  final addressrepo = AddressRepositoryImpl(datasource: addressDatasource);
   final jobRepo = JobRepoimp(jobDatasource: jobDatasource);
   final businessRepository = Businessrepoimp(
     businessDatasrouce: getBusinessDatasource,
@@ -71,6 +77,10 @@ void main() async {
   final getCostomerOrdersUseCase = GetCustomerOrdersUseCase(
     orderRepositoryImpl: orderRepo,
   );
+  final getAddressUsecase = GetAddressesUsecase(repo: addressrepo);
+  final addAddressUsecase = AddAddressUsecase(repo: addressrepo);
+  final deleteAddressUsecase = DeleteAddressUsecase(repo: addressrepo);
+  final setDefaultAddressUsecase = SetDefaultAddressUsecase(repo: addressrepo);
   final getJobsUsecase = GetJobsUsecase(jobRepoimp: jobRepo);
   final orderstatususecase = Orderstatususecase(orderRepositoryImpl: orderRepo);
   final placeOrderUsecase = PlaceOrderUsecase(orderRepositoryImpl: orderRepo);
@@ -102,6 +112,14 @@ void main() async {
           ),
         ),
         BlocProvider(
+          create: (context) => AddressBloc(
+            getAddressesUsecase: getAddressUsecase,
+            addAddressUsecase: addAddressUsecase,
+            deleteAddressUsecase: deleteAddressUsecase,
+            setDefaultAddressUsecase: setDefaultAddressUsecase,
+          ),
+        ),
+        BlocProvider(
           create: (context) => JobBloc(getJobsUsecase: getJobsUsecase),
         ),
         BlocProvider(
@@ -121,7 +139,8 @@ void main() async {
         BlocProvider(
           create: (context) => ProfileBloc(
             getProfilesUsecase: getprofilesusecase,
-            updateProfileUsecase: updateprofileusecase, updateprofilephotousecase: updateProfilePhotoUseCase,
+            updateProfileUsecase: updateprofileusecase,
+            updateprofilephotousecase: updateProfilePhotoUseCase,
           ),
         ),
         BlocProvider(create: (context) => CartBloc()),

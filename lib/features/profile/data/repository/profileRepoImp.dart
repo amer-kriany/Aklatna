@@ -17,8 +17,9 @@ class Profilerepoimp implements Profilerepo {
     String userId,
     String? username,
     String? address,
+    String? bio,
   ) async {
-    await profileDatasource.updateProfileData(userId, username, address);
+    await profileDatasource.updateProfileData(userId, username, address,bio);
   }
 
   @override
@@ -35,6 +36,7 @@ Profileentity mapToEntity(Profilemodel model) {
     isPhoneVerified: model.isPhoneVerified,
     email: model.email,
     address: model.address,
-    photo: model.photo
+    photo: model.photo,
+    bio: model.bio
   );
 }

@@ -47,7 +47,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     emit(ProfileLoading());
     try {
-      await updateProfileUsecase(event.userId, event.username, event.address);
+      await updateProfileUsecase(event.userId, event.username, event.address,event.bio);
       emit(ProfileUpdated());
     } catch (e) {
       emit(ProfileError(message: e.toString()));
