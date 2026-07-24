@@ -13,6 +13,7 @@ class OrderModel {
   final String customerPhone;
   final List<CartItem> items;
   final String? deliveryAddress;
+  final String? description;
   final double totalPrice;
   final OrderType orderType;
   final OrderStatus orderStatus;
@@ -30,7 +31,7 @@ class OrderModel {
     required this.totalPrice,
     required this.orderType,
     required this.orderStatus,
-    this.scheduledFor,
+    this.scheduledFor, this.description,
   });
 
   Map<String, dynamic> toJson() {
@@ -43,6 +44,7 @@ class OrderModel {
       'delivery_address': deliveryAddress,
       'total_price': totalPrice,
       'order_type': orderType.name,
+      'description': description,
       'order_status': 'pending',
       'scheduled_for': scheduledFor?.toIso8601String(),
       // id, created_at, order_number — DB-generated, not sent from client
@@ -114,7 +116,9 @@ class OrderModel {
       orderNumber: asStringOrEmpty(orders['order_number']),
       createdAt: asDateOrEpoch(orders['created_at']),
       orderStatus: asOrderStatus(orders['order_status']),
+      description: asNullableString(orders['description']),
       scheduledFor: asNullableDate(orders['scheduled_for']),
+
     );
   }
 }

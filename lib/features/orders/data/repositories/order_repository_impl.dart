@@ -39,6 +39,7 @@ OrderEntity mapToEntity(OrderModel order) {
     createdAt: order.createdAt,
     orderStatus: order.orderStatus,
     scheduledFor: order.scheduledFor,
+    description: order.description
   );
 }
 
@@ -56,5 +57,6 @@ OrderModel entityToModel(OrderEntity entity) {
     createdAt: entity.createdAt,
     orderStatus: entity.orderStatus,
     scheduledFor: entity.scheduledFor,
+    description: entity.description
   );
 }

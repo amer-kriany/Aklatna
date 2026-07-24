@@ -1,4 +1,3 @@
-import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_state.dart';
 import 'package:aklatna/features/cart/presentation/widgets/cart/CartCheckoutButton.dart';
@@ -12,6 +11,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// No constructor params — matches HomePage/SearchPage convention.
 class CartPage extends StatelessWidget {
@@ -86,12 +86,12 @@ class CartPage extends StatelessWidget {
 
                         BlocBuilder<ProfileBloc, ProfileState>(
                           builder: (context, profileState) {
-                            final address = profileState is ProfileLoaded
-                                ? profileState.profile.address
-                                : '';
-                            final userId = profileState is ProfileLoaded
-                                ? profileState.profile.id
-                                : '';
+                            final profile = profileState is ProfileLoaded
+                                ? profileState.profile
+                                : null;
+
+                            final address = profile?.address ?? '';
+                            final userId = profile?.id ?? '';
 
                             const orderType = 'delivery';
 
@@ -109,7 +109,79 @@ class CartPage extends StatelessWidget {
                                 ],
                                 CartCheckoutButton(
                                   onPressed: () {
-                                    context.push("/checkout");
+                                    // 🚀 Check if address is missing for delivery orders
+                                    if (orderType == 'delivery' &&
+                                        address.trim().isEmpty) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (dialogContext) => AlertDialog(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.lg,
+                                            ),
+                                          ),
+                                          title: Text(
+                                            'العنوان مفقود',
+                                            style: AppTextStyles.h4,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          content: Text(
+                                            'يرجى إضافة عنوان توصيل حتى تتمكن من إكمال الطلب.',
+                                            style: AppTextStyles.bodyMedium,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          actionsAlignment:
+                                              MainAxisAlignment.center,
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(dialogContext),
+                                              child: Text(
+                                                'إلغاء',
+                                                style: AppTextStyles
+                                                    .buttonMedium
+                                                    .copyWith(
+                                                      color: AppColors
+                                                          .textSecondary,
+                                                    ),
+                                              ),
+                                            ),
+                                            ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor:
+                                                    AppColors.primary,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        AppRadius.md,
+                                                      ),
+                                                ),
+                                              ),
+                                              onPressed: () {
+                                                Navigator.pop(
+                                                  dialogContext,
+                                                ); // Close dialog
+                                                context.push(
+                                                  '/addresses',
+                                                ); // Navigate to addresses
+                                              },
+                                              child: Text(
+                                                'إضافة عنوان',
+                                                style: AppTextStyles
+                                                    .buttonMedium
+                                                    .copyWith(
+                                                      color: Colors.white,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Direct to checkout if address is present
+                                    context.push('/checkout');
                                   },
                                 ),
                               ],

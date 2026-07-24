@@ -12,6 +12,7 @@ class OrderEntity {
   final String customerPhone;
   final List<CartItem> items;
   final String? deliveryAddress;
+  final String? description;
   final double totalPrice;
   final OrderType orderType;
   final OrderStatus orderStatus;
@@ -29,6 +30,6 @@ class OrderEntity {
     this.deliveryAddress,
     required this.totalPrice,
     required this.orderType,
-    required this.orderStatus, this.scheduledFor,
+    required this.orderStatus, this.scheduledFor, this.description,
   });
 }

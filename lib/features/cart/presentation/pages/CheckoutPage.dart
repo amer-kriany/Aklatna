@@ -1,23 +1,20 @@
-import 'package:aklatna/core/constants/app_spacing.dart';
-import 'package:aklatna/core/constants/app_text_style.dart';
-import 'package:aklatna/core/theme/app_colors.dart';
-import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
-import 'package:aklatna/features/cart/presentation/widgets/checkout/CheckoutAppBar.dart';
-import 'package:aklatna/features/cart/presentation/widgets/checkout/ConfirmButton.dart';
-import 'package:aklatna/features/cart/presentation/widgets/checkout/DeliveryOptionSection.dart';
-import 'package:aklatna/features/cart/presentation/widgets/checkout/OrderTypeSection.dart';
-import 'package:aklatna/features/orders/data/models/order_model.dart';
-import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
-import 'package:aklatna/features/orders/orderStatus.dart';
-import 'package:aklatna/features/orders/order_type.dart';
-import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
-import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-// TODO: Import your constant files
-// import 'package:your_app/core/constants/app_colors.dart';
-// import 'package:your_app/core/constants/app_spacing.dart';
+
+import '../../../../core/constants/app_spacing.dart';
+import '../../../../core/constants/app_text_style.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../cart/presentation/bloc/cart_bloc.dart';
+import '../../../cart/presentation/widgets/checkout/CheckoutAppBar.dart';
+import '../../../cart/presentation/widgets/checkout/ConfirmButton.dart';
+import '../../../cart/presentation/widgets/checkout/DeliveryOptionSection.dart';
+import '../../../cart/presentation/widgets/checkout/OrderTypeSection.dart';
+import '../../../orders/domain/entities/order_entity.dart';
+import '../../../orders/orderStatus.dart';
+import '../../../orders/order_type.dart';
+import '../../../orders/presentation/bloc/order_bloc.dart';
+import '../../../profile/presentaion/bloc/profile_bloc.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -30,6 +27,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String selectedDeliveryOption = 'توصيل';
   String selectedOrderType = 'طلب عادي';
   DateTime? _scheduledFor;
+  final TextEditingController _notesController = TextEditingController();
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickScheduleTime() async {
     final picked = await showTimePicker(
@@ -93,7 +97,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ? OrderType.delivery
           : OrderType.pickup,
       orderStatus: OrderStatus.pending,
-scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,    );
+      scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,
+      description: _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
+    );
 
     context.read<OrderBloc>().add(PlaceOrderEvent(order: order));
   }
@@ -117,7 +125,7 @@ scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,    
                 ).showSnackBar(SnackBar(content: Text(state.message)));
               }
             },
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.lg,
                 vertical: AppSpacing.md,
@@ -126,13 +134,13 @@ scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,    
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CheckoutAppBar(onBackTap: () => Navigator.pop(context)),
-                  const Spacer(flex: 1),
+                  const SizedBox(height: AppSpacing.lg),
                   DeliveryOptionSection(
                     selectedOption: selectedDeliveryOption,
                     onOptionChanged: (v) =>
                         setState(() => selectedDeliveryOption = v),
                   ),
-                  const Spacer(flex: 1),
+                  const SizedBox(height: AppSpacing.lg),
                   OrderTypeSection(
                     selectedOption: selectedOrderType,
                     onOptionChanged: (v) {
@@ -140,10 +148,12 @@ scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,    
                       if (v == 'طلب مسبق') _pickScheduleTime();
                     },
                   ),
-                  if (selectedOrderType == 'طلب مسبق' && _scheduledFor != null)
+                  if (selectedOrderType == 'طلب مسبق' &&
+                      _scheduledFor != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.lg,
+                        horizontal: AppSpacing.xs,
                       ),
                       child: Row(
                         children: [
@@ -167,7 +177,38 @@ scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,    
                         ],
                       ),
                     ),
-                  const Spacer(flex: 4),
+                  ],
+                  const SizedBox(height: AppSpacing.xl),
+
+                  // 📝 Notes Field Container
+                  Text('ملاحظات إضافية', style: AppTextStyles.regularLarge),
+                  const SizedBox(height: AppSpacing.xs),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: TextField(
+                      controller: _notesController,
+                      maxLines: 3,
+                      style: AppTextStyles.regularMedium,
+                      decoration: InputDecoration(
+                        hintText:
+                            'اكتب أي ملاحظات للطلب (مثال: لا ترن الجرس ...)',
+                        hintStyle: AppTextStyles.regularSmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xxl),
+
                   BlocBuilder<OrderBloc, OrderState>(
                     builder: (context, state) {
                       return ConfirmButton(

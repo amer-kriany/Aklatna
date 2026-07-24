@@ -24,7 +24,10 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
     on<SetDefaultAddressEvent>(_onSetDefault);
   }
 
-  Future<void> _onLoad(LoadAddressesEvent event, Emitter<AddressState> emit) async {
+  Future<void> _onLoad(
+    LoadAddressesEvent event,
+    Emitter<AddressState> emit,
+  ) async {
     emit(AddressLoading());
     try {
       final addresses = await getAddressesUsecase(event.userId);
@@ -34,58 +37,62 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
     }
   }
 
-  Future<void> _onAdd(
-  AddAddressEvent event,
-  Emitter<AddressState> emit,
-) async {
-  try {
-    emit(AddressLoading());
-
-    await addAddressUsecase(
-      userId: event.userId,
-      label: event.label,
-      street: event.street,
-      city: event.city,
-      apartment: event.apartment,
-      isDefault: event.isDefault,
-    );
-
-    final addresses = await getAddressesUsecase(event.userId);
-
-    emit(AddressLoaded(addresses: addresses));
-
-  } catch (e) {
-    emit(AddressError(message: e.toString()));
-  }
-}
-
-  Future<void> _onDelete(DeleteAddressEvent event, Emitter<AddressState> emit) async {
+  Future<void> _onAdd(AddAddressEvent event, Emitter<AddressState> emit) async {
     try {
-      await deleteAddressUsecase(event.addressId);
-      add(LoadAddressesEvent(userId: event.userId));
+      emit(AddressLoading());
+
+      await addAddressUsecase(
+        userId: event.userId,
+        label: event.label,
+        street: event.street,
+        city: event.city,
+        apartment: event.apartment,
+        isDefault: event.isDefault,
+      );
+
+      final addresses = await getAddressesUsecase(event.userId);
+
+      emit(AddressLoaded(addresses: addresses));
     } catch (e) {
       emit(AddressError(message: e.toString()));
     }
   }
 
-  Future<void> _onSetDefault(
-  SetDefaultAddressEvent event,
+ Future<void> _onDelete(
+  DeleteAddressEvent event,
   Emitter<AddressState> emit,
 ) async {
   try {
-    emit(AddressLoading());
+    // 1. Delete address
+    await deleteAddressUsecase(event.addressId);
 
-    await setDefaultAddressUsecase(
-      userId: event.userId,
-      addressId: event.addressId,
-    );
-
+    // 2. Fetch updated address list
     final addresses = await getAddressesUsecase(event.userId);
 
+    // 3. Emit updated list
     emit(AddressLoaded(addresses: addresses));
-
   } catch (e) {
     emit(AddressError(message: e.toString()));
   }
 }
+
+  Future<void> _onSetDefault(
+    SetDefaultAddressEvent event,
+    Emitter<AddressState> emit,
+  ) async {
+    try {
+      emit(AddressLoading());
+
+      await setDefaultAddressUsecase(
+        userId: event.userId,
+        addressId: event.addressId,
+      );
+
+      final addresses = await getAddressesUsecase(event.userId);
+
+      emit(AddressLoaded(addresses: addresses));
+    } catch (e) {
+      emit(AddressError(message: e.toString()));
+    }
+  }
 }
