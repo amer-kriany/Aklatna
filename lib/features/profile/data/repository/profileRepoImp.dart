@@ -16,10 +16,9 @@ class Profilerepoimp implements Profilerepo {
   Future<void> updateProfileData(
     String userId,
     String? username,
-    String? address,
     String? bio,
   ) async {
-    await profileDatasource.updateProfileData(userId, username, address,bio);
+    await profileDatasource.updateProfileData(userId, username,bio);
   }
 
   @override

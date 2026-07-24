@@ -27,15 +27,34 @@ class AuthTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.bodyMedium),
+        // 1. Made Label Bigger & Bold
+        Text(
+          label,
+          style: AppTextStyles.bodyMedium.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: AppSpacing.xs),
         TextField(
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
+          // 2. Made Typed Input Text Bigger
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,
+            // 3. Made Hint Text Bigger
+            hintStyle: const TextStyle(
+              fontSize: 15,
+              color: AppColors.textSecondary,
+            ),
             suffixIcon: suffixIcon,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: 16, // Increased padding slightly for larger font size
+            ),
           ),
         ),
       ],

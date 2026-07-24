@@ -21,7 +21,6 @@ class ProfileDatasource {
   Future<void> updateProfileData(
     String userId,
     String? username,
-    String? address,
     String?bio
   ) async {
     try {

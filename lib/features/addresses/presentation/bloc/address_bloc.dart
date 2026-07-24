@@ -34,21 +34,30 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
     }
   }
 
-  Future<void> _onAdd(AddAddressEvent event, Emitter<AddressState> emit) async {
-    try {
-      await addAddressUsecase(
-        userId: event.userId,
-        label: event.label,
-        street: event.street,
-        city: event.city,
-        apartment: event.apartment,
-        isDefault: event.isDefault,
-      );
-      add(LoadAddressesEvent(userId: event.userId));
-    } catch (e) {
-      emit(AddressError(message: e.toString()));
-    }
+  Future<void> _onAdd(
+  AddAddressEvent event,
+  Emitter<AddressState> emit,
+) async {
+  try {
+    emit(AddressLoading());
+
+    await addAddressUsecase(
+      userId: event.userId,
+      label: event.label,
+      street: event.street,
+      city: event.city,
+      apartment: event.apartment,
+      isDefault: event.isDefault,
+    );
+
+    final addresses = await getAddressesUsecase(event.userId);
+
+    emit(AddressLoaded(addresses: addresses));
+
+  } catch (e) {
+    emit(AddressError(message: e.toString()));
   }
+}
 
   Future<void> _onDelete(DeleteAddressEvent event, Emitter<AddressState> emit) async {
     try {
@@ -59,12 +68,24 @@ class AddressBloc extends Bloc<AddressEvent, AddressState> {
     }
   }
 
-  Future<void> _onSetDefault(SetDefaultAddressEvent event, Emitter<AddressState> emit) async {
-    try {
-      await setDefaultAddressUsecase(userId: event.userId, addressId: event.addressId);
-      add(LoadAddressesEvent(userId: event.userId));
-    } catch (e) {
-      emit(AddressError(message: e.toString()));
-    }
+  Future<void> _onSetDefault(
+  SetDefaultAddressEvent event,
+  Emitter<AddressState> emit,
+) async {
+  try {
+    emit(AddressLoading());
+
+    await setDefaultAddressUsecase(
+      userId: event.userId,
+      addressId: event.addressId,
+    );
+
+    final addresses = await getAddressesUsecase(event.userId);
+
+    emit(AddressLoaded(addresses: addresses));
+
+  } catch (e) {
+    emit(AddressError(message: e.toString()));
   }
+}
 }

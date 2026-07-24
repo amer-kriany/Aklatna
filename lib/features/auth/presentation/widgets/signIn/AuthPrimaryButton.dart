@@ -28,7 +28,10 @@ class AuthPrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
         ),
-        child: Text(label, style: AppTextStyles.buttonLarge),
+        child: Text(
+          label,
+          style: AppTextStyles.buttonLarge.copyWith(color: Colors.white),
+        ),
       ),
     );
   }

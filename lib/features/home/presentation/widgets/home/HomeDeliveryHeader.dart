@@ -39,11 +39,7 @@ class HomeDeliveryHeader extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xxs),
                 Row(
                   children: [
-                    Icon(
-                      Icons.location_on,
-                      size: AppSizes.iconSm,
-                      color: AppColors.primary,
-                    ),
+                    Icon(Icons.location_on, size: AppSizes.iconSm, color: AppColors.primary),
                     const SizedBox(width: AppSpacing.xxs),
                     Flexible(
                       child: Text(
@@ -56,6 +52,8 @@ class HomeDeliveryHeader extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(width: AppSpacing.xxs),
+                    Icon(Icons.keyboard_arrow_down_rounded, size: AppSizes.iconSm, color: AppColors.textSecondary),
                   ],
                 ),
               ],
@@ -64,13 +62,40 @@ class HomeDeliveryHeader extends StatelessWidget {
         ),
         GestureDetector(
           onTap: onAvatarTap,
-          child: CircleAvatar(
-            radius: AppSizes.avatarSm / 2,
-            backgroundColor: AppColors.primaryLight,
-            backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-            child: avatarUrl == null
-                ? Icon(Icons.person, color: AppColors.primary)
-                : null,
+          child: Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: CircleAvatar(
+              radius: AppSizes.avatarMd / 2,
+              backgroundColor: AppColors.background,
+              child: ClipOval(
+                child: SizedBox(
+                  width: AppSizes.avatarMd - 4,
+                  height: AppSizes.avatarMd - 4,
+                  child: avatarUrl != null
+                      ? Image.network(
+                          avatarUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => Icon(Icons.person, color: AppColors.primary, size: AppSizes.iconLg),
+                        )
+                      : Icon(Icons.person, color: AppColors.primary, size: AppSizes.iconLg),
+                ),
+              ),
+            ),
           ),
         ),
       ],

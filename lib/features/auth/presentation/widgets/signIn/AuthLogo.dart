@@ -20,10 +20,14 @@ class AuthLogo extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           alignment: Alignment.center,
-          child: const Icon(Icons.restaurant, color: AppColors.textOnPrimary, size: AppSizes.iconMd),
+          child: const Icon(
+            Icons.restaurant,
+            color: AppColors.textOnPrimary,
+            size: AppSizes.iconMd,
+          ),
         ),
         const SizedBox(width: AppSpacing.sm),
-        Text('أكلتنا', style: AppTextStyles.h3),
+        Text('أكلاتنا', style: AppTextStyles.h3),
       ],
     );
   }

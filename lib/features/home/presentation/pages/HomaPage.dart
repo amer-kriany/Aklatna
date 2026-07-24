@@ -1,17 +1,22 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
-import 'package:aklatna/features/home/domain/entity/businessEntity.dart';
-import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
+import 'package:aklatna/core/constants/app_text_style.dart';
+import 'package:aklatna/core/theme/app_colors.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/AddressSelectionBottomSheet.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/BusinessCard.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/HomeDeliveryHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/HomeGreeting.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/HomeSearchBar.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SectionHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SponseredBanner.dart';
-import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_colors.dart';
+
+import '../../../addresses/presentation/bloc/address_bloc.dart';
+import '../../business_type.dart';
+import '../../domain/entity/businessEntity.dart';
+import '../bloc/business_bloc.dart';
+import '../../../profile/presentaion/bloc/profile_bloc.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -31,15 +36,44 @@ class _HomePageState extends State<HomePage> {
     context.read<ProfileBloc>().add(GetProfilesEvent());
   }
 
-  /// Extracts only Street and City from full address string
   String _formatAddress(String? fullAddress) {
     if (fullAddress == null || fullAddress.trim().isEmpty) return '';
-    final parts = fullAddress.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    final parts = fullAddress
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
     if (parts.length >= 2) {
-      // Returns "Street, City" (taking first and last non-empty parts)
       return '${parts.first}, ${parts.last}';
     }
     return fullAddress;
+  }
+
+  String _typeLabel(BusinessType type) {
+    switch (type) {
+      case BusinessType.restaurant:
+        return 'مطعم';
+      case BusinessType.juice_shop:
+        return 'محل عصائر';
+    }
+  }
+
+  void _showAddressBottomSheet(BuildContext context, String userId) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (_) {
+        return AddressSelectionBottomSheet(userId: userId);
+      },
+    );
+
+    // 🚀 When sheet closes, refresh profile to ensure latest active address is displayed
+    if (mounted) {
+      context.read<ProfileBloc>().add(GetProfilesEvent());
+    }
   }
 
   @override
@@ -49,11 +83,13 @@ class _HomePageState extends State<HomePage> {
       body: SafeArea(
         child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, profileState) {
-            if (profileState is ProfileLoading || profileState is ProfileInitial) {
+            if (profileState is ProfileLoading ||
+                profileState is ProfileInitial) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (profileState is ProfileError || profileState is! ProfileLoaded) {
+            if (profileState is ProfileError ||
+                profileState is! ProfileLoaded) {
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -73,9 +109,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                     const SizedBox(height: 8),
                     TextButton(
-                      onPressed: () {
-                        context.read<ProfileBloc>().add(GetProfilesEvent());
-                      },
+                      onPressed: () =>
+                          context.read<ProfileBloc>().add(GetProfilesEvent()),
                       child: const Text("Retry"),
                     ),
                   ],
@@ -102,55 +137,57 @@ class _HomePageState extends State<HomePage> {
                 final sorted = [...businesses]
                   ..sort((a, b) => b.rating.compareTo(a.rating));
                 final popularBusiness = sorted.isNotEmpty ? sorted.first : null;
-                final recommendedBusinesses =
-                    sorted.length > 1 ? sorted.sublist(1) : <BusinessEntity>[];
+                final recommendedBusinesses = sorted.length > 1
+                    ? sorted.sublist(1)
+                    : <BusinessEntity>[];
 
-                const String? sponsoredBannerImageUrl = "assets/images/profile.jpg";
+                const String? sponsoredBannerImageUrl =
+                    "assets/images/profile.jpg";
 
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  padding: EdgeInsets.zero,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.pageHorizontal,
+                      Container(
+                        decoration: const BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(AppRadius.xl),
+                            bottomRight: Radius.circular(AppRadius.xl),
+                          ),
                         ),
-                        child: HomeDeliveryHeader(
-                          // Formatted to display only Street, City
-                          addressLabel: _formatAddress(profile.address),
-                          avatarUrl: profile.photo,
-                          onAvatarTap: () async {
-                            // Re-fetches profile data when returning from Profile page
-                            await context.push("/profile");
-                            if (context.mounted) {
-                              context.read<ProfileBloc>().add(GetProfilesEvent());
-                            }
-                          },
-                          onAddressTap: () {
-                            // TODO(Amer): context.push(AppRoutes.addressSelect);
-                          },
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.pageHorizontal,
+                          AppSpacing.md,
+                          AppSpacing.pageHorizontal,
+                          AppSpacing.lg,
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.pageHorizontal,
-                        ),
-                        child: HomeGreeting(userName: profile.userName),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.pageHorizontal,
-                        ),
-                        child: HomeSearchBar(
-                          onTap: () {
-                            context.go("/search");
-                          },
-                          onMicTap: null,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            HomeDeliveryHeader(
+                              addressLabel: _formatAddress(profile.address),
+                              avatarUrl: profile.photo,
+                              onAvatarTap: () async {
+                                await context.push("/profile");
+                                if (context.mounted) {
+                                  context.read<ProfileBloc>().add(
+                                    GetProfilesEvent(),
+                                  );
+                                }
+                              },
+                              onAddressTap: () =>
+                                  _showAddressBottomSheet(context, profile.id),
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            HomeGreeting(userName: profile.userName),
+                            const SizedBox(height: AppSpacing.md),
+                            HomeSearchBar(
+                              onTap: () => context.go("/search"),
+                              onMicTap: null,
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xl),
@@ -169,11 +206,11 @@ class _HomePageState extends State<HomePage> {
                       ],
 
                       if (recommendedBusinesses.isNotEmpty) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: const SectionHeader(title: 'موصى لك'),
+                          child: SectionHeader(title: 'موصى لك'),
                         ),
                         const SizedBox(height: AppSpacing.md),
                         SizedBox(
@@ -193,12 +230,14 @@ class _HomePageState extends State<HomePage> {
                                 businessId: business.id,
                                 width: _recommendedTileWidth,
                                 businessName: business.nameAr,
+                                subtitle:
+                                    '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
                                 coverUrl: business.coverUrl,
                                 rating: business.rating,
                                 ratingCount: business.ratingCount,
-                                onTap: () {
-                                  context.push("/business/${business.id}");
-                                },
+                                imageAspectRatio: 1.2,
+                                onTap: () =>
+                                    context.push("/business/${business.id}"),
                               );
                             },
                           ),
@@ -207,11 +246,11 @@ class _HomePageState extends State<HomePage> {
                       ],
 
                       if (popularBusiness != null) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: const SectionHeader(title: 'الأكثر طلبًا'),
+                          child: SectionHeader(title: 'الأكثر طلبًا'),
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Padding(
@@ -221,12 +260,14 @@ class _HomePageState extends State<HomePage> {
                           child: BusinessCard(
                             businessId: popularBusiness.id,
                             businessName: popularBusiness.nameAr,
+                            subtitle:
+                                '${_typeLabel(popularBusiness.type)} · ${_formatAddress(popularBusiness.adress)}',
                             coverUrl: popularBusiness.coverUrl,
                             rating: popularBusiness.rating,
                             ratingCount: popularBusiness.ratingCount,
-                            onTap: () {
-                              context.push("/business/${popularBusiness.id}");
-                            },
+                            imageAspectRatio: 3.4,
+                            onTap: () =>
+                                context.push("/business/${popularBusiness.id}"),
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xl),

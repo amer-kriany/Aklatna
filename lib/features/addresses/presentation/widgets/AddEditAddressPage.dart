@@ -11,7 +11,7 @@ import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class AddEditAddressPage extends StatefulWidget {
-   const AddEditAddressPage({
+  const AddEditAddressPage({
     super.key,
     this.existing,
     required this.isFirstAddress,
@@ -39,13 +39,16 @@ class _AddEditAddressPageState extends State<AddEditAddressPage> {
     final existing = widget.existing;
     _streetController = TextEditingController(text: existing?.street ?? '');
     _cityController = TextEditingController(text: existing?.city ?? '');
-    _apartmentController = TextEditingController(text: existing?.apartment ?? '');
+    _apartmentController = TextEditingController(
+      text: existing?.apartment ?? '',
+    );
     _selectedLabel = existing?.label ?? 'Home';
-if (existing != null) {
-  _isDefault = existing.isDefault;
-} else {
-  _isDefault = widget.isFirstAddress;
-}  }
+    if (existing != null) {
+      _isDefault = existing.isDefault;
+    } else {
+      _isDefault = widget.isFirstAddress;
+    }
+  }
 
   @override
   void dispose() {
@@ -55,18 +58,23 @@ if (existing != null) {
     super.dispose();
   }
 
-  void _onSave() {
+  void _onSave() async {
+    print("🔥🔥🔥 _onSave CALLED");
     final profileState = context.read<ProfileBloc>().state;
     if (profileState is! ProfileLoaded) return;
 
     final street = _streetController.text.trim();
     final city = _cityController.text.trim();
-    if (street.isEmpty || city.isEmpty) return; // TODO(Amer): real validation messages
+    if (street.isEmpty || city.isEmpty)
+      return; // TODO(Amer): real validation messages
 
     if (widget.existing != null) {
       // Editing: delete old, add new (no update-in-place usecase built yet)
       context.read<AddressBloc>().add(
-        DeleteAddressEvent(userId: profileState.profile.id, addressId: widget.existing!.id),
+        DeleteAddressEvent(
+          userId: profileState.profile.id,
+          addressId: widget.existing!.id,
+        ),
       );
     }
 
@@ -80,6 +88,7 @@ if (existing != null) {
         isDefault: _isDefault,
       ),
     );
+    await Future.delayed(const Duration(milliseconds: 300));
 
     Navigator.pop(context);
   }
@@ -90,19 +99,37 @@ if (existing != null) {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.existing == null ? 'إضافة عنوان' : 'تعديل عنوان', style: AppTextStyles.h4),
+          title: Text(
+            widget.existing == null ? 'إضافة عنوان' : 'تعديل عنوان',
+            style: AppTextStyles.h4,
+          ),
         ),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AuthTextField(label: 'الشارع', hint: 'مثال: شارع الزبير بن العوام', controller: _streetController),
+                AuthTextField(
+                  label: 'الشارع',
+                  hint: 'مثال: شارع الزبير بن العوام',
+                  controller: _streetController,
+                ),
                 const SizedBox(height: AppSpacing.lg),
-                AuthTextField(label: 'المدينة', hint: 'مثال: داريا', controller: _cityController),
+                AuthTextField(
+                  label: 'المدينة',
+                  hint: 'مثال: داريا',
+                  controller: _cityController,
+                ),
                 const SizedBox(height: AppSpacing.lg),
-                AuthTextField(label: 'الشقة (اختياري)', hint: 'رقم الشقة أو الطابق', controller: _apartmentController),
+                AuthTextField(
+                  label: 'الشقة (اختياري)',
+                  hint: 'رقم الشقة أو الطابق',
+                  controller: _apartmentController,
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 Text('تصنيف العنوان', style: AppTextStyles.bodyMedium),
                 const SizedBox(height: AppSpacing.sm),
@@ -114,29 +141,34 @@ if (existing != null) {
                       child: ChoiceChip(
                         label: Text(label),
                         selected: isSelected,
-                        onSelected: (_) => setState(() => _selectedLabel = label),
+                        onSelected: (_) =>
+                            setState(() => _selectedLabel = label),
                         selectedColor: AppColors.primary,
                         labelStyle: AppTextStyles.bodyMedium.copyWith(
-                          color: isSelected ? AppColors.textOnPrimary : AppColors.textPrimary,
+                          color: isSelected
+                              ? AppColors.textOnPrimary
+                              : AppColors.textPrimary,
                         ),
                         backgroundColor: AppColors.surface,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.full)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                        ),
                       ),
                     );
                   }).toList(),
                 ),
                 const SizedBox(height: AppSpacing.lg),
-               if (!widget.isFirstAddress)
-  CheckboxListTile(
-    contentPadding: EdgeInsets.zero,
-    value: _isDefault,
-    onChanged: (v) => setState(() => _isDefault = v ?? false),
-    title: Text(
-      'اجعله العنوان الافتراضي',
-      style: AppTextStyles.bodyMedium,
-    ),
-    activeColor: AppColors.primary,
-  ),
+                if (!widget.isFirstAddress)
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _isDefault,
+                    onChanged: (v) => setState(() => _isDefault = v ?? false),
+                    title: Text(
+                      'اجعله العنوان الافتراضي',
+                      style: AppTextStyles.bodyMedium,
+                    ),
+                    activeColor: AppColors.primary,
+                  ),
                 const SizedBox(height: AppSpacing.xl),
                 BlocBuilder<AddressBloc, AddressState>(
                   builder: (context, state) {

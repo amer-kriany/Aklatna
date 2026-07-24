@@ -47,7 +47,10 @@ class _AddressesPageState extends State<AddressesPage> {
         appBar: AppBar(title: Text('عناويني', style: AppTextStyles.h4)),
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
             child: Column(
               children: [
                 Expanded(
@@ -63,12 +66,18 @@ class _AddressesPageState extends State<AddressesPage> {
                         return const SizedBox.shrink();
                       }
                       if (state.addresses.isEmpty) {
-                        return Center(child: Text('لا توجد عناوين محفوظة', style: AppTextStyles.bodyMedium));
+                        return Center(
+                          child: Text(
+                            'لا توجد عناوين محفوظة',
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        );
                       }
 
                       return ListView.separated(
                         itemCount: state.addresses.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: AppSpacing.sm),
                         itemBuilder: (context, index) {
                           final addr = state.addresses[index];
                           return Container(
@@ -76,7 +85,9 @@ class _AddressesPageState extends State<AddressesPage> {
                               color: AppColors.background,
                               borderRadius: BorderRadius.circular(AppRadius.lg),
                               border: Border.all(
-                                color: addr.isDefault ? AppColors.primary : AppColors.border,
+                                color: addr.isDefault
+                                    ? AppColors.primary
+                                    : AppColors.border,
                               ),
                             ),
                             padding: const EdgeInsets.all(AppSpacing.md),
@@ -85,45 +96,62 @@ class _AddressesPageState extends State<AddressesPage> {
                                 CircleAvatar(
                                   radius: 24,
                                   backgroundColor: AppColors.primaryLight,
-                                  child: Icon(_iconForLabel(addr.label), color: AppColors.primary),
+                                  child: Icon(
+                                    _iconForLabel(addr.label),
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                                 const SizedBox(width: AppSpacing.md),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Text(addr.label ?? 'عنوان', style: AppTextStyles.bodyMedium),
+                                      Text(
+                                        addr.label ?? 'عنوان',
+                                        style: AppTextStyles.bodyMedium,
+                                      ),
                                       const SizedBox(height: AppSpacing.xxs),
                                       Text(
                                         '${addr.street}${addr.apartment.isNotEmpty ? '، ${addr.apartment}' : ''}، ${addr.city}',
-                                        style: AppTextStyles.regularSmall.copyWith(color: AppColors.textSecondary),
+                                        style: AppTextStyles.regularSmall
+                                            .copyWith(
+                                              color: AppColors.textSecondary,
+                                            ),
                                       ),
                                     ],
                                   ),
                                 ),
                                 // Edit button
-IconButton(
-  icon: const Icon(
-    Icons.edit_outlined,
-    color: AppColors.primary,
-    size: AppSizes.iconSm,
-  ),
-  onPressed: () => Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => AddEditAddressPage(
-        existing: addr,
-        isFirstAddress: false,
-      ),
-    ),
-  ),
-),
                                 IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: AppColors.error, size: AppSizes.iconSm),
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    color: AppColors.primary,
+                                    size: AppSizes.iconSm,
+                                  ),
+                                  onPressed: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => AddEditAddressPage(
+                                        existing: addr,
+                                        isFirstAddress: false,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: AppColors.error,
+                                    size: AppSizes.iconSm,
+                                  ),
                                   onPressed: () {
                                     if (_userId != null) {
                                       context.read<AddressBloc>().add(
-                                        DeleteAddressEvent(userId: _userId!, addressId: addr.id),
+                                        DeleteAddressEvent(
+                                          userId: _userId!,
+                                          addressId: addr.id,
+                                        ),
                                       );
                                     }
                                   },
@@ -137,40 +165,42 @@ IconButton(
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-               SizedBox(
-  width: double.infinity,
-  height: AppSizes.buttonHeight,
-  child: FilledButton(
-    onPressed: () {
-      final state = context.read<AddressBloc>().state;
+                SizedBox(
+                  width: double.infinity,
+                  height: AppSizes.buttonHeight,
+                  child: FilledButton(
+                    onPressed: () {
+                      final state = context.read<AddressBloc>().state;
 
-      bool isFirstAddress = false;
+                      bool isFirstAddress = false;
 
-      if (state is AddressLoaded) {
-        isFirstAddress = state.addresses.isEmpty;
-      }
+                      if (state is AddressLoaded) {
+                        isFirstAddress = state.addresses.isEmpty;
+                      }
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => AddEditAddressPage(
-            isFirstAddress: isFirstAddress,
-          ),
-        ),
-      );
-    },
-    style: FilledButton.styleFrom(
-      backgroundColor: AppColors.primary,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-    ),
-    child: Text(
-      'إضافة عنوان جديد',
-      style: AppTextStyles.buttonLarge,
-    ),
-  ),
-),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AddEditAddressPage(
+                            isFirstAddress: isFirstAddress,
+                          ),
+                        ),
+                      );
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                      ),
+                    ),
+                    child: Text(
+                      'إضافة عنوان جديد',
+                      style: AppTextStyles.buttonLarge.copyWith(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

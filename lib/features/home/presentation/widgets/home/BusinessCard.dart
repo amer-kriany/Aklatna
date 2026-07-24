@@ -9,16 +9,12 @@ import '../../../../../core/theme/app_colors.dart';
 class BusinessCard extends StatelessWidget {
   final String businessId;
   final String businessName;
+  final String? subtitle;
   final String? coverUrl;
   final double? rating;
   final int? ratingCount;
   final VoidCallback onTap;
-
-  /// Fixed width for horizontal-list tiles (e.g. "Recommended" row).
-  /// Leave null to let the card fill whatever width the parent gives it.
   final double? width;
-
-  /// Controls image shape. Defaults to 16:9.
   final double imageAspectRatio;
 
   const BusinessCard({
@@ -26,11 +22,12 @@ class BusinessCard extends StatelessWidget {
     required this.businessId,
     required this.businessName,
     required this.onTap,
+    this.subtitle,
     this.coverUrl,
     this.rating,
     this.ratingCount,
     this.width,
-    this.imageAspectRatio = 16 / 9,
+    this.imageAspectRatio = 1.3,
   });
 
   void _onToggleFavorite(BuildContext context) {
@@ -52,87 +49,135 @@ class BusinessCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Container(
-          width: width,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.border, width: 1),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  AspectRatio(
-                    aspectRatio: imageAspectRatio,
-                    child: _buildImage(),
-                  ),
-                  // Floating Favorite Heart Button over image
-                  Positioned(
-                    top: AppSpacing.xs,
-                    right: AppSpacing.xs,
-                    child: BlocBuilder<FavoriteBloc, FavoriteState>(
-                      builder: (context, favoriteState) {
-                        final isFavorite = favoriteState is FavoriteLoaded &&
-                            favoriteState.favoriteIds.contains(businessId);
-
-                        return Material(
-                          color: Colors.white.withOpacity(0.9),
-                          shape: const CircleBorder(),
-                          elevation: 2,
-                          child: InkWell(
-                            customBorder: const CircleBorder(),
-                            onTap: () => _onToggleFavorite(context),
-                            child: SizedBox(
-                              width: 34,
-                              height: 34,
-                              child: Icon(
-                                isFavorite
-                                    ? Icons.favorite_rounded
-                                    : Icons.favorite_border_rounded,
-                                color: isFavorite
-                                    ? AppColors.primary
-                                    : Colors.black87,
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      businessName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.h4.copyWith(
-                        color: AppColors.textPrimary,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      child: Container(
+        width: width,
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                AspectRatio(
+                  aspectRatio: imageAspectRatio,
+                  child: _buildImage(),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 40,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withOpacity(0),
+                          Colors.black.withOpacity(0.30),
+                        ],
                       ),
                     ),
-                    if (rating != null) ...[
-                      const SizedBox(height: AppSpacing.xxs),
-                      _buildRating(),
-                    ],
-                  ],
+                  ),
                 ),
+                if (rating != null)
+                  Positioned(
+                    left: AppSpacing.xs,
+                    bottom: AppSpacing.xs,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.95),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.star_rounded, size: 13, color: AppColors.warning),
+                          const SizedBox(width: 3),
+                          Text(
+                            rating!.toStringAsFixed(1),
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (ratingCount != null) ...[
+                            const SizedBox(width: 2),
+                            Text(
+                              '($ratingCount)',
+                              style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                Positioned(
+                  top: AppSpacing.xs,
+                  right: AppSpacing.xs,
+                  child: BlocBuilder<FavoriteBloc, FavoriteState>(
+                    builder: (context, favoriteState) {
+                      final isFavorite = favoriteState is FavoriteLoaded &&
+                          favoriteState.favoriteIds.contains(businessId);
+
+                      return Material(
+                        color: Colors.white.withOpacity(0.9),
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () => _onToggleFavorite(context),
+                          child: SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: Icon(
+                              isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                              color: isFavorite ? AppColors.primary : Colors.black87,
+                              size: 17,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, 2),
+              child: Text(
+                businessName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
               ),
-            ],
-          ),
+            ),
+            if (subtitle != null && subtitle!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.sm, 0, AppSpacing.sm, AppSpacing.sm),
+                child: Text(
+                  subtitle!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.regularSmall.copyWith(color: AppColors.textSecondary),
+                ),
+              )
+            else
+              const SizedBox(height: AppSpacing.sm),
+          ],
         ),
       ),
     );
@@ -141,11 +186,12 @@ class BusinessCard extends StatelessWidget {
   Widget _buildImage() {
     if (coverUrl == null || coverUrl!.isEmpty) {
       return Container(
-        color: AppColors.surfaceVariant,
+        color: AppColors.primaryLight,
+        alignment: Alignment.center,
         child: Icon(
-          Icons.storefront_outlined,
-          color: AppColors.textSecondary,
-          size: AppSizes.iconXl,
+          Icons.storefront_rounded,
+          color: AppColors.primary,
+          size: AppSizes.iconXl * 1.4,
         ),
       );
     }
@@ -176,32 +222,6 @@ class BusinessCard extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildRating() {
-    return Row(
-      children: [
-        Row(
-          children: List.generate(5, (index) {
-            final filled = index < rating!.round();
-            return Icon(
-              filled ? Icons.star_rounded : Icons.star_border_rounded,
-              size: AppSizes.iconSm,
-              color: AppColors.primary,
-            );
-          }),
-        ),
-        if (ratingCount != null) ...[
-          const SizedBox(width: AppSpacing.xxs),
-          Text(
-            '($ratingCount)',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ],
     );
   }
 }

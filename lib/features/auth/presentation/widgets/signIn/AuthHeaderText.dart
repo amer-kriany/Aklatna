@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
-
-import '../../../../../core/constants/app_spacing.dart';
-import '../../../../../core/constants/app_text_style.dart';
-import '../../../../../core/theme/app_colors.dart';
+import 'package:aklatna/core/constants/app_spacing.dart';
+import 'package:aklatna/core/theme/app_colors.dart';
+import 'package:flutter/widgets.dart';
 
 class AuthHeaderText extends StatelessWidget {
-  const AuthHeaderText({super.key, required this.title, required this.subtitle});
+  const AuthHeaderText({
+    super.key,
+    required this.title,
+    required this.subtitle,
+  });
 
   final String title;
   final String subtitle;
@@ -15,9 +17,22 @@ class AuthHeaderText extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: AppTextStyles.h1),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 26, // Bigger Title
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: AppSpacing.xs),
-        Text(subtitle, style: AppTextStyles.regularMedium.copyWith(color: AppColors.textSecondary)),
+        Text(
+          subtitle,
+          style: const TextStyle(
+            fontSize: 15, // Bigger Subtitle
+            color: AppColors.textSecondary,
+          ),
+        ),
       ],
     );
   }

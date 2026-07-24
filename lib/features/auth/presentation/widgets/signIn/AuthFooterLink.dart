@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
-
-import '../../../../../core/constants/app_text_style.dart';
-import '../../../../../core/theme/app_colors.dart';
+import 'package:aklatna/core/theme/app_colors.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
 
 class AuthFooterLink extends StatelessWidget {
   const AuthFooterLink({
@@ -23,8 +22,21 @@ class AuthFooterLink extends StatelessWidget {
         child: RichText(
           text: TextSpan(
             children: [
-              TextSpan(text: text, style: AppTextStyles.regularMedium.copyWith(color: AppColors.textSecondary)),
-              TextSpan(text: ' $actionText', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primary)),
+              TextSpan(
+                text: text,
+                style: const TextStyle(
+                  fontSize: 15, // Bigger Footer Text
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              TextSpan(
+                text: ' $actionText',
+                style: const TextStyle(
+                  fontSize: 15, // Bigger Footer Action Text
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
             ],
           ),
         ),

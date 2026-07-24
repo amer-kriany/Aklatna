@@ -9,7 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
-
+import '../../../../core/theme/app_colors.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -40,12 +40,20 @@ class _SignUpPageState extends State<SignUpPage> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    if (username.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
-      return; // TODO(Amer): real field validation/error messages
+    if (username.isEmpty ||
+        phone.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty) {
+      return;
     }
 
     context.read<AuthBloc>().add(
-      SignUpEvent(email: email, phone: phone, password: password, username: username),
+      SignUpEvent(
+        email: email,
+        phone: phone,
+        password: password,
+        username: username,
+      ),
     );
   }
 
@@ -54,6 +62,7 @@ class _SignUpPageState extends State<SignUpPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: AppColors.background,
         body: SafeArea(
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
@@ -62,76 +71,111 @@ class _SignUpPageState extends State<SignUpPage> {
               }
               if (state is AuthError) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.message)),
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.redAccent,
+                  ),
                 );
               }
             },
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const AuthLogo(),
-                  const SizedBox(height: AppSpacing.xxl),
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: AppSpacing.lg),
 
-                  const AuthHeaderText(
-                    title: 'إنشاء حساب جديد',
-                    subtitle: 'أدخل بياناتك لإنشاء حسابك',
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
+                        // Logo
+                        const Center(child: AuthLogo()),
+                        const SizedBox(height: AppSpacing.xl),
 
-                  AuthTextField(
-                    label: 'الاسم',
-                    hint: 'أدخل اسمك',
-                    controller: _usernameController,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
+                        // Header Text
+                        const AuthHeaderText(
+                          title: 'إنشاء حساب جديد ✨',
+                          subtitle: 'أدخل بياناتك لإنشاء حسابك في أكلاتنا',
+                        ),
+                        const SizedBox(height: AppSpacing.xxl),
 
-                  AuthTextField(
-                    label: 'رقم الهاتف',
-                    hint: 'أدخل رقم هاتفك',
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
+                        // Name Input
+                        AuthTextField(
+                          label: 'الاسم',
+                          hint: 'أدخل اسمك الكامل',
+                          controller: _usernameController,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
 
-                  AuthTextField(
-                    label: 'البريد الإلكتروني',
-                    hint: 'أدخل بريدك الإلكتروني',
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
+                        // Phone Input
+                        AuthTextField(
+                          label: 'رقم الهاتف',
+                          hint: 'أدخل رقم هاتفك',
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
 
-                  AuthTextField(
-                    label: 'كلمة المرور',
-                    hint: 'أدخل كلمة المرور',
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        // Email Input
+                        AuthTextField(
+                          label: 'البريد الإلكتروني',
+                          hint: 'أدخل بريدك الإلكتروني',
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // Password Input
+                        AuthTextField(
+                          label: 'كلمة المرور',
+                          hint: 'أدخل كلمة المرور',
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: AppColors.textSecondary,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xxl),
+
+                        // Sign Up Action Button
+                        BlocBuilder<AuthBloc, AuthState>(
+                          builder: (context, state) {
+                            return AuthPrimaryButton(
+                              label: 'إنشاء حساب',
+                              onPressed: state is AuthLoading
+                                  ? null
+                                  : _onSignUp,
+                            );
+                          },
+                        ),
+
+                        const Spacer(),
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // Footer Link
+                        AuthFooterLink(
+                          text: 'لديك حساب بالفعل؟',
+                          actionText: 'تسجيل الدخول',
+                          onTap: () => context.pop(),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
-
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      return AuthPrimaryButton(
-                        label: 'إنشاء حساب',
-                        onPressed: state is AuthLoading ? null : _onSignUp,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.xxl),
-
-                  AuthFooterLink(
-                    text: 'لديك حساب بالفعل؟',
-                    actionText: 'تسجيل الدخول',
-                    onTap: () => context.pop(),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

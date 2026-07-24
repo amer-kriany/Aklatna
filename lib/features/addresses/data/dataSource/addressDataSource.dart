@@ -36,7 +36,10 @@ class AddressDatasource {
         'city': city,
         'apartment': apartment,
         'is_default': isDefault,
+        
       });
+        print("🚨 addAddress CALLED");
+
     } catch (e) {
       rethrow;
     }
@@ -50,12 +53,25 @@ class AddressDatasource {
     }
   }
 
-  Future<void> setDefault({required String userId, required String addressId}) async {
-    try {
-      await supabase.from('customer_addresses').update({'is_default': false}).eq('user_id', userId);
-      await supabase.from('customer_addresses').update({'is_default': true}).eq('id', addressId);
-    } catch (e) {
-      rethrow;
-    }
+ Future<void> setDefault({
+  required String userId,
+  required String addressId,
+}) async {
+  print("SET DEFAULT CALLED: $addressId");
+
+  try {
+    await supabase
+        .from('customer_addresses')
+        .update({'is_default': false})
+        .eq('user_id', userId);
+
+    await supabase
+        .from('customer_addresses')
+        .update({'is_default': true})
+        .eq('id', addressId);
+        print("Datasource setDefault called");
+  } catch (e) {
+    rethrow;
   }
+}
 }

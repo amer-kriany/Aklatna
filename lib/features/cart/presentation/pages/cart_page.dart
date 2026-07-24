@@ -1,7 +1,6 @@
 import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_state.dart';
-import 'package:aklatna/features/cart/presentation/pages/CheckoutPage.dart';
 import 'package:aklatna/features/cart/presentation/widgets/cart/CartCheckoutButton.dart';
 import 'package:aklatna/features/cart/presentation/widgets/cart/CartDeliveryAddressSection.dart';
 import 'package:aklatna/features/cart/presentation/widgets/cart/CartSummarySection.dart';
@@ -65,9 +64,6 @@ class CartPage extends StatelessWidget {
                                 RemoveItemEvent(itemId: item.itemId),
                               ),
                               onRemove: () {
-                                // Removes fully regardless of quantity — dispatch
-                                // RemoveItemEvent repeatedly, or add a dedicated
-                                // "remove all of this item" event if preferred.
                                 for (int i = 0; i < item.quantity; i++) {
                                   context.read<CartBloc>().add(
                                     RemoveItemEvent(itemId: item.itemId),
@@ -93,6 +89,9 @@ class CartPage extends StatelessWidget {
                             final address = profileState is ProfileLoaded
                                 ? profileState.profile.address
                                 : '';
+                            final userId = profileState is ProfileLoaded
+                                ? profileState.profile.id
+                                : '';
 
                             const orderType = 'delivery';
 
@@ -104,21 +103,13 @@ class CartPage extends StatelessWidget {
                                     address: address.isNotEmpty
                                         ? address
                                         : 'لا يوجد عنوان محفوظ',
-                                    onEdit: () {
-                                      context.push("/addresses");
-                                    },
+                                    userId: userId,
                                   ),
                                   const SizedBox(height: AppSpacing.lg),
                                 ],
                                 CartCheckoutButton(
                                   onPressed: () {
                                     context.push("/checkout");
-                                    // TODO(Amer): build order payload from
-                                    // cartState.items, address, orderType,
-                                    // call order placement usecase.
-                                    // Remember locked rule: confirm button
-                                    // disabled on first tap, closed
-                                    // restaurants block ordering.
                                   },
                                 ),
                               ],

@@ -1,7 +1,5 @@
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
-import 'package:aklatna/features/auth/presentation/widgets/signIn/AuthDividerOr.dart';
 import 'package:aklatna/features/auth/presentation/widgets/signIn/AuthFooterLink.dart';
-import 'package:aklatna/features/auth/presentation/widgets/signIn/AuthGoogleButton.dart';
 import 'package:aklatna/features/auth/presentation/widgets/signIn/AuthHeaderText.dart';
 import 'package:aklatna/features/auth/presentation/widgets/signIn/AuthLogo.dart';
 import 'package:aklatna/features/auth/presentation/widgets/signIn/AuthPrimaryButton.dart';
@@ -11,7 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
-
+import '../../../../core/theme/app_colors.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -35,7 +33,7 @@ class _SignInPageState extends State<SignInPage> {
   void _onLogin() {
     final phone = _phoneController.text.trim();
     final password = _passwordController.text;
-    if (phone.isEmpty || password.isEmpty) return; // TODO(Amer): real field validation/error messages
+    if (phone.isEmpty || password.isEmpty) return;
 
     context.read<AuthBloc>().add(SignInEvent(phone: phone, password: password));
   }
@@ -45,6 +43,7 @@ class _SignInPageState extends State<SignInPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor: AppColors.background,
         body: SafeArea(
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
@@ -53,74 +52,92 @@ class _SignInPageState extends State<SignInPage> {
               }
               if (state is AuthError) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(state.message)),
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: Colors.redAccent,
+                  ),
                 );
               }
             },
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const AuthLogo(),
-                  const SizedBox(height: AppSpacing.xxl),
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: AppSpacing.lg),
 
-                  const AuthHeaderText(
-                    title: 'تسجيل الدخول إلى حسابك',
-                    subtitle: 'أدخل رقم هاتفك وكلمة المرور لتسجيل الدخول',
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
+                        // Logo
+                        const Center(child: AuthLogo()),
+                        const SizedBox(height: AppSpacing.xl),
 
-                  AuthTextField(
-                    label: 'رقم الهاتف',
-                    hint: 'أدخل رقم هاتفك',
-                    controller: _phoneController,
-                    keyboardType: TextInputType.phone,
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
+                        // Header Text
+                        const AuthHeaderText(
+                          title: 'مرحباً بك مجدداً 👋',
+                          subtitle: 'أدخل رقم هاتفك وكلمة المرور لتسجيل الدخول',
+                        ),
+                        const SizedBox(height: AppSpacing.xxl),
 
-                  AuthTextField(
-                    label: 'كلمة المرور',
-                    hint: 'أدخل كلمة المرور',
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        // Phone Input Field
+                        AuthTextField(
+                          label: 'رقم الهاتف',
+                          hint: 'أدخل رقم هاتفك',
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+
+                        // Password Input Field
+                        AuthTextField(
+                          label: 'كلمة المرور',
+                          hint: 'أدخل كلمة المرور',
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off_outlined
+                                  : Icons.visibility_outlined,
+                              color: AppColors.textSecondary,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xxl),
+
+                        // Login Action Button
+                        BlocBuilder<AuthBloc, AuthState>(
+                          builder: (context, state) {
+                            return AuthPrimaryButton(
+                              label: 'تسجيل الدخول',
+                              onPressed: state is AuthLoading ? null : _onLogin,
+                            );
+                          },
+                        ),
+
+                        const Spacer(),
+                        const SizedBox(height: AppSpacing.xl),
+
+                        // Footer Link
+                        AuthFooterLink(
+                          text: 'ليس لديك حساب؟',
+                          actionText: 'إنشاء حساب جديد',
+                          onTap: () => context.push('/signup'),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.xl),
-
-                  BlocBuilder<AuthBloc, AuthState>(
-                    builder: (context, state) {
-                      return AuthPrimaryButton(
-                        label: 'تسجيل الدخول',
-                        onPressed: state is AuthLoading ? null : _onLogin,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.xl),
-
-                  const AuthDividerOr(),
-                  const SizedBox(height: AppSpacing.xl),
-
-                  AuthGoogleButton(
-                    onPressed: () {
-                      // TODO(Amer): no Google auth usecase exists yet.
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('قريباً')),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: AppSpacing.xxl),
-
-                  AuthFooterLink(
-                    text: 'ليس لديك حساب؟',
-                    actionText: 'إنشاء حساب',
-                    onTap: () => context.push('/signup'),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

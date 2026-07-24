@@ -9,7 +9,6 @@ abstract class Profilerepo {
   Future<void> updateProfileData(
     String userId,
     String? username,
-    String? address,
     String? bio,
   );
 }
