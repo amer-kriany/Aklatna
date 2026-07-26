@@ -2,7 +2,6 @@ import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 
 class PromotionCard extends StatelessWidget {
   const PromotionCard({

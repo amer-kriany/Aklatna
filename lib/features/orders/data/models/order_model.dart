@@ -14,6 +14,8 @@ class OrderModel {
   final List<CartItem> items;
   final String? deliveryAddress;
   final String? description;
+  final String? businessLogo;
+  final String? businessName;
   final double totalPrice;
   final OrderType orderType;
   final OrderStatus orderStatus;
@@ -31,7 +33,7 @@ class OrderModel {
     required this.totalPrice,
     required this.orderType,
     required this.orderStatus,
-    this.scheduledFor, this.description,
+    this.scheduledFor, this.description, this.businessLogo, this.businessName,
   });
 
   Map<String, dynamic> toJson() {
@@ -45,6 +47,8 @@ class OrderModel {
       'total_price': totalPrice,
       'order_type': orderType.name,
       'description': description,
+      'business_logo':businessLogo,
+      'business_name':businessName,
       'order_status': 'pending',
       'scheduled_for': scheduledFor?.toIso8601String(),
       // id, created_at, order_number — DB-generated, not sent from client
@@ -110,6 +114,8 @@ class OrderModel {
       customername: asStringOrEmpty(orders['customer_name']),
       customerPhone: asStringOrEmpty(orders['customer_phone']),
       items: asCartItems(orders['items']),
+      businessName: asStringOrEmpty(orders['business_name']),
+      businessLogo: asNullableString(orders['business_logo']),
       totalPrice: asDoubleOrZero(orders['total_price']),
       orderType: asOrderType(orders['order_type']),
       deliveryAddress: asNullableString(orders['delivery_address']),
