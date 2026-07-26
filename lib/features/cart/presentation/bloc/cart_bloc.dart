@@ -12,34 +12,35 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<ClearCartEvent>(_onClearCart);
   }
 
-  void _onAddItem(AddItemEvent event, Emitter<CartState> emit) {
-    // Different restaurant → clear cart first
-    if (state.businessId != null && state.businessId != event.item.businessId) {
-      emit(CartState.initial());
-    }
-
-    final existingIndex = state.items.indexWhere(
-      (i) => i.itemId == event.item.itemId,
-    );
-
-    List<CartItem> updatedItems = List.from(state.items);
-
-    if (existingIndex != -1) {
-      final existing = updatedItems[existingIndex];
-      updatedItems[existingIndex] = existing.copyWith(
-        quantity: existing.quantity + 1,
-      );
-    } else {
-      updatedItems.add(event.item);
-    }
-
-    emit(state.copyWith(
-      items: updatedItems,
-      businessId: event.item.businessId,
-      totalPrice: _calcTotal(updatedItems),
-      
-    ));
+ void _onAddItem(AddItemEvent event, Emitter<CartState> emit) {
+  // Different restaurant → clear cart first
+  if (state.businessId != null && state.businessId != event.item.businessId) {
+    emit(CartState.initial());
   }
+
+  final existingIndex = state.items.indexWhere(
+    (i) => i.itemId == event.item.itemId,
+  );
+
+  List<CartItem> updatedItems = List.from(state.items);
+
+  if (existingIndex != -1) {
+    final existing = updatedItems[existingIndex];
+    updatedItems[existingIndex] = existing.copyWith(
+      quantity: existing.quantity + 1,
+    );
+  } else {
+    updatedItems.add(event.item);
+  }
+
+  emit(state.copyWith(
+    items: updatedItems,
+    businessId: event.item.businessId,
+    businessName: event.businessName ?? state.businessName,
+    businessLogo: event.businessLogo ?? state.businessLogo,
+    totalPrice: _calcTotal(updatedItems),
+  ));
+}
 
   void _onRemoveItem(RemoveItemEvent event, Emitter<CartState> emit) {
     List<CartItem> updatedItems = List.from(state.items);

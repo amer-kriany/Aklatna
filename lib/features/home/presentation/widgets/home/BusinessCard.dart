@@ -37,7 +37,7 @@ class BusinessCard extends StatelessWidget {
     this.rating,
     this.ratingCount,
     this.width,
-    this.height = 240,
+    this.height = 245,
     this.imageAspectRatio = 1.3,
     this.statusText,
     this.deliveryFeeText,
@@ -101,8 +101,14 @@ class BusinessCard extends StatelessWidget {
               // ============================================================
               // IMAGE
               // ============================================================
+              // FIXED: was Expanded(flex: ...) sharing a hardcoded ratio
+              // with the info section below, which overflowed whenever the
+              // info section's actual content (long name + subtitle + two
+              // wrapped pills) needed more height than its fixed flex slice
+              // allowed. Now the image just absorbs whatever space is left
+              // AFTER the info section takes what it actually needs, so the
+              // info section can never overflow itself.
               Expanded(
-                flex: compact ? 58 : 62,
                 child: Stack(
                   children: [
                     Positioned.fill(
@@ -150,85 +156,80 @@ class BusinessCard extends StatelessWidget {
               // ============================================================
               // INFORMATION
               // ============================================================
-              Expanded(
-                flex: compact ? 42 : 38,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    compact ? 8 : AppSpacing.sm,
-                    compact ? 6 : AppSpacing.xs,
-                    compact ? 8 : AppSpacing.sm,
-                    compact ? 7 : AppSpacing.sm,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Business name + subtitle
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            businessName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.h4.copyWith(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: compact ? 15 : null,
-                            ),
-                          ),
-
-                          if (hasSubtitle) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              subtitle!,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.regularSmall.copyWith(
-                                color: AppColors.textSecondary,
-                                fontSize: compact ? 10 : null,
-                              ),
-                            ),
-                          ],
-                        ],
+              // No longer Expanded/flex — sized to its own content, so it
+              // can never overflow regardless of name length, subtitle
+              // presence, or whether the pill row wraps to two lines.
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  compact ? 8 : AppSpacing.sm,
+                  compact ? 6 : AppSpacing.xs,
+                  compact ? 8 : AppSpacing.sm,
+                  compact ? 7 : AppSpacing.sm,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Business name + subtitle
+                    Text(
+                      businessName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.h4.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: compact ? 15 : null,
                       ),
+                    ),
 
-                      const Spacer(),
-
-                      // ====================================================
-                      // STATUS + DELIVERY
-                      // ====================================================
-                      if (hasStatus || hasDelivery)
-                        SizedBox(
-                          width: double.infinity,
-                          child: Wrap(
-                            alignment: WrapAlignment.end,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: compact ? 4 : 6,
-                            runSpacing: 4,
-                            children: [
-                              if (hasStatus)
-                                _buildPill(
-                                  text: statusText!,
-                                  backgroundColor:
-                                      AppColors.primaryLight,
-                                  foregroundColor:
-                                      AppColors.primary,
-                                ),
-
-                              if (hasDelivery)
-                                _buildPill(
-                                  text: deliveryFeeText!,
-                                  backgroundColor:
-                                      AppColors.surfaceVariant,
-                                  foregroundColor:
-                                      AppColors.textPrimary,
-                                ),
-                            ],
-                          ),
+                    if (hasSubtitle) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.regularSmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: compact ? 10 : null,
                         ),
+                      ),
                     ],
-                  ),
+
+                    // ====================================================
+                    // STATUS + DELIVERY
+                    // ====================================================
+                    if (hasStatus || hasDelivery) ...[
+                      SizedBox(height: compact ? 6 : 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: Wrap(
+                          alignment: WrapAlignment.end,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: compact ? 4 : 6,
+                          runSpacing: 4,
+                          children: [
+                            if (hasStatus)
+                              _buildPill(
+                                text: statusText!,
+                                backgroundColor:
+                                    AppColors.primaryLight,
+                                foregroundColor:
+                                    AppColors.primary,
+                              ),
+
+                            if (hasDelivery)
+                              _buildPill(
+                                text: deliveryFeeText!,
+                                backgroundColor:
+                                    AppColors.surfaceVariant,
+                                foregroundColor:
+                                    AppColors.textPrimary,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],

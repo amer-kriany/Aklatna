@@ -105,14 +105,16 @@ final GoRouter appRouter = GoRouter(
         ),
       ],
     ),
-    GoRoute(
+   GoRoute(
   path: '/food/:id',
   parentNavigatorKey: MainShell.rootNavigatorKey,
   builder: (context, state) {
     final menuDatasource = Menudatasource();
     final menuRepo = Menurepoimp(menudatasource: menuDatasource);
-    final addonDatasource = Addonesdatasource(); // adjust to your real class name
-    final addonRepo = AddonRepositoryImpl(datasource: addonDatasource); // adjust to your real class name
+    final addonDatasource = Addonesdatasource();
+    final addonRepo = AddonRepositoryImpl(datasource: addonDatasource);
+    final businessDatasource = BusinessDatasrouce();
+    final businessRepo = Businessrepoimp(businessDatasrouce: businessDatasource);
 
     return MultiBlocProvider(
       providers: [
@@ -124,6 +126,12 @@ final GoRouter appRouter = GoRouter(
         ),
         BlocProvider(
           create: (_) => AddonBloc(getAddonsUsecase: GetAddonsUsecase(repo: addonRepo)),
+        ),
+        BlocProvider(
+          create: (_) => BusinessBloc(
+            getBusinessUsecase: GetbusinessUsecase(repository: businessRepo),
+            searchbusinessesusecase: Searchbusinessesusecase(businessrepoimp: businessRepo),
+          ),
         ),
       ],
       child: Foodetailspage(itemId: state.pathParameters['id']!),

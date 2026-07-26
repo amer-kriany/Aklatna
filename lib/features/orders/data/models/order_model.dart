@@ -101,7 +101,6 @@ class OrderModel {
           .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e)))
           .toList();
       }catch(e){
-        Println("Error parsing cart items in order: $e");
     return <CartItem>[];
       }
      
@@ -124,6 +123,7 @@ class OrderModel {
       orderStatus: asOrderStatus(orders['order_status']),
       description: asNullableString(orders['description']),
       scheduledFor: asNullableDate(orders['scheduled_for']),
+      
 
     );
   }

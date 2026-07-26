@@ -51,11 +51,8 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
     }
 
     context.read<FavoriteBloc>().add(
-          ToggleFavoriteEvent(
-            userId: userId,
-            businessId: widget.businessId,
-          ),
-        );
+      ToggleFavoriteEvent(userId: userId, businessId: widget.businessId),
+    );
   }
 
   @override
@@ -127,9 +124,9 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                                 builder: (context, favoriteState) {
                                   final isFavorite =
                                       favoriteState is FavoriteLoaded &&
-                                          favoriteState.favoriteIds.contains(
-                                            widget.businessId,
-                                          );
+                                      favoriteState.favoriteIds.contains(
+                                        widget.businessId,
+                                      );
 
                                   return Material(
                                     color: Colors.white,
@@ -177,9 +174,7 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                   child: BlocBuilder<MenuBloc, MenuState>(
                     builder: (context, menuState) {
                       if (menuState is MenuLoading) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
+                        return const Center(child: CircularProgressIndicator());
                       }
                       if (menuState is MenuError) {
                         return Center(child: Text(menuState.message));
@@ -222,9 +217,7 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                             Expanded(
                               child: itemsInCategory.isEmpty
                                   ? const Center(
-                                      child: Text(
-                                        'لا توجد أطباق في هذا القسم',
-                                      ),
+                                      child: Text('لا توجد أطباق في هذا القسم'),
                                     )
                                   : GridView.builder(
                                       padding: const EdgeInsets.symmetric(
@@ -233,11 +226,11 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                                       ),
                                       gridDelegate:
                                           const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        mainAxisSpacing: AppSpacing.sm,
-                                        crossAxisSpacing: AppSpacing.sm,
-                                        childAspectRatio: 0.75,
-                                      ),
+                                            crossAxisCount: 2,
+                                            mainAxisSpacing: AppSpacing.sm,
+                                            crossAxisSpacing: AppSpacing.sm,
+                                            childAspectRatio: 0.75,
+                                          ),
                                       itemCount: itemsInCategory.length,
                                       itemBuilder: (context, index) {
                                         final item = itemsInCategory[index];
@@ -245,24 +238,24 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                                           photoUrl: item.photoUrl,
                                           nameAr: item.nameAr,
                                           price: item.price,
-                                          onTap: () => context
-                                              .push('/food/${item.id}'),
+                                          onTap: () =>
+                                              context.push('/food/${item.id}'),
                                           onAdd: () {
                                             context.read<CartBloc>().add(
-                                                  AddItemEvent(
-                                                    item: CartItem(
-                                                      itemId: item.id,
-                                                      nameAr: item.nameAr,
-                                                      description:
-                                                          item.description ??
-                                                              '',
-                                                      price: item.price,
-                                                      quantity: 1,
-                                                      businessId:
-                                                          item.businessId,
-                                                    ),
-                                                  ),
-                                                );
+                                              AddItemEvent(
+                                                item: CartItem(
+                                                  itemId: item.id,
+                                                  nameAr: item.nameAr,
+                                                  description:
+                                                      item.description ?? '',
+                                                  price: item.price,
+                                                  quantity: 1,
+                                                  businessId: item.businessId,
+                                                ),
+                                                businessName: business.nameAr,
+                                                businessLogo: business.logoUrl,
+                                              ),
+                                            );
                                           },
                                         );
                                       },

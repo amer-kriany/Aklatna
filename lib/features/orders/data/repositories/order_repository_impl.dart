@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:aklatna/features/orders/data/datasources/order_remote_datasource.dart';
 import 'package:aklatna/features/orders/data/models/order_model.dart';
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
@@ -39,7 +41,11 @@ OrderEntity mapToEntity(OrderModel order) {
     createdAt: order.createdAt,
     orderStatus: order.orderStatus,
     scheduledFor: order.scheduledFor,
-    description: order.description
+    description: order.description,
+    businessLogo: order.businessLogo,
+    businessName: order.businessName,
+    deliveryAddress: order.deliveryAddress,
+
   );
 }
 
@@ -57,6 +63,10 @@ OrderModel entityToModel(OrderEntity entity) {
     createdAt: entity.createdAt,
     orderStatus: entity.orderStatus,
     scheduledFor: entity.scheduledFor,
-    description: entity.description
+    description: entity.description,
+    businessLogo: entity.businessLogo,
+    businessName: entity.businessName,
+    deliveryAddress: entity.deliveryAddress,
+    
   );
 }
