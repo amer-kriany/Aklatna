@@ -1,37 +1,23 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
-import 'package:aklatna/features/home/domain/entity/businessEntity.dart';
-import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
-import 'package:aklatna/features/home/presentation/widgets/BusinessCard.dart';
-import 'package:aklatna/features/home/presentation/widgets/HomeDeliveryHeader.dart';
-import 'package:aklatna/features/home/presentation/widgets/HomeGreeting.dart';
-import 'package:aklatna/features/home/presentation/widgets/HomeSearchBar.dart';
-import 'package:aklatna/features/home/presentation/widgets/SectionHeader.dart';
-import 'package:aklatna/features/home/presentation/widgets/SponseredBanner.dart';
-import 'package:aklatna/features/profile/domain/entities/profileEntity.dart';
-import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
+import 'package:aklatna/core/theme/app_colors.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/AddressSelectionBottomSheet.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/BusinessCard.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/HomeDeliveryHeader.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/HomeGreeting.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/HomeSearchBar.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/SectionHeader.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/SponseredBanner.dart';
+import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
+import 'package:aklatna/features/promotions/presentaion/widgets/promotionCard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/theme/app_colors.dart';
+import 'package:go_router/go_router.dart';
 
-// TODO(Amer): fix these import paths to match your real project structure
-// import '../../business/presentation/bloc/business_bloc.dart';
-// import '../../business/domain/entities/business_entity.dart';
-// import '../../profile/presentation/bloc/profile_bloc.dart';
-// import '../../../../core/routes/app_routes.dart';
+import '../../business_type.dart';
+import '../../domain/entity/businessEntity.dart';
+import '../bloc/business_bloc.dart';
+import '../../../profile/presentaion/bloc/profile_bloc.dart';
 
-/// Home page - wired to real BusinessBloc + ProfileBloc.
-///
-/// Profile gates the whole page (header/greeting need it) - shows a
-/// full-page spinner until ProfileLoaded. Once that's ready, the
-/// business sections render independently and collapse to nothing
-/// (not a second spinner) until BusinessFetched arrives, since a
-/// business-load delay shouldn't block the whole page from showing.
-///
-/// "Popular Near You" / "Recommended" aren't separate bloc states -
-/// BusinessFetched only gives one flat list, so this page derives the
-/// split itself: highest-rated business = Popular, the rest = Recommended.
-/// TODO(Amer): confirm this is really how "popular" should be decided
-/// (vs. e.g. admin-picked or a future paid placement).
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -40,7 +26,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Approximate - verify against real device render and adjust.
   static const double _recommendedTileWidth = 160;
   static const double _recommendedRowHeight = 210;
 
@@ -49,6 +34,46 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     context.read<BusinessBloc>().add(GetBusinesses());
     context.read<ProfileBloc>().add(GetProfilesEvent());
+    context.read<PromotionsBloc>().add(LoadPromotionsEvent());
+  }
+
+  String _formatAddress(String? fullAddress) {
+    if (fullAddress == null || fullAddress.trim().isEmpty) return '';
+    final parts = fullAddress
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    if (parts.length >= 2) {
+      return '${parts.first}, ${parts.last}';
+    }
+    return fullAddress;
+  }
+
+  String _typeLabel(BusinessType type) {
+    switch (type) {
+      case BusinessType.restaurant:
+        return 'مطعم';
+      case BusinessType.juice_shop:
+        return 'محل عصائر';
+    }
+  }
+
+  void _showAddressBottomSheet(BuildContext context, String userId) async {
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      ),
+      builder: (_) {
+        return AddressSelectionBottomSheet(userId: userId);
+      },
+    );
+
+    if (mounted) {
+      context.read<ProfileBloc>().add(GetProfilesEvent());
+    }
   }
 
   @override
@@ -63,29 +88,47 @@ class _HomePageState extends State<HomePage> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (profileState is ProfileError) {
-              return Text(profileState.message);
+            if (profileState is ProfileError ||
+                profileState is! ProfileLoaded) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.orange,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "Profile not found",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () =>
+                          context.read<ProfileBloc>().add(GetProfilesEvent()),
+                      child: const Text("Retry"),
+                    ),
+                  ],
+                ),
+              );
             }
-             List<Profileentity> profiles=[];
-            final Profileentity profile;
-            if (profileState is ProfileLoaded) {
-               profiles = profileState.profiles;
-            }
-            print(profiles.length);
-            if (profiles.isNotEmpty) {
-              profile = profiles.first;
-            } else {
-              return Center(child: Text("no profile found"));
-            }
-///////////////////////////////////////////////////////////////////////////////////////
+
+            final profile = profileState.profile;
+
             return BlocBuilder<BusinessBloc, BusinessState>(
               builder: (context, businessState) {
                 if (businessState is BusinessLoading) {
-                  return Center(child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
                 if (businessState is BusinessError) {
-                  return Center(child: Text(businessState.message+"fuck tramp"));
+                  return Center(child: Text(businessState.message));
                 }
+
                 List<BusinessEntity> businesses = <BusinessEntity>[];
                 if (businessState is BusinessFetched) {
                   businesses = businessState.businesses;
@@ -98,85 +141,154 @@ class _HomePageState extends State<HomePage> {
                     ? sorted.sublist(1)
                     : <BusinessEntity>[];
 
-                // TODO(Amer): sponsored_banners table doesn't exist yet -
-                // wire this once it's built.
-                const String? sponsoredBannerImageUrl = "null";
+                const String? sponsoredBannerImageUrl = null;
 
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                  padding: EdgeInsets.zero,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.pageHorizontal,
+                      Container(
+                        decoration: const BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(AppRadius.xl),
+                            bottomRight: Radius.circular(AppRadius.xl),
+                          ),
                         ),
-                        child: HomeDeliveryHeader(
-                          // TODO(Amer): resolve real address source (deferred)
-                          addressLabel: profile.address,
-                          avatarUrl: profile.profilePhoto,
-                          onAvatarTap: () {
-                            // TODO(Amer): context.push(AppRoutes.profile);
-                          },
-                          onAddressTap: () {
-                            // TODO(Amer): context.push(AppRoutes.addressSelect);
-                          },
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.pageHorizontal,
+                          AppSpacing.md,
+                          AppSpacing.pageHorizontal,
+                          AppSpacing.lg,
                         ),
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.pageHorizontal,
-                        ),
-                        child: HomeGreeting(userName: profile.userName),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.pageHorizontal,
-                        ),
-                        child: HomeSearchBar(
-                          onTap: () {
-                            // TODO(Amer): context.push(AppRoutes.search);
-                          },
-                          onMicTap: null, // visual only, not wired in Phase 1
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            HomeDeliveryHeader(
+                              addressLabel: _formatAddress(profile.address),
+                              avatarUrl: profile.photo,
+                              onAvatarTap: () async {
+                                await context.push("/profile");
+                                if (context.mounted) {
+                                  context.read<ProfileBloc>().add(
+                                    GetProfilesEvent(),
+                                  );
+                                }
+                              },
+                              onAddressTap: () =>
+                                  _showAddressBottomSheet(context, profile.id),
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            HomeGreeting(userName: profile.userName),
+                            const SizedBox(height: AppSpacing.md),
+                            HomeSearchBar(
+                              onTap: () => context.go("/search"),
+                              onMicTap: null,
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: AppSpacing.xl),
 
-                      if (popularBusiness != null) ...[
+                      if (sponsoredBannerImageUrl != null) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: const SectionHeader(title: 'الأكثر طلبًا'),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.pageHorizontal,
-                          ),
-                          child: BusinessCard(
-                            businessName: popularBusiness.nameAr,
-                            coverUrl: popularBusiness.coverUrl,
-                            rating: popularBusiness.rating,
-                            ratingCount: popularBusiness.ratingCount,
-                            onTap: () {
-                              // TODO(Amer): context.push('${AppRoutes.business}/${popularBusiness.id}');
-                            },
+                          child: SponsoredBanner(
+                            imageUrl: sponsoredBannerImageUrl,
+                            onTap: () {},
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
+                      // ---- Promotions section — responsive, no fixed height/width ----
+                      BlocBuilder<PromotionsBloc, PromotionsState>(
+                        builder: (context, promoState) {
+                          if (promoState is PromotionsLoading) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppSpacing.xl,
+                              ),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
+                          if (promoState is PromotionsError) {
+                            return const SizedBox.shrink();
+                          }
+
+                          if (promoState is! PromotionsLoaded ||
+                              promoState.promotions.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.pageHorizontal,
+                                ),
+                                child: SectionHeader(title: 'عروض وخصومات'),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.only(
+                                  left: AppSpacing.pageHorizontal,
+                                  right: AppSpacing.sm,
+                                ),
+                                child: IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      for (
+                                        int i = 0;
+                                        i < promoState.promotions.length;
+                                        i++
+                                      ) ...[
+                                        if (i != 0)
+                                          const SizedBox(width: AppSpacing.sm),
+                                        PromotionCard(
+                                          businessName: promoState
+                                              .promotions[i]
+                                              .businessName,
+                                          coverUrl:
+                                              promoState.promotions[i].photoUrl,
+                                          itemName:
+                                              promoState.promotions[i].itemName,
+                                          discountPercentage: promoState
+                                              .promotions[i]
+                                              .discountPercentage,
+                                          oldPrice:
+                                              promoState.promotions[i].oldPrice,
+                                          newPrice:
+                                              promoState.promotions[i].newPrice,
+                                          onTap: () => context.push(
+                                            "/business/${promoState.promotions[i].businessId}",
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                            ],
+                          );
+                        },
+                      ),
+
                       if (recommendedBusinesses.isNotEmpty) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: const SectionHeader(title: 'موصى لك'),
+                          child: SectionHeader(title: 'موصى لك'),
                         ),
                         const SizedBox(height: AppSpacing.md),
                         SizedBox(
@@ -193,14 +305,17 @@ class _HomePageState extends State<HomePage> {
                             itemBuilder: (context, index) {
                               final business = recommendedBusinesses[index];
                               return BusinessCard(
+                                businessId: business.id,
                                 width: _recommendedTileWidth,
                                 businessName: business.nameAr,
+                                subtitle:
+                                    '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
                                 coverUrl: business.coverUrl,
                                 rating: business.rating,
                                 ratingCount: business.ratingCount,
-                                onTap: () {
-                                  // TODO(Amer): context.push('${AppRoutes.business}/${business.id}');
-                                },
+                                imageAspectRatio: 1.2,
+                                onTap: () =>
+                                    context.push("/business/${business.id}"),
                               );
                             },
                           ),
@@ -208,25 +323,32 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
-                      if (sponsoredBannerImageUrl != null) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
+                      if (popularBusiness != null) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: const SectionHeader(title: 'إعلانات'),
+                          child: SectionHeader(title: 'الأكثر طلبًا'),
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: SponsoredBanner(
-                            imageUrl: sponsoredBannerImageUrl,
-                            onTap: () {
-                              // TODO(Amer): decide destination once sponsored_banners table exists
-                            },
+                          child: BusinessCard(
+                            businessId: popularBusiness.id,
+                            businessName: popularBusiness.nameAr,
+                            subtitle:
+                                '${_typeLabel(popularBusiness.type)} · ${_formatAddress(popularBusiness.adress)}',
+                            coverUrl: popularBusiness.coverUrl,
+                            rating: popularBusiness.rating,
+                            ratingCount: popularBusiness.ratingCount,
+                            imageAspectRatio: 3.4,
+                            onTap: () =>
+                                context.push("/business/${popularBusiness.id}"),
                           ),
                         ),
+                        const SizedBox(height: AppSpacing.xl),
                       ],
                     ],
                   ),

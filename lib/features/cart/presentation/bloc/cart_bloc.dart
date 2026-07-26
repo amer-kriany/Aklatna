@@ -37,6 +37,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       items: updatedItems,
       businessId: event.item.businessId,
       totalPrice: _calcTotal(updatedItems),
+      
     ));
   }
 
@@ -53,11 +54,11 @@ class CartBloc extends Bloc<CartEvent, CartState> {
       updatedItems.removeAt(index);
     }
 
-    emit(state.copyWith(
-      items: updatedItems,
-      totalPrice: _calcTotal(updatedItems),
-      businessId: updatedItems.isEmpty ? null : state.businessId,
-    ));
+   emit(state.copyWith(
+  items: updatedItems,
+  totalPrice: _calcTotal(updatedItems),
+  clearBusinessId: updatedItems.isEmpty,
+));
   }
 
   void _onClearCart(ClearCartEvent event, Emitter<CartState> emit) {

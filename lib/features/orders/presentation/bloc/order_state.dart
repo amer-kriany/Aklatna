@@ -39,3 +39,14 @@ final class OrderStatusError extends OrderState {
   @override
   List<Object> get props => [error];
 }
+
+
+
+final class OrderPlacing extends OrderState {}
+final class OrderPlaced extends OrderState {}
+final class OrderError extends OrderState {
+  final String message;
+  const OrderError({required this.message});
+
+  
+}

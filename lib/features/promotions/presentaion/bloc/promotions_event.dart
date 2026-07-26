@@ -6,4 +6,4 @@ sealed class PromotionsEvent extends Equatable {
   @override
   List<Object> get props => [];
 }
-class GetPromotionsEvent extends PromotionsEvent {}
+class LoadPromotionsEvent extends PromotionsEvent {}

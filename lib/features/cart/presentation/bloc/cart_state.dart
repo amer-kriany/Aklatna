@@ -13,14 +13,15 @@ class CartState {
       CartState(items: [], totalPrice: 0.0, businessId: null);
       
   CartState copyWith({
-    List<CartItem>? items,
-    double? totalPrice,
-    String? businessId,
-  }) {
-    return CartState(
-      items: items ?? this.items,
-      totalPrice: totalPrice ?? this.totalPrice,
-      businessId: businessId ?? this.businessId,
-    );
-  }
+  List<CartItem>? items,
+  double? totalPrice,
+  String? businessId,
+  bool clearBusinessId = false,
+}) {
+  return CartState(
+    items: items ?? this.items,
+    totalPrice: totalPrice ?? this.totalPrice,
+    businessId: clearBusinessId ? null : (businessId ?? this.businessId),
+  );
+}
 }

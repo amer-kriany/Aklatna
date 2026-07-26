@@ -7,7 +7,7 @@ class OrderRemoteDatasource {
   // place an order
   Future<void> placeOrder(OrderModel order) async {
     try {
-      await supabase.from('orders').insert(order.toJson());
+      await supabase.from('order').insert(order.toJson());
     } catch (e) {
       rethrow;
     }
@@ -17,7 +17,7 @@ class OrderRemoteDatasource {
   Future<List<OrderModel>> customerOrders(String customerId) async {
     try {
       final orders = await supabase
-          .from('orders')
+          .from('order')
           .select()
           .eq('customer_id', customerId)
           .order('created_at', ascending: false);
@@ -30,7 +30,7 @@ class OrderRemoteDatasource {
   // whatch order status
   Stream<OrderModel> watchOrderStatus(String orderId) {
     return supabase
-        .from("orders")
+        .from("order")
         .stream(primaryKey: ['id'])
         .eq('id', orderId)
         .map((row) => OrderModel.fromSupabase(row.first));

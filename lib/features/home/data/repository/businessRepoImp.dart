@@ -7,14 +7,13 @@ class Businessrepoimp implements Businessrepo {
   final BusinessDatasrouce businessDatasrouce;
   Businessrepoimp({required this.businessDatasrouce});
 
-@override
+  @override
   Future<List<BusinessEntity>> getBusinessTable() async {
     final business = await businessDatasrouce.getBusinesses();
-    return business.map((e)=>mapToEntity(e)).toList();
+    return business.map((e) => mapToEntity(e)).toList();
   }
 
-  
- BusinessEntity mapToEntity(BusinessModel model) {
+  BusinessEntity mapToEntity(BusinessModel model) {
     return BusinessEntity(
       id: model.id,
       name: model.name,
@@ -28,6 +27,13 @@ class Businessrepoimp implements Businessrepo {
       type: model.type,
       rating: model.rating,
       ratingCount: model.ratingCount,
+      coverUrl: model.coverUrl,
     );
+  }
+
+  @override
+  Future<List<BusinessEntity>> searchBusinesses({required String query}) async {
+    final response = await businessDatasrouce.searchBusinesses(query: query);
+    return response.map((e)=>mapToEntity(e)).toList() ;
   }
 }

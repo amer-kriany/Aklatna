@@ -8,7 +8,7 @@ sealed class OrderEvent extends Equatable {
 }
 
 class PlaceOrderEvent extends OrderEvent {
-  final OrderModel order;
+  final OrderEntity order;
   const PlaceOrderEvent({required this.order});
   @override
   List<Object> get props => [order];
