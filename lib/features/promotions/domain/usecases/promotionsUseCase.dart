@@ -1,12 +1,12 @@
-import 'package:aklatna/features/promotions/data/repository/promotionsRepoImp.dart';
 import 'package:aklatna/features/promotions/domain/entities/promotionEntity.dart';
+import 'package:aklatna/features/promotions/domain/repository/promotionsRepo.dart';
 
-class Promotionsusecase {
-  final Promotionsrepoimp promotionsrepoimp;
-  Promotionsusecase({required this.promotionsrepoimp});
+class GetPromotionsUseCase {
+  final Promotionsrepo repo;
 
-  // get all promotions
-  Future<List<Promotionentity>> call() async {
-    return await promotionsrepoimp.getAllPromotions() ;
+  GetPromotionsUseCase(this.repo);
+
+  Future<List<PromotionEntity>> call() {
+    return repo.getPromotions();
   }
 }

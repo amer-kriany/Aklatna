@@ -2,29 +2,52 @@ class Promotionmodel {
   final String id;
   final String label;
   final int discountPercentage;
+
   final String businessId;
-  final String? imageUrl;
-  final DateTime startTime;
-  final DateTime endTime;
+  final String businessName;
+
+  final String menuItemId;
+  final String menuItemName;
+
+  final String? photoUrl;
+  final double? oldPrice;
+  final double? newPrice;
+  final bool isActive;
+
   final DateTime createdAt;
+
   const Promotionmodel({
     required this.id,
     required this.label,
     required this.discountPercentage,
     required this.businessId,
-    required this.startTime,
-    required this.endTime,
-    this.imageUrl,
+    required this.businessName,
+    required this.menuItemId,
+    required this.menuItemName,
+    this.photoUrl,
     required this.createdAt,
+    this.oldPrice,
+    this.newPrice,
+    required this.isActive,
   });
 
   factory Promotionmodel.fromJson(Map<String, dynamic> json) {
     String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
     String? asNullableString(dynamic value) => value?.toString();
+    double? asNullableDouble(dynamic value) {
+      if (value == null) return null;
+      if (value is num) return value.toDouble();
+      return double.tryParse(value.toString());
+    }
 
     int asIntOrZero(dynamic value) {
       if (value is num) return value.toInt();
       return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    double asDoubleOrZero(dynamic value) {
+      if (value is num) return value.toDouble();
+      return double.tryParse(value?.toString() ?? '') ?? 0.0;
     }
 
     DateTime asDateOrEpoch(dynamic value) {
@@ -36,12 +59,20 @@ class Promotionmodel {
     return Promotionmodel(
       id: asStringOrEmpty(json['id']),
       label: asStringOrEmpty(json['label']),
-      discountPercentage: asIntOrZero(json['discountPercentage']),
-      businessId: asStringOrEmpty(json['businessId']),
-      imageUrl: asNullableString(json['imageUrl']),
-      startTime: asDateOrEpoch(json['start_time']),
-      endTime: asDateOrEpoch(json['end_time']),
+      discountPercentage: asIntOrZero(json['discount_percentage']),
+
+      businessId: asStringOrEmpty(json['business_id']),
+      businessName: asStringOrEmpty(json['business_name']),
+
+      menuItemId: asStringOrEmpty(json['menu_item_id']),
+      menuItemName: asStringOrEmpty(json['menu_item_name']),
+
+      photoUrl: asNullableString(json['photo_url']),
+
       createdAt: asDateOrEpoch(json['created_at']),
+      isActive: json['is_active'] ?? false,
+      oldPrice: asNullableDouble(json['old_price']),
+      newPrice: asNullableDouble(json['new_price']),
     );
   }
 }

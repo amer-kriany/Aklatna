@@ -12,7 +12,7 @@ final class PromotionsInitial extends PromotionsState {}
 final class PromotionsLoading extends PromotionsState {}
 
 final class PromotionsLoaded extends PromotionsState {
-  final List<Promotionentity> promotions;
+  final List<PromotionEntity> promotions;
   const PromotionsLoaded({required this.promotions});
   @override
   List<Object> get props => [promotions];

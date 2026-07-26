@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
+import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
+import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
+import 'package:aklatna/features/home/presentation/widgets/businesses/MenuItemGridCard.dart';
 import 'package:aklatna/features/home/presentation/widgets/search/popularDishes.dart';
-import 'package:aklatna/features/home/presentation/widgets/search/recentKeyword.dart';
 import 'package:aklatna/features/home/presentation/widgets/search/searchBarState.dart'
     as app;
 import 'package:aklatna/features/home/presentation/widgets/search/searchResultCard.dart';
@@ -24,8 +26,8 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final _controller = TextEditingController();
-  List<String> _recentKeywords = [];
   String _query = '';
+  String? _selectedCategoryName;
   Timer? _debounce;
 
   @override
@@ -37,11 +39,6 @@ class _SearchPageState extends State<SearchPage> {
     if (context.read<BusinessBloc>().state is BusinessInitial) {
       context.read<BusinessBloc>().add(GetBusinesses());
     }
-    _loadRecent();
-  }
-
-  Future<void> _loadRecent() async {
-    // Recent keywords logic if needed
   }
 
   void _onQueryChanged(String value) {
@@ -51,13 +48,6 @@ class _SearchPageState extends State<SearchPage> {
       if (value.trim().isEmpty) return;
       context.read<BusinessBloc>().add(SearchBusinesses(query: value.trim()));
     });
-  }
-
-  void _onRecentKeywordTap(String keyword) {
-    _controller.text = keyword;
-    setState(() => _query = keyword);
-    if (keyword.trim().isEmpty) return;
-    context.read<BusinessBloc>().add(SearchBusinesses(query: keyword.trim()));
   }
 
   @override
@@ -79,8 +69,7 @@ class _SearchPageState extends State<SearchPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.md),
-              
-              // Top Bar: Page Title + Favorites Heart Icon
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -106,17 +95,10 @@ class _SearchPageState extends State<SearchPage> {
               Expanded(
                 child: ListView(
                   children: [
-                    if (_query.trim().isEmpty &&
-                        _recentKeywords.isNotEmpty) ...[
-                      RecentKeywords(
-                        keywords: _recentKeywords,
-                        onTap: _onRecentKeywordTap,
-                      ),
-                      const SizedBox(height: AppSpacing.lg),
-                    ],
+                    if (_query.trim().isEmpty) _buildCategoryChipsAndResults(),
                     if (_query.trim().isNotEmpty) _buildResults(),
                     const SizedBox(height: AppSpacing.lg),
-                    _buildIdleContent(),
+                    if (_query.trim().isEmpty) _buildIdleContent(),
                   ],
                 ),
               ),
@@ -126,6 +108,123 @@ class _SearchPageState extends State<SearchPage> {
       ),
     );
   }
+
+  /// Category chips (from menu_categories, distinct names) + filtered food
+  /// results when a chip is selected.
+  Widget _buildCategoryChipsAndResults() {
+    return BlocBuilder<MenuBloc, MenuState>(
+      builder: (context, state) {
+        if (state is! MenuAllLoaded) return const SizedBox.shrink();
+
+        final distinctCategoryNames =
+            state.categories.map((c) => c.nameAr).toSet().toList();
+
+        if (distinctCategoryNames.isEmpty) return const SizedBox.shrink();
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 44,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: distinctCategoryNames.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
+                  itemBuilder: (context, index) {
+                    final name = distinctCategoryNames[index];
+                    final isSelected = _selectedCategoryName == name;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedCategoryName = isSelected ? null : name;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.xs,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.primary : AppColors.surface,
+                          borderRadius: BorderRadius.circular(AppRadius.full),
+                          border: Border.all(
+                            color: isSelected ? AppColors.primary : AppColors.border,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Text(
+                          name,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: isSelected ? AppColors.textOnPrimary : AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              if (_selectedCategoryName != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                _buildCategoryResults(state, _selectedCategoryName!),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+ Widget _buildCategoryResults(MenuAllLoaded state, String categoryName) {
+  final matchingCategoryIds = state.categories
+      .where((c) => c.nameAr == categoryName)
+      .map((c) => c.id)
+      .toSet();
+
+  final matchingItems =
+      state.items.where((i) => matchingCategoryIds.contains(i.categoryId)).toList();
+
+  if (matchingItems.isEmpty) {
+    return Text('لا توجد أطباق في هذا القسم', style: AppTextStyles.bodyMedium);
+  }
+
+  return GridView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 2,
+      mainAxisSpacing: AppSpacing.sm,
+      crossAxisSpacing: AppSpacing.sm,
+      childAspectRatio: 0.75,
+    ),
+    itemCount: matchingItems.length,
+    itemBuilder: (context, index) {
+      final item = matchingItems[index];
+      return MenuItemGridCard(
+        photoUrl: item.photoUrl,
+        nameAr: item.nameAr,
+        price: item.price,
+        onTap: () => context.push('/food/${item.id}'),
+        onAdd: () {
+          context.read<CartBloc>().add(
+            AddItemEvent(
+              item: CartItem(
+                itemId: item.id,
+                nameAr: item.nameAr,
+                description: item.description ?? '',
+                photoUrl: item.photoUrl,
+                price: item.price,
+                quantity: 1,
+                businessId: item.businessId,
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
 
   /// Popular dishes slider at the bottom
   Widget _buildIdleContent() {
@@ -206,7 +305,7 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  /// Active query search results
+  /// Active query search results (business search)
   Widget _buildResults() {
     return BlocBuilder<BusinessBloc, BusinessState>(
       builder: (context, state) {

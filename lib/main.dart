@@ -35,6 +35,10 @@ import 'package:aklatna/features/profile/domain/usecases/getProfilesUsecase.dart
 import 'package:aklatna/features/profile/domain/usecases/updateProfilePhotoUseCase.dart';
 import 'package:aklatna/features/profile/domain/usecases/updateProfileUsecase.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
+import 'package:aklatna/features/promotions/data/dataSource/promotionDataSource.dart';
+import 'package:aklatna/features/promotions/data/repository/promotionsRepoImp.dart';
+import 'package:aklatna/features/promotions/domain/usecases/promotionsUseCase.dart';
+import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
 import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -60,8 +64,12 @@ void main() async {
   final orderRemoteDatasource = OrderRemoteDatasource();
   final jobDatasource = JobDatasource();
   final addressDatasource = AddressDatasource();
+  final promotiondatasource = Promotiondatasource();
 
   // repositories
+  final promotionrepo = Promotionsrepoimp(
+    promotiondatasource: promotiondatasource,
+  );
   final favoriteRepo = FavoriteRepositoryImpl(datasource: favoriteDatasource);
   final orderRepo = OrderRepositoryImpl(
     orderRemoteDatasource: orderRemoteDatasource,
@@ -74,6 +82,7 @@ void main() async {
   final menuRepo = Menurepoimp(menudatasource: getMenuDataSource);
   final profileRepo = Profilerepoimp(profileDatasource: profileDatasource);
   //use cases
+  final getpromotions = GetPromotionsUseCase( promotionrepo);
   final getCostomerOrdersUseCase = GetCustomerOrdersUseCase(
     orderRepositoryImpl: orderRepo,
   );
@@ -110,6 +119,9 @@ void main() async {
             getBusinessUsecase: getBusinessUsecase,
             searchbusinessesusecase: searchBusinessesusecase,
           ),
+        ),
+        BlocProvider(
+          create: (context) => PromotionsBloc(promotionsusecase: getpromotions),
         ),
         BlocProvider(
           create: (context) => AddressBloc(

@@ -1,5 +1,4 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
-import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/AddressSelectionBottomSheet.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/BusinessCard.dart';
@@ -8,11 +7,12 @@ import 'package:aklatna/features/home/presentation/widgets/home/HomeGreeting.dar
 import 'package:aklatna/features/home/presentation/widgets/home/HomeSearchBar.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SectionHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SponseredBanner.dart';
+import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
+import 'package:aklatna/features/promotions/presentaion/widgets/promotionCard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../addresses/presentation/bloc/address_bloc.dart';
 import '../../business_type.dart';
 import '../../domain/entity/businessEntity.dart';
 import '../bloc/business_bloc.dart';
@@ -34,6 +34,7 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     context.read<BusinessBloc>().add(GetBusinesses());
     context.read<ProfileBloc>().add(GetProfilesEvent());
+    context.read<PromotionsBloc>().add(LoadPromotionsEvent());
   }
 
   String _formatAddress(String? fullAddress) {
@@ -70,7 +71,6 @@ class _HomePageState extends State<HomePage> {
       },
     );
 
-    // 🚀 When sheet closes, refresh profile to ensure latest active address is displayed
     if (mounted) {
       context.read<ProfileBloc>().add(GetProfilesEvent());
     }
@@ -141,8 +141,7 @@ class _HomePageState extends State<HomePage> {
                     ? sorted.sublist(1)
                     : <BusinessEntity>[];
 
-                const String? sponsoredBannerImageUrl =
-                    "assets/images/profile.jpg";
+                const String? sponsoredBannerImageUrl = null;
 
                 return SingleChildScrollView(
                   padding: EdgeInsets.zero,
@@ -204,6 +203,85 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: AppSpacing.xl),
                       ],
+
+                      // ---- Promotions section — responsive, no fixed height/width ----
+                      BlocBuilder<PromotionsBloc, PromotionsState>(
+                        builder: (context, promoState) {
+                          if (promoState is PromotionsLoading) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppSpacing.xl,
+                              ),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
+                          if (promoState is PromotionsError) {
+                            return const SizedBox.shrink();
+                          }
+
+                          if (promoState is! PromotionsLoaded ||
+                              promoState.promotions.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.pageHorizontal,
+                                ),
+                                child: SectionHeader(title: 'عروض وخصومات'),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.only(
+                                  left: AppSpacing.pageHorizontal,
+                                  right: AppSpacing.sm,
+                                ),
+                                child: IntrinsicHeight(
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      for (
+                                        int i = 0;
+                                        i < promoState.promotions.length;
+                                        i++
+                                      ) ...[
+                                        if (i != 0)
+                                          const SizedBox(width: AppSpacing.sm),
+                                        PromotionCard(
+                                          businessName: promoState
+                                              .promotions[i]
+                                              .businessName,
+                                          coverUrl:
+                                              promoState.promotions[i].photoUrl,
+                                          itemName:
+                                              promoState.promotions[i].itemName,
+                                          discountPercentage: promoState
+                                              .promotions[i]
+                                              .discountPercentage,
+                                          oldPrice:
+                                              promoState.promotions[i].oldPrice,
+                                          newPrice:
+                                              promoState.promotions[i].newPrice,
+                                          onTap: () => context.push(
+                                            "/business/${promoState.promotions[i].businessId}",
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                            ],
+                          );
+                        },
+                      ),
 
                       if (recommendedBusinesses.isNotEmpty) ...[
                         const Padding(

@@ -9,19 +9,24 @@ class Promotionsrepoimp implements Promotionsrepo {
 
   // get all promotions
   @override
-  Future<List<Promotionentity>> getAllPromotions() async {
-    final promotions = await promotiondatasource.getAllPromotions();
-    return  promotions.map((e)=>mapToEntity(e)).toList() ;
+  Future<List<PromotionEntity>> getPromotions() async {
+    final promotions = await promotiondatasource.getPromotions();
+    return promotions.map((e) => mapToEntity(e)).toList();
   }
 }
 
-Promotionentity mapToEntity(Promotionmodel model) {
-  return Promotionentity(
-    id: model.id,
+PromotionEntity mapToEntity(Promotionmodel model) {
+  return PromotionEntity(
     label: model.label,
     discountPercentage: model.discountPercentage,
     businessId: model.businessId,
-    startTime: model.startTime,
-    endTime: model.endTime, createdAt: model.createdAt,
+    businessName: model.businessName,
+    menuItemId: model.menuItemId,
+    itemName: model.menuItemName,
+    oldPrice: model.oldPrice,
+    newPrice: model.newPrice,
+    photoUrl: model.photoUrl ?? '',
+    id: model.id,
+    isActive: model.isActive,
   );
 }
