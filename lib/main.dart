@@ -180,6 +180,9 @@ class MyApp extends StatelessWidget {
           context.read<FavoriteBloc>().add(
             LoadFavoritesEvent(userId: state.profile.id),
           );
+          context.read<OrderBloc>().add(
+            GetCustomerOrdersEvent(customerId: state.profile.id),
+          );
         }
       },
       child: MaterialApp.router(

@@ -4,7 +4,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class OrderRemoteDatasource {
   final supabase = Supabase.instance.client;
 
-  // place an order
+  // ============================================================
+  // PLACE ORDER
+  // ============================================================
+
   Future<void> placeOrder(OrderModel order) async {
     try {
       await supabase.from('order').insert(order.toJson());
@@ -13,7 +16,10 @@ class OrderRemoteDatasource {
     }
   }
 
-  // get customer's orders history
+  // ============================================================
+  // GET CUSTOMER ORDERS
+  // ============================================================
+
   Future<List<OrderModel>> customerOrders(String customerId) async {
     try {
       final orders = await supabase
@@ -21,18 +27,32 @@ class OrderRemoteDatasource {
           .select()
           .eq('customer_id', customerId)
           .order('created_at', ascending: false);
-      return orders.map((e) => OrderModel.fromSupabase(e)).toList();
+
+      return orders
+          .map<OrderModel>(
+            (e) => OrderModel.fromSupabase(e),
+          )
+          .toList();
     } catch (e) {
       rethrow;
     }
   }
 
-  // whatch order status
+  // ============================================================
+  // REALTIME ORDER STATUS
+  // ============================================================
+
   Stream<OrderModel> watchOrderStatus(String orderId) {
     return supabase
-        .from("order")
+        .from('order')
         .stream(primaryKey: ['id'])
         .eq('id', orderId)
-        .map((row) => OrderModel.fromSupabase(row.first));
+        .map((rows) {
+          if (rows.isEmpty) {
+            throw Exception('Order not found');
+          }
+
+          return OrderModel.fromSupabase(rows.first);
+        });
   }
 }

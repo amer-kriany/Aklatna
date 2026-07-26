@@ -4,6 +4,7 @@ import 'package:aklatna/features/cart/presentation/widgets/cart/CartCheckoutButt
 import 'package:aklatna/features/cart/presentation/widgets/cart/CartDeliveryAddressSection.dart';
 import 'package:aklatna/features/cart/presentation/widgets/cart/CartSummarySection.dart';
 import 'package:aklatna/features/cart/presentation/widgets/cart/cartItemCard.dart';
+import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -17,6 +18,43 @@ import '../../../../core/theme/app_colors.dart';
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
 
+  void _showActiveOrderDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        title: Text(
+          'لديك طلب قيد التنفيذ',
+          style: AppTextStyles.h4,
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          'لا يمكنك إنشاء طلب جديد حتى يكتمل أو يُلغى طلبك الحالي.',
+          style: AppTextStyles.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+            ),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'حسناً',
+              style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,7 +67,7 @@ class CartPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: AppSpacing.md),
-              Text('سلتي', style: AppTextStyles.h2), // "My Cart"
+              Text('سلتي', style: AppTextStyles.h2),
               const SizedBox(height: AppSpacing.lg),
 
               Expanded(
@@ -109,7 +147,23 @@ class CartPage extends StatelessWidget {
                                 ],
                                 CartCheckoutButton(
                                   onPressed: () {
-                                    // 🚀 Check if address is missing for delivery orders
+                                    // ------------------------------------------------
+                                    // 1) Active-order guard — checked first, before
+                                    // the address check, so the customer sees this
+                                    // regardless of whether their address is set.
+                                    // ------------------------------------------------
+                                    final orderState =
+                                        context.read<OrderBloc>().state;
+
+                                    if (orderState is CustomerOrdersFetched &&
+                                        orderState.hasActiveOrder) {
+                                      _showActiveOrderDialog(context);
+                                      return;
+                                    }
+
+                                    // ------------------------------------------------
+                                    // 2) Missing address check (unchanged)
+                                    // ------------------------------------------------
                                     if (orderType == 'delivery' &&
                                         address.trim().isEmpty) {
                                       showDialog(
@@ -158,12 +212,8 @@ class CartPage extends StatelessWidget {
                                                 ),
                                               ),
                                               onPressed: () {
-                                                Navigator.pop(
-                                                  dialogContext,
-                                                ); // Close dialog
-                                                context.push(
-                                                  '/addresses',
-                                                ); // Navigate to addresses
+                                                Navigator.pop(dialogContext);
+                                                context.push('/addresses');
                                               },
                                               child: Text(
                                                 'إضافة عنوان',
@@ -180,7 +230,9 @@ class CartPage extends StatelessWidget {
                                       return;
                                     }
 
-                                    // Direct to checkout if address is present
+                                    // ------------------------------------------------
+                                    // 3) All clear -> go to checkout
+                                    // ------------------------------------------------
                                     context.push('/checkout');
                                   },
                                 ),

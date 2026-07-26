@@ -130,21 +130,11 @@ final GoRouter appRouter = GoRouter(
     );
   },
 ),
-    GoRoute(
-      path: '/checkout',
-      parentNavigatorKey: MainShell.rootNavigatorKey,
-      builder: (context, state) {
-        final orderRepo = OrderRepositoryImpl(orderRemoteDatasource: OrderRemoteDatasource());
-        return BlocProvider(
-          create: (_) => OrderBloc(
-         placeOrderUsecase:   PlaceOrderUsecase( orderRepositoryImpl: orderRepo),
-         customerOrdersUsecase:   GetCustomerOrdersUseCase( orderRepositoryImpl: orderRepo),
-            watchOrderStatusUsecase: Orderstatususecase( orderRepositoryImpl: orderRepo), 
-          ),
-          child: const CheckoutPage(),
-        );
-      },
-    ),
+   GoRoute(
+  path: '/checkout',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) => const CheckoutPage(),
+),
     GoRoute(
   path: '/addresses',
   parentNavigatorKey: MainShell.rootNavigatorKey,
