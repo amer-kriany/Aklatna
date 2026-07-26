@@ -27,8 +27,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   static const double _recommendedTileWidth = 160;
-  static const double _recommendedRowHeight = 210;
-
+  static const double _recommendedRowHeight = 220;
   @override
   void initState() {
     super.initState();
@@ -125,6 +124,7 @@ class _HomePageState extends State<HomePage> {
                 if (businessState is BusinessLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
+
                 if (businessState is BusinessError) {
                   return Center(child: Text(businessState.message));
                 }
@@ -204,7 +204,6 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
-                      // ---- Promotions section — responsive, no fixed height/width ----
                       BlocBuilder<PromotionsBloc, PromotionsState>(
                         builder: (context, promoState) {
                           if (promoState is PromotionsLoading) {
@@ -307,13 +306,19 @@ class _HomePageState extends State<HomePage> {
                               return BusinessCard(
                                 businessId: business.id,
                                 width: _recommendedTileWidth,
+                                height: 150,
+                                compact: true,
                                 businessName: business.nameAr,
                                 subtitle:
                                     '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
                                 coverUrl: business.coverUrl,
                                 rating: business.rating,
                                 ratingCount: business.ratingCount,
-                                imageAspectRatio: 1.2,
+                                imageAspectRatio: 1.15,
+                                statusText: business.isOpen
+                                    ? 'مفتوح الآن'
+                                    : 'مغلق الآن',
+                                deliveryFeeText: 'توصيل 5,000',
                                 onTap: () =>
                                     context.push("/business/${business.id}"),
                               );
@@ -344,6 +349,12 @@ class _HomePageState extends State<HomePage> {
                             rating: popularBusiness.rating,
                             ratingCount: popularBusiness.ratingCount,
                             imageAspectRatio: 3.4,
+                            height: 250,
+                            compact: false,
+                            statusText: popularBusiness.isOpen
+                                ? 'مفتوح الآن'
+                                : 'مغلق الآن',
+                            deliveryFeeText: 'توصيل 5,000',
                             onTap: () =>
                                 context.push("/business/${popularBusiness.id}"),
                           ),
