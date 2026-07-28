@@ -100,6 +100,21 @@ class _SearchPageState extends State<SearchPage> {
     BuildContext context,
     Menuitementity item,
   ) {
+    final businessState = context.read<BusinessBloc>().state;
+ 
+    String? businessName;
+    String? businessLogo;
+ 
+    if (businessState is BusinessFetched) {
+      for (final business in businessState.businesses) {
+        if (business.id == item.businessId) {
+          businessName = business.nameAr;
+          businessLogo = business.logoUrl;
+          break;
+        }
+      }
+    }
+ 
     context.read<CartBloc>().add(
           AddItemEvent(
             item: CartItem(
@@ -113,9 +128,12 @@ class _SearchPageState extends State<SearchPage> {
               note: '',
               selectedAddons: [],
             ),
+            businessName: businessName,
+            businessLogo: businessLogo,
           ),
         );
   }
+ 
 
   // ============================================================
   // REMOVE ITEM FROM CART

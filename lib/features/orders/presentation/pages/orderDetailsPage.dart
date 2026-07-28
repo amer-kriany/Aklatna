@@ -1,5 +1,11 @@
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:aklatna/features/addresses/domain/entity/addressEntity.dart';
+import 'package:aklatna/features/addresses/presentation/bloc/address_bloc.dart';
+import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
+import 'package:aklatna/core/utils/distance_utils.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
@@ -49,7 +55,7 @@ class OrderDetailsPage extends StatelessWidget {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Delivery information
-                _buildDeliveryInfo(),
+                _buildDeliveryInfo(context),
 
                 const SizedBox(height: AppSpacing.xl),
 
@@ -363,7 +369,51 @@ class OrderDetailsPage extends StatelessWidget {
   // DELIVERY INFORMATION
   // ===========================================================================
 
-  Widget _buildDeliveryInfo() {
+  Widget _buildDeliveryInfo(BuildContext context) {
+    // ============================================================
+    // DISTANCE CALC
+    // ============================================================
+    //
+    // NOTE: uses the customer's CURRENT default address coordinates,
+    // not a snapshot from when this order was placed — the `order`
+    // table only stores delivery_address as a formatted string, no
+    // lat/lng. If the customer changed their default address since
+    // placing this order, the distance shown here will reflect their
+    // current address, not the one actually used for this delivery.
+    // ============================================================
+
+    String? distanceText;
+
+    final addressState = context.watch<AddressBloc>().state;
+    final businessState = context.watch<BusinessBloc>().state;
+
+    if (addressState is AddressLoaded && businessState is BusinessFetched) {
+      AddressEntity? defaultAddress;
+
+      for (final address in addressState.addresses) {
+        if (address.isDefault) {
+          defaultAddress = address;
+          break;
+        }
+      }
+
+      if (defaultAddress != null) {
+        for (final business in businessState.businesses) {
+          if (business.id == order.businessId) {
+            final distanceKm = DistanceUtils.calculateDistanceKm(
+              customerLatitude: defaultAddress.latitude,
+              customerLongitude: defaultAddress.longitude,
+              restaurantLatitude: business.latitude,
+              restaurantLongitude: business.longitude,
+            );
+
+            distanceText = DistanceUtils.formatDistance(distanceKm);
+            break;
+          }
+        }
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -391,6 +441,15 @@ class OrderDetailsPage extends StatelessWidget {
                   icon: Icons.location_on_outlined,
                   title: 'عنوان التوصيل',
                   value: order.deliveryAddress!,
+                ),
+                const Divider(),
+              ],
+
+              if (distanceText != null) ...[
+                _infoRow(
+                  icon: Icons.social_distance_outlined,
+                  title: 'المسافة',
+                  value: distanceText,
                 ),
                 const Divider(),
               ],

@@ -1,3 +1,4 @@
+import 'package:aklatna/features/cart/presentation/widgets/checkout/orderCountDownDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -61,7 +62,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     setState(() => _scheduledFor = scheduled);
   }
 
-  void _onConfirm() {
+  Future<void> _onConfirm() async {
     final orderState = context.read<OrderBloc>().state;
     if (orderState is OrderPlacing) return;
 
@@ -83,21 +84,43 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     final profile = profileState.profile;
 
-   final order = OrderEntity(
-  businessId: cartState.businessId!,
-  customerId: profile.id,
-  customername: profile.userName,
-  customerPhone: profile.phoneNumber,
-  items: cartState.items,
-  deliveryAddress: selectedDeliveryOption == 'توصيل' ? profile.address : null,
-  totalPrice: cartState.totalPrice,
-  orderType: selectedDeliveryOption == 'توصيل' ? OrderType.delivery : OrderType.pickup,
-  orderStatus: OrderStatus.pending,
-  scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,
-  description: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-  businessName: cartState.businessName,
-  businessLogo: cartState.businessLogo,
-);
+    final order = OrderEntity(
+      businessId: cartState.businessId!,
+      customerId: profile.id,
+      customername: profile.userName,
+      customerPhone: profile.phoneNumber,
+      items: cartState.items,
+      deliveryAddress:
+          selectedDeliveryOption == 'توصيل' ? profile.address : null,
+      totalPrice: cartState.totalPrice,
+      orderType: selectedDeliveryOption == 'توصيل'
+          ? OrderType.delivery
+          : OrderType.pickup,
+      orderStatus: OrderStatus.pending,
+      scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,
+      description: _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
+      businessName: cartState.businessName,
+      businessLogo: cartState.businessLogo,
+    );
+
+    // ================================================================
+    // COUNTDOWN CONFIRMATION
+    // ================================================================
+    //
+    // Order is NOT placed yet — this shows a 5s countdown with a cancel
+    // button. Only if it resolves to `true` (timer ran out naturally,
+    // customer didn't cancel) do we actually dispatch PlaceOrderEvent.
+    // barrierDismissible: false so tapping outside can't accidentally
+    // skip the cancel window.
+    // ================================================================
+
+    final shouldPlaceOrder = await OrderCountdownDialog.show(context);
+
+    if (shouldPlaceOrder != true) return;
+
+    if (!mounted) return;
 
     context.read<OrderBloc>().add(PlaceOrderEvent(order: order));
   }
