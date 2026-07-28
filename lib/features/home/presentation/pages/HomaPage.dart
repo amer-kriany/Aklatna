@@ -188,12 +188,15 @@ class _HomePageState extends State<HomePage> {
                     (a, b) => b.rating.compareTo(a.rating),
                   );
 
-                final popularBusiness =
-                    sorted.isNotEmpty ? sorted.first : null;
+                final topRatedBusinesses = sorted
+                    .where((b) => b.rating > 4.5)
+                    .toList();
 
-                final recommendedBusinesses = sorted.length > 1
-                    ? sorted.sublist(1)
-                    : <BusinessEntity>[];
+                final openNowCandidates = sorted
+                    .where((b) =>
+                        b.isOpen &&
+                        !topRatedBusinesses.any((t) => t.id == b.id))
+                    .toList();
 
                 const String? sponsoredBannerImageUrl = null;
 
@@ -272,45 +275,50 @@ class _HomePageState extends State<HomePage> {
                       // ONGOING ORDER
                       // =====================================================
 
-                     BlocBuilder<OrderBloc, OrderState>(
-  builder: (context, orderState) {
-    if (orderState is! CustomerOrdersFetched) {
-      return const SizedBox.shrink();
-    }
+                      BlocBuilder<OrderBloc, OrderState>(
+                        builder: (context, orderState) {
+                          if (orderState is! CustomerOrdersFetched) {
+                            return const SizedBox.shrink();
+                          }
 
-    final ongoingOrders = orderState.orders.where((order) {
-      return order.orderStatus == OrderStatus.pending ||
-          order.orderStatus == OrderStatus.preparing ||
-          order.orderStatus == OrderStatus.ready;
-    }).toList();
+                          final ongoingOrders =
+                              orderState.orders.where((order) {
+                            return order.orderStatus ==
+                                    OrderStatus.pending ||
+                                order.orderStatus ==
+                                    OrderStatus.preparing ||
+                                order.orderStatus ==
+                                    OrderStatus.ready;
+                          }).toList();
 
-    if (ongoingOrders.isEmpty) {
-      return const SizedBox.shrink();
-    }
+                          if (ongoingOrders.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
 
-    final order = ongoingOrders.first;
+                          final order = ongoingOrders.first;
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.pageHorizontal,
-        AppSpacing.lg,
-        AppSpacing.pageHorizontal,
-        0,
-      ),
-      child: _OngoingOrderCard(
-        order: order,
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => OrderDetailsPage(order: order),
-            ),
-          );
-        },
-      ),
-    );
-  },
-),
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.pageHorizontal,
+                              AppSpacing.lg,
+                              AppSpacing.pageHorizontal,
+                              0,
+                            ),
+                            child: _OngoingOrderCard(
+                              order: order,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        OrderDetailsPage(order: order),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
 
                       const SizedBox(
                         height: AppSpacing.xl,
@@ -450,17 +458,17 @@ class _HomePageState extends State<HomePage> {
                       ),
 
                       // =====================================================
-                      // RECOMMENDED
+                      // TOP RATED
                       // =====================================================
 
-                      if (recommendedBusinesses.isNotEmpty) ...[
+                      if (topRatedBusinesses.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal:
                                 AppSpacing.pageHorizontal,
                           ),
                           child: SectionHeader(
-                            title: 'موصى لك',
+                            title: 'الأعلى تقييمًا',
                           ),
                         ),
 
@@ -479,7 +487,7 @@ class _HomePageState extends State<HomePage> {
                               right: AppSpacing.sm,
                             ),
                             itemCount:
-                                recommendedBusinesses.length,
+                                topRatedBusinesses.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(
                               width: AppSpacing.sm,
@@ -489,7 +497,7 @@ class _HomePageState extends State<HomePage> {
                               index,
                             ) {
                               final business =
-                                  recommendedBusinesses[
+                                  topRatedBusinesses[
                                       index];
 
                               return BusinessCard(
@@ -531,17 +539,17 @@ class _HomePageState extends State<HomePage> {
                       ],
 
                       // =====================================================
-                      // MOST ORDERED
+                      // OPEN NOW
                       // =====================================================
 
-                      if (popularBusiness != null) ...[
+                      if (openNowCandidates.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal:
                                 AppSpacing.pageHorizontal,
                           ),
                           child: SectionHeader(
-                            title: 'الأكثر طلبًا',
+                            title: 'مفتوح الآن',
                           ),
                         ),
 
@@ -549,39 +557,45 @@ class _HomePageState extends State<HomePage> {
                           height: AppSpacing.md,
                         ),
 
-                        Padding(
+                        ListView.separated(
+                          shrinkWrap: true,
+                          physics:
+                              const NeverScrollableScrollPhysics(),
                           padding: const EdgeInsets.symmetric(
                             horizontal:
                                 AppSpacing.pageHorizontal,
                           ),
-                          child: BusinessCard(
-                            businessId:
-                                popularBusiness.id,
-                            businessName:
-                                popularBusiness.nameAr,
-                            subtitle:
-                                '${_typeLabel(popularBusiness.type)} · ${_formatAddress(popularBusiness.adress)}',
-                            coverUrl:
-                                popularBusiness.coverUrl,
-                            rating:
-                                popularBusiness.rating,
-                            ratingCount:
-                                popularBusiness.ratingCount,
-                            imageAspectRatio: 3.4,
-                            height: 250,
-                            compact: false,
-                            statusText:
-                                popularBusiness.isOpen
-                                    ? 'مفتوح الآن'
-                                    : 'مغلق الآن',
-                            deliveryFeeText:
-                                'توصيل 5,000',
-                            onTap: () {
-                              context.push(
-                                "/business/${popularBusiness.id}",
-                              );
-                            },
+                          itemCount: openNowCandidates.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(
+                            height: AppSpacing.md,
                           ),
+                          itemBuilder: (context, index) {
+                            final business =
+                                openNowCandidates[index];
+
+                            return BusinessCard(
+                              businessId: business.id,
+                              businessName: business.nameAr,
+                              subtitle:
+                                  '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
+                              coverUrl: business.coverUrl,
+                              rating: business.rating,
+                              ratingCount: business.ratingCount,
+                              imageAspectRatio: 3.4,
+                              height: 250,
+                              compact: false,
+                              statusText: business.isOpen
+                                  ? 'مفتوح الآن'
+                                  : 'مغلق الآن',
+                              deliveryFeeText: 'توصيل 5,000',
+                              onTap: () {
+                                context.push(
+                                  "/business/${business.id}",
+                                );
+                              },
+                            );
+                          },
                         ),
 
                         const SizedBox(
@@ -614,43 +628,42 @@ class _OngoingOrderCard extends StatelessWidget {
   final VoidCallback onTap;
 
   String _statusText(OrderStatus status) {
-  switch (status) {
-    case OrderStatus.pending:
-      return 'بانتظار المطعم';
+    switch (status) {
+      case OrderStatus.pending:
+        return 'بانتظار المطعم';
 
-    case OrderStatus.preparing:
-      return 'جاري تحضير طلبك';
+      case OrderStatus.preparing:
+        return 'جاري تحضير طلبك';
 
-    case OrderStatus.ready:
-      return 'طلبك جاهز';
+      case OrderStatus.ready:
+        return 'طلبك جاهز';
 
-    case OrderStatus.completed:
-      return 'تم إكمال الطلب';
+      case OrderStatus.completed:
+        return 'تم إكمال الطلب';
 
-    case OrderStatus.cancelled:
-      return 'تم إلغاء الطلب';
+      case OrderStatus.cancelled:
+        return 'تم إلغاء الطلب';
+    }
   }
-}
 
-IconData _statusIcon(OrderStatus status) {
-  switch (status) {
-    case OrderStatus.pending:
-      return Icons.access_time_rounded;
+  IconData _statusIcon(OrderStatus status) {
+    switch (status) {
+      case OrderStatus.pending:
+        return Icons.access_time_rounded;
 
-    case OrderStatus.preparing:
-      return Icons.restaurant_rounded;
+      case OrderStatus.preparing:
+        return Icons.restaurant_rounded;
 
-    case OrderStatus.ready:
-      return Icons.inventory_2_outlined;
+      case OrderStatus.ready:
+        return Icons.inventory_2_outlined;
 
-    case OrderStatus.completed:
-      return Icons.check_circle_rounded;
+      case OrderStatus.completed:
+        return Icons.check_circle_rounded;
 
-    case OrderStatus.cancelled:
-      return Icons.cancel_outlined;
+      case OrderStatus.cancelled:
+        return Icons.cancel_outlined;
+    }
   }
-}
- 
 
   @override
   Widget build(BuildContext context) {

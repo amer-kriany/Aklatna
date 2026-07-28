@@ -9,6 +9,7 @@ class BusinessEntity {
   final String? description;
   final String openingTime;
   final String closingTime;
+  final bool isClosedToday;
   final bool isActive;
   final BusinessType type;
   final String? logoUrl;
@@ -18,7 +19,11 @@ class BusinessEntity {
   final String? ownerId;
   final double rating;
   final int ratingCount;
-  bool get isOpen => BusinessTimeUtils.isOpenNow(openingTime, closingTime);
+
+  bool get isOpen {
+    if (isClosedToday) return false;
+    return BusinessTimeUtils.isOpenNow(openingTime, closingTime);
+  }
 
   BusinessEntity({
     required this.id,
@@ -28,6 +33,7 @@ class BusinessEntity {
     this.description,
     required this.openingTime,
     required this.closingTime,
+    this.isClosedToday = false,
     required this.isActive,
     this.logoUrl,
     this.coverUrl,

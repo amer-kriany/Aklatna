@@ -2,6 +2,7 @@ import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:aklatna/features/cart/presentation/bloc/cart_state.dart';
 import 'package:aklatna/features/favorit/presentation/bloc/favorite_bloc.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/home/presentation/widgets/businesses/BusinessCategoryChips.dart';
@@ -84,8 +85,7 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                   child: Stack(
                     children: [
                       Positioned.fill(
-                        child:
-                            business.coverUrl != null &&
+                        child: business.coverUrl != null &&
                                 business.coverUrl!.isNotEmpty
                             ? Image.network(
                                 business.coverUrl!,
@@ -164,7 +164,6 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                 BusinessDetailsInfo(
                   nameAr: business.nameAr,
                   rating: business.rating,
-                  ratingCount: business.ratingCount,
                   description: business.description ?? '',
                 ),
 
@@ -219,42 +218,73 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
                                   ? const Center(
                                       child: Text('لا توجد أطباق في هذا القسم'),
                                     )
-                                  : GridView.builder(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: AppSpacing.lg,
-                                        vertical: AppSpacing.sm,
-                                      ),
-                                      gridDelegate:
-                                          const SliverGridDelegateWithFixedCrossAxisCount(
-                                            crossAxisCount: 2,
-                                            mainAxisSpacing: AppSpacing.sm,
-                                            crossAxisSpacing: AppSpacing.sm,
-                                            childAspectRatio: 0.75,
+                                  : BlocBuilder<CartBloc, CartState>(
+                                      builder: (context, cartState) {
+                                        return GridView.builder(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppSpacing.lg,
+                                            vertical: AppSpacing.sm,
                                           ),
-                                      itemCount: itemsInCategory.length,
-                                      itemBuilder: (context, index) {
-                                        final item = itemsInCategory[index];
-                                        return MenuItemGridCard(
-                                          photoUrl: item.photoUrl,
-                                          nameAr: item.nameAr,
-                                          price: item.price,
-                                          onTap: () =>
-                                              context.push('/food/${item.id}'),
-                                          onAdd: () {
-                                            context.read<CartBloc>().add(
-                                              AddItemEvent(
-                                                item: CartItem(
-                                                  itemId: item.id,
-                                                  nameAr: item.nameAr,
-                                                  description:
-                                                      item.description ?? '',
-                                                  price: item.price,
-                                                  quantity: 1,
-                                                  businessId: item.businessId,
-                                                ),
-                                                businessName: business.nameAr,
-                                                businessLogo: business.logoUrl,
+                                          gridDelegate:
+                                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: 2,
+                                                mainAxisSpacing: AppSpacing.sm,
+                                                crossAxisSpacing: AppSpacing.sm,
+                                                childAspectRatio: 0.72,
                                               ),
+                                          itemCount: itemsInCategory.length,
+                                          itemBuilder: (context, index) {
+                                            final item = itemsInCategory[index];
+
+                                            // Directly search in cartState.items
+                                            final matchingItemIndex =
+                                                cartState.items.indexWhere(
+                                              (element) =>
+                                                  element.itemId == item.id,
+                                            );
+
+                                            final itemQuantity =
+                                                matchingItemIndex != -1
+                                                    ? cartState
+                                                        .items[matchingItemIndex]
+                                                        .quantity
+                                                    : 0;
+
+                                            return MenuItemGridCard(
+                                              photoUrl: item.photoUrl,
+                                              nameAr: item.nameAr,
+                                              price: item.price,
+                                              quantity: itemQuantity,
+                                              onTap: () => context
+                                                  .push('/food/${item.id}'),
+                                              onAdd: () {
+                                                context.read<CartBloc>().add(
+                                                      AddItemEvent(
+                                                        item: CartItem(
+                                                          itemId: item.id,
+                                                          nameAr: item.nameAr,
+                                                          description:
+                                                              item.description ??
+                                                                  '',
+                                                          price: item.price,
+                                                          quantity: 1,
+                                                          businessId:
+                                                              item.businessId,
+                                                        ),
+                                                        businessName:
+                                                            business.nameAr,
+                                                        businessLogo:
+                                                            business.logoUrl,
+                                                      ),
+                                                    );
+                                              },
+                                              onRemove: () {
+                                                context.read<CartBloc>().add(
+                                                      RemoveItemEvent(
+                                                        itemId: item.id,
+                                                      ),
+                                                    );
+                                              },
                                             );
                                           },
                                         );

@@ -177,89 +177,90 @@ class OrderDetailsPage extends StatelessWidget {
   // ORDER STATUS
   // ===========================================================================
 
- Widget _buildOrderStatus() {
-  return Container(
-    padding: const EdgeInsets.all(AppSpacing.lg),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      border: Border.all(color: AppColors.border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildOrderStatus() {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('حالة الطلب', style: AppTextStyles.h4),
+          const SizedBox(height: AppSpacing.lg),
+          if (order.orderStatus == OrderStatus.cancelled)
+            _buildCancelledState()
+          else
+            _buildStatusTimeline(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCancelledState() {
+    return Row(
       children: [
-        Text('حالة الطلب', style: AppTextStyles.h4),
-        const SizedBox(height: AppSpacing.lg),
-        if (order.orderStatus == OrderStatus.cancelled)
-          _buildCancelledState()
-        else
-          _buildStatusTimeline(),
-      ],
-    ),
-  );
-}
-Widget _buildCancelledState() {
-  return Row(
-    children: [
-      Icon(Icons.cancel_rounded, color: AppColors.error, size: 28),
-      const SizedBox(width: AppSpacing.md),
-      Expanded(
-        child: Text(
-          'تم إلغاء هذا الطلب',
-          style: AppTextStyles.bodyMedium.copyWith(
-            fontWeight: FontWeight.bold,
-            color: AppColors.error,
+        Icon(Icons.cancel_rounded, color: AppColors.error, size: 28),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Text(
+            'تم إلغاء هذا الطلب',
+            style: AppTextStyles.bodyMedium.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.error,
+            ),
           ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   Widget _buildStatusTimeline() {
-  final currentIndex = _statusIndex(order.orderStatus);
+    final currentIndex = _statusIndex(order.orderStatus);
 
-  return Column(
-    children: [
-      _statusStep(
-        title: 'تم استلام الطلب',
-        subtitle: 'تم إرسال طلبك إلى المطعم',
-        stepIndex: 0,
-        currentIndex: currentIndex,
-        icon: Icons.receipt_long_rounded,
-        isLast: false,
-      ),
-      _statusStep(
-        title: 'جاري تحضير الطلب',
-        subtitle: 'المطعم يقوم بتحضير طلبك',
-        stepIndex: 1,
-        currentIndex: currentIndex,
-        icon: Icons.restaurant_rounded,
-        isLast: false,
-      ),
-      _statusStep(
-        title: 'الطلب جاهز',
-        subtitle: order.orderType == OrderType.delivery
-            ? 'طلبك جاهز للتوصيل'
-            : 'طلبك جاهز للاستلام',
-        stepIndex: 2,
-        currentIndex: currentIndex,
-        icon: Icons.inventory_2_rounded,
-        isLast: false,
-      ),
-      _statusStep(
-        title: 'تم الإكمال',
-        subtitle: order.orderType == OrderType.delivery
-            ? 'تم توصيل طلبك'
-            : 'تم استلام طلبك',
-        stepIndex: 3,
-        currentIndex: currentIndex,
-        icon: Icons.check_circle_rounded,
-        isLast: true,
-      ),
-    ],
-  );
-}
+    return Column(
+      children: [
+        _statusStep(
+          title: 'تم استلام الطلب',
+          subtitle: 'تم إرسال طلبك إلى المطعم',
+          stepIndex: 0,
+          currentIndex: currentIndex,
+          icon: Icons.receipt_long_rounded,
+          isLast: false,
+        ),
+        _statusStep(
+          title: 'جاري تحضير الطلب',
+          subtitle: 'المطعم يقوم بتحضير طلبك',
+          stepIndex: 1,
+          currentIndex: currentIndex,
+          icon: Icons.restaurant_rounded,
+          isLast: false,
+        ),
+        _statusStep(
+          title: 'الطلب جاهز',
+          subtitle: order.orderType == OrderType.delivery
+              ? 'طلبك جاهز للتوصيل'
+              : 'طلبك جاهز للاستلام',
+          stepIndex: 2,
+          currentIndex: currentIndex,
+          icon: Icons.inventory_2_rounded,
+          isLast: false,
+        ),
+        _statusStep(
+          title: 'تم الإكمال',
+          subtitle: order.orderType == OrderType.delivery
+              ? 'تم توصيل طلبك'
+              : 'تم استلام طلبك',
+          stepIndex: 3,
+          currentIndex: currentIndex,
+          icon: Icons.check_circle_rounded,
+          isLast: true,
+        ),
+      ],
+    );
+  }
 
   Widget _statusStep({
     required String title,
@@ -665,19 +666,19 @@ Widget _buildCancelledState() {
   // ===========================================================================
 
   int _statusIndex(OrderStatus status) {
-  switch (status) {
-    case OrderStatus.pending:
-      return 0;
-    case OrderStatus.preparing:
-      return 1;
-    case OrderStatus.ready:
-      return 2;
-    case OrderStatus.completed:
-      return 3;
-    case OrderStatus.cancelled:
-      return -1; // handled separately, see _buildOrderStatus
+    switch (status) {
+      case OrderStatus.pending:
+        return 0;
+      case OrderStatus.preparing:
+        return 1;
+      case OrderStatus.ready:
+        return 2;
+      case OrderStatus.completed:
+        return 3;
+      case OrderStatus.cancelled:
+        return -1; // handled separately, see _buildOrderStatus
+    }
   }
-}
 
   String _orderTypeText(OrderType type) {
     return type.toString().split('.').last;

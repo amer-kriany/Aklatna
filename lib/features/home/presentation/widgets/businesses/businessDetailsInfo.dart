@@ -10,13 +10,11 @@ class BusinessDetailsInfo extends StatelessWidget {
     super.key,
     required this.nameAr,
     required this.rating,
-    required this.ratingCount,
     required this.description,
   });
 
   final String nameAr;
   final double rating;
-  final int ratingCount;
   final String description;
 
   @override
@@ -30,10 +28,7 @@ class BusinessDetailsInfo extends StatelessWidget {
             children: [
               const Icon(Icons.star, color: AppColors.warning, size: AppSizes.iconSm),
               const SizedBox(width: AppSpacing.xxs),
-              Text(
-                '$rating (${ratingCount.toString()})',
-                style: AppTextStyles.bodyMedium,
-              ),
+              
 
               const SizedBox(width: AppSpacing.lg),
 
