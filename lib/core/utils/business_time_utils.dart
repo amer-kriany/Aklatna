@@ -14,12 +14,30 @@ class BusinessTimeUtils {
 
   /// Same as [isOpenNow] but for a specific [time] (useful for testing).
   static bool isOpenAt(TimeOfDay time, String openingTime, String closingTime) {
+    // BUGFIX: previously, a business with no hours data at all (empty
+    // strings, e.g. no restaurant_hours row AND no old businesses
+    // opening_time/closing_time set) would parse to 00:00-00:00, which
+    // fell into the "overnight" branch below and always returned true
+    // regardless of the actual time — showing every unconfigured
+    // business as permanently open. Missing hours data should mean
+    // "we don't know, so show closed", not "always open".
+    if (openingTime.trim().isEmpty || closingTime.trim().isEmpty) {
+      return false;
+    }
+
     final open = _parseTime(openingTime);
     final close = _parseTime(closingTime);
 
     final nowMinutes = time.hour * 60 + time.minute;
     final openMinutes = open.hour * 60 + open.minute;
     final closeMinutes = close.hour * 60 + close.minute;
+
+    // Same fix applies here: open == close with real (non-empty) values
+    // is a degenerate/misconfigured case, not a valid 24h-overnight
+    // schedule. Treat as closed rather than always-open.
+    if (openMinutes == closeMinutes) {
+      return false;
+    }
 
     if (closeMinutes > openMinutes) {
       // Same-day hours, e.g. 09:00 - 23:00

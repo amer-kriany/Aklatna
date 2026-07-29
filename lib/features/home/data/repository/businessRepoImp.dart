@@ -51,29 +51,20 @@ class Businessrepoimp implements Businessrepo {
   // TODAY'S HOURS
   // ============================================================
 
-  Future<List<RestaurantHourModel>> _fetchTodayHoursSafely() async {
-    try {
-      // Dart:
-      // Monday = 1
-      // Tuesday = 2
-      // ...
-      // Sunday = 7
-      //
-      // Supabase:
-      // Monday = 0
-      // Tuesday = 1
-      // ...
-      // Sunday = 6
-
-      final todayIndex = DateTime.now().weekday - 1;
-
-      return await businessDatasrouce.getTodayHours(
-        dayOfWeek: todayIndex,
-      );
-    } catch (e) {
-      return [];
+Future<List<RestaurantHourModel>> _fetchTodayHoursSafely() async {
+  try {
+    final todayIndex = DateTime.now().weekday - 1;
+    final hours = await businessDatasrouce.getTodayHours(dayOfWeek: todayIndex);
+    print('DEBUG: todayIndex=$todayIndex, fetched ${hours.length} hours rows');
+    for (final h in hours) {
+      print('DEBUG: hour row -> businessId=${h.businessId}, open=${h.openTime}, close=${h.closeTime}');
     }
+    return hours;
+  } catch (e) {
+    print('DEBUG: getTodayHours failed: $e');
+    return [];
   }
+}
 
   // ============================================================
   // BUSINESS MODEL -> BUSINESS ENTITY

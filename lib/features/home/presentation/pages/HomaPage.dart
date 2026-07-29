@@ -349,113 +349,98 @@ class _HomePageState extends State<HomePage> {
                       // PROMOTIONS
                       // =====================================================
 
-                      BlocBuilder<PromotionsBloc, PromotionsState>(
-                        builder: (context, promoState) {
-                          if (promoState is PromotionsLoading) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: AppSpacing.xl,
-                              ),
-                              child: Center(
-                                child:
-                                    CircularProgressIndicator(),
-                              ),
-                            );
-                          }
+                     BlocBuilder<PromotionsBloc, PromotionsState>(
+  builder: (context, promoState) {
+    if (promoState is PromotionsLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(
+          vertical: AppSpacing.xl,
+        ),
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
-                          if (promoState is PromotionsError) {
-                            return const SizedBox.shrink();
-                          }
+    if (promoState is PromotionsError) {
+      return const SizedBox.shrink();
+    }
 
-                          if (promoState
-                                  is! PromotionsLoaded ||
-                              promoState.promotions.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
+    if (promoState is! PromotionsLoaded ||
+        promoState.promotions.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
-                          return Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal:
-                                      AppSpacing.pageHorizontal,
-                                ),
-                                child: SectionHeader(
-                                  title: 'عروض وخصومات',
-                                ),
-                              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.pageHorizontal,
+          ),
+          child: SectionHeader(
+            title: 'عروض وخصومات',
+          ),
+        ),
 
-                              const SizedBox(
-                                height: AppSpacing.md,
-                              ),
+        const SizedBox(
+          height: AppSpacing.md,
+        ),
 
-                              SingleChildScrollView(
-                                scrollDirection:
-                                    Axis.horizontal,
-                                padding: const EdgeInsets.only(
-                                  left: AppSpacing.pageHorizontal,
-                                  right: AppSpacing.sm,
-                                ),
-                                child: Row(
-                                  children: [
-                                    for (
-                                      int i = 0;
-                                      i <
-                                          promoState
-                                              .promotions.length;
-                                      i++
-                                    ) ...[
-                                      if (i != 0)
-                                        const SizedBox(
-                                          width:
-                                              AppSpacing.sm,
-                                        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.only(
+            left: AppSpacing.pageHorizontal,
+            right: AppSpacing.sm,
+          ),
+          child: Row(
+            children: [
+              for (
+                int i = 0;
+                i < promoState.promotions.length;
+                i++
+              ) ...[
+                if (i != 0)
+                  const SizedBox(
+                    width: AppSpacing.sm,
+                  ),
 
-                                      PromotionCard(
-                                        businessName:
-                                            promoState
-                                                .promotions[i]
-                                                .businessName,
-                                        coverUrl:
-                                            promoState
-                                                .promotions[i]
-                                                .photoUrl,
-                                        itemName:
-                                            promoState
-                                                .promotions[i]
-                                                .itemName,
-                                        discountPercentage:
-                                            promoState
-                                                .promotions[i]
-                                                .discountPercentage,
-                                        oldPrice:
-                                            promoState
-                                                .promotions[i]
-                                                .oldPrice,
-                                        newPrice:
-                                            promoState
-                                                .promotions[i]
-                                                .newPrice,
-                                        onTap: () {
-                                          context.push(
-                                            "/business/${promoState.promotions[i].businessId}",
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
+                PromotionCard(
+                  businessName:
+                      promoState.promotions[i].businessName,
+                  coverUrl:
+                      promoState.promotions[i].photoUrl,
+                  itemName:
+                      promoState.promotions[i].itemName,
+                  discountPercentage:
+                      promoState.promotions[i].discountPercentage,
 
-                              const SizedBox(
-                                height: AppSpacing.xl,
-                              ),
-                            ],
-                          );
-                        },
-                      ),
+                  // num? -> double?
+                  oldPrice:
+                      promoState.promotions[i].oldPrice?.toDouble(),
+
+                  // num? -> double?
+                  newPrice:
+                      promoState.promotions[i].newPrice?.toDouble(),
+
+                  onTap: () {
+                    context.push(
+                      "/business/${promoState.promotions[i].businessId}",
+                    );
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+
+        const SizedBox(
+          height: AppSpacing.xl,
+        ),
+      ],
+    );
+  },
+),
 
                       // =====================================================
                       // TOP RATED

@@ -1,5 +1,6 @@
 import 'package:aklatna/core/router/MainShell.dart';
 import 'package:aklatna/core/router/go_router_refresh_stream.dart';
+import 'package:aklatna/core/services/onboarding_service.dart';
 import 'package:aklatna/features/addOnes/data/datasource/addOnesDataSource.dart';
 import 'package:aklatna/features/addOnes/data/repository/addOnesRepoImp.dart';
 import 'package:aklatna/features/addOnes/domain/useCases/getAddOnesUseCase.dart';
@@ -27,39 +28,72 @@ import 'package:aklatna/features/menu/domain/usecases/getCategoriesUseCase.dart'
 import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/menu/presentation/pages/FoodDetailsPage.dart';
-import 'package:aklatna/features/orders/data/datasources/order_remote_datasource.dart';
-import 'package:aklatna/features/orders/data/repositories/order_repository_impl.dart';
-import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
-import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
-import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
+import 'package:aklatna/features/onboarding/presentation/pages/onboardingPage.dart';
 import 'package:aklatna/features/orders/presentation/pages/myOrderPage.dart';
 import 'package:aklatna/features/profile/presentaion/pages/profilePage.dart';
+import 'package:aklatna/features/splash/pages/splashScreen.dart';
 import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-
 final GoRouter appRouter = GoRouter(
-  initialLocation: '/home',
+  initialLocation: '/splash', // <-- بداية التطبيق من الـ Splash
   navigatorKey: MainShell.rootNavigatorKey,
   refreshListenable: GoRouterRefreshStream(sl<AuthBloc>().stream),
-  redirect: (context, state) {
+  redirect: (context, state) async {
     final authState = sl<AuthBloc>().state;
-    final isGoingToAuth = state.matchedLocation == '/signin' || state.matchedLocation == '/signup';
+    final location = state.matchedLocation;
 
-    // Still checking session on cold start — don't redirect yet, avoids
-    // bouncing a genuinely logged-in user to /signin for a frame.
+    // 1. لا تقم بأي إعادة توجيه أثناء وجود المستخدم في شاشة الـ Splash
+    if (location == '/splash') return null;
+
+    // 2. التحقق من إكمال الـ Onboarding
+    final bool hasCompletedOnboarding = await OnboardingService.isCompleted();
+
+    if (!hasCompletedOnboarding) {
+      if (location != '/onboarding') return '/onboarding';
+      return null;
+    }
+
+    if (hasCompletedOnboarding && location == '/onboarding') {
+      final isAuthenticated = authState is AuthAuthenticated;
+      return isAuthenticated ? '/home' : '/signin';
+    }
+
+    // 3. التحقق من مصادقة المستخدم (Auth Flow)
+    final isGoingToAuth = location == '/signin' || location == '/signup';
+
     if (authState is AuthInitial || authState is AuthLoading) return null;
 
     final isAuthenticated = authState is AuthAuthenticated;
 
     if (!isAuthenticated && !isGoingToAuth) return '/signin';
     if (isAuthenticated && isGoingToAuth) return '/home';
+
     return null;
   },
   routes: [
+    GoRoute(
+      path: '/splash',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/onboarding',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) => const OnboardingScreen(),
+    ),
+    GoRoute(
+      path: '/signin',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) => const SignInPage(),
+    ),
+    GoRoute(
+      path: '/signup',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) => const SignUpPage(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return MainShell(navigationShell: navigationShell);
@@ -105,49 +139,49 @@ final GoRouter appRouter = GoRouter(
         ),
       ],
     ),
-   GoRoute(
-  path: '/food/:id',
-  parentNavigatorKey: MainShell.rootNavigatorKey,
-  builder: (context, state) {
-    final menuDatasource = Menudatasource();
-    final menuRepo = Menurepoimp(menudatasource: menuDatasource);
-    final addonDatasource = Addonesdatasource();
-    final addonRepo = AddonRepositoryImpl(datasource: addonDatasource);
-    final businessDatasource = BusinessDatasrouce();
-    final businessRepo = Businessrepoimp(businessDatasrouce: businessDatasource);
-
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (_) => MenuBloc(
-            menuCategoriesusecase: Getcategoriesusecase(repo: menuRepo),
-            menuItemsusecase: Getitemsusecase(repo: menuRepo),
-          ),
-        ),
-        BlocProvider(
-          create: (_) => AddonBloc(getAddonsUsecase: GetAddonsUsecase(repo: addonRepo)),
-        ),
-        BlocProvider(
-          create: (_) => BusinessBloc(
-            getBusinessUsecase: GetbusinessUsecase(repository: businessRepo),
-            searchbusinessesusecase: Searchbusinessesusecase(businessrepoimp: businessRepo),
-          ),
-        ),
-      ],
-      child: Foodetailspage(itemId: state.pathParameters['id']!),
-    );
-  },
-),
-   GoRoute(
-  path: '/checkout',
-  parentNavigatorKey: MainShell.rootNavigatorKey,
-  builder: (context, state) => const CheckoutPage(),
-),
     GoRoute(
-  path: '/addresses',
-  parentNavigatorKey: MainShell.rootNavigatorKey,
-  builder: (context, state) => const AddressesPage(),
-),
+      path: '/food/:id',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) {
+        final menuDatasource = Menudatasource();
+        final menuRepo = Menurepoimp(menudatasource: menuDatasource);
+        final addonDatasource = Addonesdatasource();
+        final addonRepo = AddonRepositoryImpl(datasource: addonDatasource);
+        final businessDatasource = BusinessDatasrouce();
+        final businessRepo = Businessrepoimp(businessDatasrouce: businessDatasource);
+
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (_) => MenuBloc(
+                menuCategoriesusecase: Getcategoriesusecase(repo: menuRepo),
+                menuItemsusecase: Getitemsusecase(repo: menuRepo),
+              ),
+            ),
+            BlocProvider(
+              create: (_) => AddonBloc(getAddonsUsecase: GetAddonsUsecase(repo: addonRepo)),
+            ),
+            BlocProvider(
+              create: (_) => BusinessBloc(
+                getBusinessUsecase: GetbusinessUsecase(repository: businessRepo),
+                searchbusinessesusecase: Searchbusinessesusecase(businessrepoimp: businessRepo),
+              ),
+            ),
+          ],
+          child: Foodetailspage(itemId: state.pathParameters['id']!),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/checkout',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) => const CheckoutPage(),
+    ),
+    GoRoute(
+      path: '/addresses',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) => const AddressesPage(),
+    ),
     GoRoute(
       path: '/order-placed',
       parentNavigatorKey: MainShell.rootNavigatorKey,
@@ -181,35 +215,14 @@ final GoRouter appRouter = GoRouter(
       },
     ),
     GoRoute(
-      path: '/signin',
+      path: '/favorites',
       parentNavigatorKey: MainShell.rootNavigatorKey,
-      builder: (context, state) => const SignInPage(),
-    ),
-    
-    GoRoute(
-  path: '/favorites',
-  parentNavigatorKey: MainShell.rootNavigatorKey,
-  builder: (context, state) => const FavoritesPage(),
-),
-    GoRoute(
-      path: '/signup',
-      parentNavigatorKey: MainShell.rootNavigatorKey,
-      builder: (context, state) => const SignUpPage(),
+      builder: (context, state) => const FavoritesPage(),
     ),
     GoRoute(
-  path: '/profile',
-  parentNavigatorKey: MainShell.rootNavigatorKey,
-  builder: (context, state) => const ProfilePage(),
-),
+      path: '/profile',
+      parentNavigatorKey: MainShell.rootNavigatorKey,
+      builder: (context, state) => const ProfilePage(),
+    ),
   ],
 );
-
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.label});
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: Text('$label — TODO: wire real page')));
-  }
-}

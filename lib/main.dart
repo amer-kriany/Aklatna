@@ -1,5 +1,6 @@
 import 'package:aklatna/core/router/app_router.dart';
 import 'package:aklatna/core/router/MainShell.dart';
+import 'package:aklatna/core/services/onboarding_service.dart';
 import 'package:aklatna/features/addresses/data/dataSource/addressDataSource.dart';
 import 'package:aklatna/features/addresses/data/repository/addressRepoImp.dart';
 import 'package:aklatna/features/addresses/domain/usecases/useCases.dart';
@@ -61,7 +62,11 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
   setupInjection();
-  // data sources
+
+  // Check if user has already completed onboarding
+  final bool hasCompletedOnboarding = await OnboardingService.isCompleted();
+
+  // Data sources
   final getBusinessDatasource = BusinessDatasrouce();
   final getMenuDataSource = Menudatasource();
   final profileDatasource = ProfileDatasource();
@@ -71,7 +76,7 @@ void main() async {
   final addressDatasource = AddressDatasource();
   final promotiondatasource = Promotiondatasource();
 
-  // repositories
+  // Repositories
   final promotionrepo = Promotionsrepoimp(
     promotiondatasource: promotiondatasource,
   );
@@ -86,8 +91,9 @@ void main() async {
   );
   final menuRepo = Menurepoimp(menudatasource: getMenuDataSource);
   final profileRepo = Profilerepoimp(profileDatasource: profileDatasource);
-  //use cases
-  final getpromotions = GetPromotionsUseCase( promotionrepo);
+
+  // Use cases
+  final getpromotions = GetPromotionsUseCase(promotionrepo);
   final getCostomerOrdersUseCase = GetCustomerOrdersUseCase(
     orderRepositoryImpl: orderRepo,
   );
@@ -169,36 +175,25 @@ void main() async {
           ),
         ),
       ],
-      child: MyApp(),
+      child: MyApp(hasCompletedOnboarding: hasCompletedOnboarding),
     ),
   );
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  const MyApp({
+    super.key, 
+    this.hasCompletedOnboarding = false, // Default to false
+  });
+
+  final bool hasCompletedOnboarding;
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
-  // ===========================================================================
-  // GLOBAL "ORDER COMPLETED -> PROMPT RATING" LISTENER
-  // ===========================================================================
-  //
-  // Runs no matter which screen the customer is on. Whenever OrderBloc
-  // emits CustomerOrdersFetched (initial fetch, pull-to-refresh, or a
-  // Realtime status update), we scan for orders with orderStatus ==
-  // completed that we haven't already checked this session. For each one,
-  // we check Supabase directly (hasReviewForOrder) — if it hasn't been
-  // reviewed, we push RatingPage on the ROOT navigator so it appears as
-  // a full-screen overlay above whatever the customer is currently doing.
-  //
-  // _checkedOrderIds prevents re-checking/re-prompting for the same order
-  // repeatedly within the same app session (e.g. every time the orders
-  // list refetches).
-  // ===========================================================================
 
+class _MyAppState extends State<MyApp> {
   final Set<String> _checkedOrderIds = {};
 
   final ReviewRepositoryImpl _reviewRepo = ReviewRepositoryImpl(
@@ -214,9 +209,6 @@ class _MyAppState extends State<MyApp> {
       if (status != OrderStatus.completed) continue;
       if (_checkedOrderIds.contains(orderId)) continue;
 
-      // Mark as checked immediately (before the async gap below) so a
-      // second CustomerOrdersFetched emission arriving while this check
-      // is still in flight doesn't trigger a duplicate prompt.
       _checkedOrderIds.add(orderId);
 
       final alreadyReviewed = await _reviewRepo.hasReviewForOrder(orderId);
@@ -233,10 +225,6 @@ class _MyAppState extends State<MyApp> {
           ),
         );
       }
-
-      // Only surface one rating prompt at a time. If there happen to be
-      // multiple newly-completed unreviewed orders, the rest will be
-      // caught on the next CustomerOrdersFetched emission.
       break;
     }
   }

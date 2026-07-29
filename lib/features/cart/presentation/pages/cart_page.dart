@@ -10,6 +10,7 @@ import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:aklatna/core/utils/distance_utils.dart';
+import 'package:aklatna/core/utils/delivery_price_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -153,6 +154,7 @@ class CartPage extends StatelessWidget {
                         // ============================================
 
                         String? distanceText;
+                        double? deliveryPrice;
 
                         AddressEntity? defaultAddress;
 
@@ -185,6 +187,9 @@ class CartPage extends StatelessWidget {
                                   DistanceUtils.formatDistance(
                                 distanceKm,
                               );
+
+                              deliveryPrice = DeliveryPriceUtils
+                                  .calculateDeliveryPrice(distanceKm);
                               break;
                             }
                           }
@@ -238,12 +243,8 @@ class CartPage extends StatelessWidget {
                             ),
 
                             // ============================================
-                            // DISTANCE ROW (one per cart, not per item)
-                            // ============================================
-                            //
-                            // TODO: predicted delivery time goes on the
-                            // right side of this same row once that
-                            // feature is built.
+                            // DISTANCE ROW (info only — price shown
+                            // separately in CartSummarySection below)
                             // ============================================
 
                             if (distanceText != null) ...[
@@ -252,32 +253,21 @@ class CartPage extends StatelessWidget {
                                   vertical: AppSpacing.sm,
                                 ),
                                 child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.location_on_outlined,
-                                          size: 16,
-                                          color: AppColors.primary,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'المسافة: $distanceText',
-                                          style: AppTextStyles
-                                              .regularMedium
-                                              .copyWith(
-                                            color: AppColors.primary,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
+                                    const Icon(
+                                      Icons.location_on_outlined,
+                                      size: 16,
+                                      color: AppColors.primary,
                                     ),
-
-                                    // Reserved for predicted delivery
-                                    // time — leave empty for now.
-                                    const SizedBox.shrink(),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'المسافة: $distanceText',
+                                      style: AppTextStyles.regularMedium
+                                          .copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -289,6 +279,11 @@ class CartPage extends StatelessWidget {
 
                             CartSummarySection(
                               subTotal: cartState.totalPrice,
+                              itemCount: cartState.items.fold<int>(
+                                0,
+                                (sum, item) => sum + item.quantity,
+                              ),
+                              deliveryPrice: deliveryPrice,
                             ),
 
                             const SizedBox(height: AppSpacing.lg),
