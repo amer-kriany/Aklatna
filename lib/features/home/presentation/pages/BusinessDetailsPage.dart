@@ -303,6 +303,72 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage> {
           },
         ),
       ),
+
+      // ===================================================================
+      // GO TO CART (floating bar)
+      // ===================================================================
+      //
+      // Appears once the cart has items, slides up from the bottom.
+      // Uses context.go (not push) since /cart is a StatefulShellRoute
+      // branch — go lets go_router properly switch the bottom nav tab
+      // instead of stacking a duplicate route on top of the shell.
+      // ===================================================================
+
+      bottomNavigationBar: BlocBuilder<CartBloc, CartState>(
+        builder: (context, cartState) {
+          final hasItems = cartState.items.isNotEmpty;
+
+          return AnimatedSlide(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            offset: hasItems ? Offset.zero : const Offset(0, 1),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: hasItems ? 1.0 : 0.0,
+              child: hasItems
+                  ? SafeArea(
+                      top: false,
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        child: Material(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          child: InkWell(
+                            onTap: () => context.go('/cart'),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.md,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.shopping_cart_rounded,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'اذهب إلى السلة (${cartState.items.fold<int>(0, (sum, i) => sum + i.quantity)})',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          );
+        },
+      ),
     );
   }
 }

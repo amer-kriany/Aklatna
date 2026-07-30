@@ -6,6 +6,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/distance_utils.dart';
+import '../../../../core/utils/delivery_price_utils.dart';
+import '../../../addresses/domain/entity/addressEntity.dart';
+import '../../../addresses/presentation/bloc/address_bloc.dart';
+import '../../../home/presentation/bloc/business_bloc.dart';
 import '../../../cart/presentation/bloc/cart_bloc.dart';
 import '../../../cart/presentation/widgets/checkout/CheckoutAppBar.dart';
 import '../../../cart/presentation/widgets/checkout/ConfirmButton.dart';
@@ -62,6 +67,53 @@ class _CheckoutPageState extends State<CheckoutPage> {
     setState(() => _scheduledFor = scheduled);
   }
 
+  // ============================================================
+  // DELIVERY PRICE CALC
+  // ============================================================
+  //
+  // Same pattern used in CartPage: distance from customer's default
+  // address to the business, converted to a price via
+  // DeliveryPriceUtils. Returns 0 (not null) if pickup or if location
+  // data is unavailable, since this feeds directly into total_price
+  // which is stored in the DB — a null there would be a real bug.
+  // ============================================================
+
+  double _calculateDeliveryPrice(BuildContext context, String businessId) {
+    if (selectedDeliveryOption != 'توصيل') return 0;
+
+    final addressState = context.read<AddressBloc>().state;
+    final businessState = context.read<BusinessBloc>().state;
+
+    if (addressState is! AddressLoaded) return 0;
+    if (businessState is! BusinessFetched) return 0;
+
+    AddressEntity? defaultAddress;
+
+    for (final address in addressState.addresses) {
+      if (address.isDefault) {
+        defaultAddress = address;
+        break;
+      }
+    }
+
+    if (defaultAddress == null) return 0;
+
+    for (final business in businessState.businesses) {
+      if (business.id == businessId) {
+        final distanceKm = DistanceUtils.calculateDistanceKm(
+          customerLatitude: defaultAddress.latitude,
+          customerLongitude: defaultAddress.longitude,
+          restaurantLatitude: business.latitude,
+          restaurantLongitude: business.longitude,
+        );
+
+        return DeliveryPriceUtils.calculateDeliveryPrice(distanceKm) ?? 0;
+      }
+    }
+
+    return 0;
+  }
+
   Future<void> _onConfirm() async {
     final orderState = context.read<OrderBloc>().state;
     if (orderState is OrderPlacing) return;
@@ -84,6 +136,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     final profile = profileState.profile;
 
+    // BUGFIX: total_price previously only included item subtotal —
+    // delivery fee was never added, meaning every stored order
+    // undercharged the actual amount the restaurant should collect
+    // (this app is cash-only, so this directly affects real money
+    // changing hands).
+    final deliveryPrice = _calculateDeliveryPrice(
+      context,
+      cartState.businessId!,
+    );
+
+    final totalPrice = cartState.totalPrice + deliveryPrice;
+
     final order = OrderEntity(
       businessId: cartState.businessId!,
       customerId: profile.id,
@@ -92,7 +156,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       items: cartState.items,
       deliveryAddress:
           selectedDeliveryOption == 'توصيل' ? profile.address : null,
-      totalPrice: cartState.totalPrice,
+      totalPrice: totalPrice,
       orderType: selectedDeliveryOption == 'توصيل'
           ? OrderType.delivery
           : OrderType.pickup,
@@ -112,8 +176,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
     // Order is NOT placed yet — this shows a 5s countdown with a cancel
     // button. Only if it resolves to `true` (timer ran out naturally,
     // customer didn't cancel) do we actually dispatch PlaceOrderEvent.
-    // barrierDismissible: false so tapping outside can't accidentally
-    // skip the cancel window.
     // ================================================================
 
     final shouldPlaceOrder = await OrderCountdownDialog.show(context);

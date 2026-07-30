@@ -71,7 +71,7 @@ class OrderDetailsPage extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // Total
+                // Total (with delivery fee breakdown)
                 _buildPriceSummary(),
 
                 // Description
@@ -371,15 +371,13 @@ class OrderDetailsPage extends StatelessWidget {
 
   Widget _buildDeliveryInfo(BuildContext context) {
     // ============================================================
-    // DISTANCE CALC
+    // DISTANCE CALC (info only — this is unrelated to the delivery
+    // FEE breakdown in _buildPriceSummary, which is derived from
+    // stored totalPrice and doesn't have this staleness issue)
     // ============================================================
     //
     // NOTE: uses the customer's CURRENT default address coordinates,
-    // not a snapshot from when this order was placed — the `order`
-    // table only stores delivery_address as a formatted string, no
-    // lat/lng. If the customer changed their default address since
-    // placing this order, the distance shown here will reflect their
-    // current address, not the one actually used for this delivery.
+    // not a snapshot from when this order was placed.
     // ============================================================
 
     String? distanceText;
@@ -651,10 +649,29 @@ class OrderDetailsPage extends StatelessWidget {
   }
 
   // ===========================================================================
-  // PRICE SUMMARY
+  // PRICE SUMMARY (with delivery fee breakdown)
+  // ===========================================================================
+  //
+  // Delivery fee is DERIVED as totalPrice - itemsSubtotal, rather than
+  // recalculated from current distance/address. This is intentional:
+  // totalPrice is the authoritative, correctly-stored amount from when
+  // the order was actually placed (post-fix), so deriving from it is
+  // exact — recomputing via current address would reintroduce the
+  // "customer's address may have changed since" staleness problem.
   // ===========================================================================
 
   Widget _buildPriceSummary() {
+    final itemsSubtotal = order.items.fold<double>(
+      0,
+      (sum, item) => sum + (item.price * item.quantity),
+    );
+
+    // Clamp to 0 as a safety net against float rounding producing a
+    // tiny negative value, or against pre-fix legacy orders where
+    // totalPrice might be less than itemsSubtotal for other reasons.
+    final deliveryFee =
+        (order.totalPrice - itemsSubtotal).clamp(0, double.infinity);
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -664,23 +681,63 @@ class OrderDetailsPage extends StatelessWidget {
           color: AppColors.border,
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          Text(
-            'الإجمالي',
-            style: AppTextStyles.h4,
+          _priceRow(
+            'المجموع الفرعي',
+            '${itemsSubtotal.toStringAsFixed(0)} ل.س',
           ),
 
-          Text(
-            '${order.totalPrice.toStringAsFixed(0)} ل.س',
-            style: AppTextStyles.h4.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          const SizedBox(height: AppSpacing.sm),
+
+          _priceRow(
+            'رسوم التوصيل',
+            order.orderType == OrderType.delivery
+                ? '${deliveryFee.toStringAsFixed(0)} ل.س'
+                : 'لا يوجد (استلام)',
+          ),
+
+          const SizedBox(height: AppSpacing.sm),
+          const Divider(),
+          const SizedBox(height: AppSpacing.xs),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'الإجمالي',
+                style: AppTextStyles.h4,
+              ),
+
+              Text(
+                '${order.totalPrice.toStringAsFixed(0)} ل.س',
+                style: AppTextStyles.h4.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _priceRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.regularMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: AppTextStyles.bodyMedium,
+        ),
+      ],
     );
   }
 

@@ -69,100 +69,114 @@ class MenuItemGridCard extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ================= IMAGE SECTION =================
+              // ================= IMAGE SECTION (ASPECT RATIO BASED) =================
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(AppRadius.lg),
                 ),
-                child: _hasValidPhotoUrl
-                    ? Image.network(
-                        photoUrl!,
-                        height: 115,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _buildFallbackImage(),
-                      )
-                    : _buildFallbackImage(),
+                child: AspectRatio(
+                  aspectRatio: 16 / 10,
+                  child: _hasValidPhotoUrl
+                      ? Image.network(
+                          photoUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildFallbackImage(),
+                        )
+                      : _buildFallbackImage(),
+                ),
               ),
 
               // ================= DETAILS SECTION =================
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    // Dish Name
-                    Text(
-                      nameAr,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Top details (Name & Business)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Dish Name
+                          Text(
+                            nameAr,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                          ),
 
-                    // Restaurant / Business Name
-                    if (hasBusinessName) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        businessNameAr!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: 11,
-                        ),
+                          // Restaurant / Business Name
+                          if (hasBusinessName) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              businessNameAr!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+
+                      // Bottom actions (Price + Cart Controls)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Price with Currency Label
+                          Flexible(
+                            child: RichText(
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: price.toStringAsFixed(0),
+                                    style: AppTextStyles.priceMedium.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: ' ل.س',
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: AppSpacing.xs),
+
+                          // Cart controls (Renders ONLY if onAdd is provided)
+                          if (hasCartActions)
+                            currentQuantity == 0
+                                ? _AddButton(onPressed: onAdd!)
+                                : _QuantityControl(
+                                    quantity: currentQuantity,
+                                    onAdd: onAdd!,
+                                    onRemove: onRemove ?? () {},
+                                  ),
+                        ],
                       ),
                     ],
-
-                    const SizedBox(height: AppSpacing.xs),
-
-                    // Price + Optional Cart Action Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Price with Currency Label
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: price.toStringAsFixed(0),
-                                style: AppTextStyles.priceMedium.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              TextSpan(
-                                text: ' ل.س',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Cart controls (Renders ONLY if onAdd is provided)
-                        if (hasCartActions)
-                          currentQuantity == 0
-                              ? _AddButton(onPressed: onAdd!)
-                              : _QuantityControl(
-                                  quantity: currentQuantity,
-                                  onAdd: onAdd!,
-                                  onRemove: onRemove ?? () {},
-                                ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -174,14 +188,12 @@ class MenuItemGridCard extends StatelessWidget {
 
   Widget _buildFallbackImage() {
     return Container(
-      height: 115,
-      width: double.infinity,
       color: AppColors.surface,
       alignment: Alignment.center,
       child: const Icon(
         Icons.fastfood_rounded,
         color: AppColors.textSecondary,
-        size: 32,
+        size: 28,
       ),
     );
   }
@@ -200,16 +212,16 @@ class _AddButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.primary,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.full),
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.full),
         child: const Padding(
-          padding: EdgeInsets.all(6),
+          padding: EdgeInsets.all(5),
           child: Icon(
             Icons.add_rounded,
             color: AppColors.textOnPrimary,
-            size: 18,
+            size: 16,
           ),
         ),
       ),
@@ -235,24 +247,23 @@ class _QuantityControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 28,
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: AppColors.primaryLight,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           _SmallButton(icon: Icons.remove, onPressed: onRemove),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               '$quantity',
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.w800,
-                fontSize: 12,
+                fontSize: 11,
               ),
             ),
           ),
@@ -277,11 +288,14 @@ class _SmallButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onPressed,
-      borderRadius: BorderRadius.circular(6),
-      child: SizedBox(
-        width: 22,
-        height: 22,
-        child: Icon(icon, size: 14, color: AppColors.primary),
+      borderRadius: BorderRadius.circular(AppRadius.full),
+      child: Padding(
+        padding: const EdgeInsets.all(2),
+        child: Icon(
+          icon,
+          size: 13,
+          color: AppColors.primary,
+        ),
       ),
     );
   }

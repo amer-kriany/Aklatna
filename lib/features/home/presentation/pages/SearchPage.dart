@@ -101,10 +101,10 @@ class _SearchPageState extends State<SearchPage> {
     Menuitementity item,
   ) {
     final businessState = context.read<BusinessBloc>().state;
- 
+
     String? businessName;
     String? businessLogo;
- 
+
     if (businessState is BusinessFetched) {
       for (final business in businessState.businesses) {
         if (business.id == item.businessId) {
@@ -114,7 +114,7 @@ class _SearchPageState extends State<SearchPage> {
         }
       }
     }
- 
+
     context.read<CartBloc>().add(
           AddItemEvent(
             item: CartItem(
@@ -133,7 +133,6 @@ class _SearchPageState extends State<SearchPage> {
           ),
         );
   }
- 
 
   // ============================================================
   // REMOVE ITEM FROM CART
@@ -166,7 +165,6 @@ class _SearchPageState extends State<SearchPage> {
               // ==================================================
               // HEADER
               // ==================================================
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -191,7 +189,6 @@ class _SearchPageState extends State<SearchPage> {
               // ==================================================
               // SEARCH BAR
               // ==================================================
-
               app.SearchBar(
                 controller: _controller,
                 onQueryChanged: _onQueryChanged,
@@ -202,20 +199,13 @@ class _SearchPageState extends State<SearchPage> {
               // ==================================================
               // CONTENT
               // ==================================================
-
               Expanded(
                 child: ListView(
                   children: [
-                    if (_query.trim().isEmpty)
-                      _buildCategoryChipsAndResults(),
-
-                    if (_query.trim().isNotEmpty)
-                      _buildResults(),
-
+                    if (_query.trim().isEmpty) _buildCategoryChipsAndResults(),
+                    if (_query.trim().isNotEmpty) _buildResults(),
                     const SizedBox(height: AppSpacing.lg),
-
-                    if (_query.trim().isEmpty)
-                      _buildIdleContent(),
+                    if (_query.trim().isEmpty) _buildIdleContent(),
                   ],
                 ),
               ),
@@ -237,10 +227,8 @@ class _SearchPageState extends State<SearchPage> {
           return const SizedBox.shrink();
         }
 
-        final distinctCategoryNames = state.categories
-            .map((c) => c.nameAr)
-            .toSet()
-            .toList();
+        final distinctCategoryNames =
+            state.categories.map((c) => c.nameAr).toSet().toList();
 
         if (distinctCategoryNames.isEmpty) {
           return const SizedBox.shrink();
@@ -253,60 +241,52 @@ class _SearchPageState extends State<SearchPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                height: 44,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: distinctCategoryNames.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(width: AppSpacing.sm),
-                  itemBuilder: (context, index) {
-                    final name = distinctCategoryNames[index];
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: distinctCategoryNames.map((name) {
+                    final isSelected = _selectedCategoryName == name;
 
-                    final isSelected =
-                        _selectedCategoryName == name;
-
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedCategoryName =
-                              isSelected ? null : name;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.surface,
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.full),
-                          border: Border.all(
+                    return Padding(
+                      padding: const EdgeInsets.only(left: AppSpacing.sm),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedCategoryName = isSelected ? null : name;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primary
-                                : AppColors.border,
+                                : AppColors.surface,
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.full),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.border,
+                            ),
                           ),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          name,
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: isSelected
-                                ? AppColors.textOnPrimary
-                                : AppColors.textPrimary,
+                          alignment: Alignment.center,
+                          child: Text(
+                            name,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: isSelected
+                                  ? AppColors.textOnPrimary
+                                  : AppColors.textPrimary,
+                            ),
                           ),
                         ),
                       ),
                     );
-                  },
+                  }).toList(),
                 ),
               ),
-
-              // CATEGORY RESULTS
-
               if (_selectedCategoryName != null) ...[
                 const SizedBox(height: AppSpacing.md),
                 _buildCategoryResults(
@@ -325,7 +305,7 @@ class _SearchPageState extends State<SearchPage> {
   // CATEGORY RESULTS
   // ============================================================
 
- Widget _buildCategoryResults(
+  Widget _buildCategoryResults(
     MenuAllLoaded state,
     String categoryName,
   ) {
@@ -347,24 +327,20 @@ class _SearchPageState extends State<SearchPage> {
       );
     }
 
-    // Same business-name lookup pattern used in _buildIdleContent —
-    // menu_items has no business_name column, only business_id, so
-    // we resolve it client-side from BusinessBloc's already-fetched list.
     final businessState = context.watch<BusinessBloc>().state;
 
-    final Map<String, String> businessNamesById =
-        businessState is BusinessFetched
-            ? {
-                for (final business in businessState.businesses)
-                  business.id: business.nameAr,
-              }
-            : const <String, String>{};
+    final Map<String, String> businessNamesById = businessState
+            is BusinessFetched
+        ? {
+            for (final business in businessState.businesses)
+              business.id: business.nameAr,
+          }
+        : const <String, String>{};
 
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate:
-          const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         mainAxisSpacing: AppSpacing.sm,
         crossAxisSpacing: AppSpacing.sm,
@@ -395,18 +371,14 @@ class _SearchPageState extends State<SearchPage> {
     return BlocBuilder<MenuBloc, MenuState>(
       builder: (context, state) {
         final List<Menuitementity> menuItems =
-            state is MenuAllLoaded
-                ? state.items
-                : const <Menuitementity>[];
+            state is MenuAllLoaded ? state.items : const <Menuitementity>[];
 
-        final businessState =
-            context.watch<BusinessBloc>().state;
+        final businessState = context.watch<BusinessBloc>().state;
 
         final Map<String, double> businessRatingsById =
             businessState is BusinessFetched
                 ? {
-                    for (final business
-                        in businessState.businesses)
+                    for (final business in businessState.businesses)
                       business.id: business.rating,
                   }
                 : const <String, double>{};
@@ -414,8 +386,7 @@ class _SearchPageState extends State<SearchPage> {
         final Map<String, String> businessNamesById =
             businessState is BusinessFetched
                 ? {
-                    for (final business
-                        in businessState.businesses)
+                    for (final business in businessState.businesses)
                       business.id: business.nameAr,
                   }
                 : const <String, String>{};
@@ -423,155 +394,82 @@ class _SearchPageState extends State<SearchPage> {
         final rankedItems = [...menuItems]
           ..sort(
             (a, b) {
-              final ratingA =
-                  businessRatingsById[a.businessId] ?? 0;
+              final ratingA = businessRatingsById[a.businessId] ?? 0;
+              final ratingB = businessRatingsById[b.businessId] ?? 0;
 
-              final ratingB =
-                  businessRatingsById[b.businessId] ?? 0;
+              final byRating = ratingB.compareTo(ratingA);
+              if (byRating != 0) return byRating;
 
-              final byRating =
-                  ratingB.compareTo(ratingA);
-
-              if (byRating != 0) {
-                return byRating;
-              }
-
-              return a.sortOrder.compareTo(
-                b.sortOrder,
-              );
+              return a.sortOrder.compareTo(b.sortOrder);
             },
           );
 
-        final popularItems =
-            rankedItems.take(10).toList();
+        final popularItems = rankedItems.take(10).toList();
 
         return Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               'أطباق شائعة',
               style: AppTextStyles.h4,
             ),
-
-            const SizedBox(
-              height: AppSpacing.md,
-            ),
-
+            const SizedBox(height: AppSpacing.md),
             if (state is MenuLoading)
-              const SizedBox(
-                height: 210,
-                child: Center(
-                  child:
-                      CircularProgressIndicator(),
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                  child: CircularProgressIndicator(),
                 ),
               ),
-
             if (state is MenuError)
               Padding(
-                padding: const EdgeInsets.only(
-                  top: AppSpacing.sm,
-                ),
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
                 child: Text(
                   state.message,
-                  style:
-                      AppTextStyles.bodyMedium,
+                  style: AppTextStyles.bodyMedium,
                 ),
               ),
-
-            if (state is! MenuLoading &&
-                popularItems.isNotEmpty)
-              SizedBox(
-                height: 210,
-                child: ListView.separated(
-                  scrollDirection:
-                      Axis.horizontal,
-                  itemCount:
-                      popularItems.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(
-                        width: AppSpacing.sm,
-                      ),
-                  itemBuilder:
-                      (context, index) {
-                    final item =
-                        popularItems[index];
-
-                    return BlocBuilder<
-                        CartBloc,
-                        CartState>(
-                      builder:
-                          (context, cartState) {
-                        final quantity =
-                            _getCartQuantity(
-                          cartState,
-                          item.id,
-                        );
-
-                        return PopularDishCard(
-                          photoUrl:
-                              item.photoUrl ?? '',
-                          dishNameAr:
-                              item.nameAr,
-                          dishPrice:
-                              item.price,
-                          businessNameAr:
-                              businessNamesById[
-                                      item.businessId] ??
-                                  '',
-
-                          // ==========================
-                          // CART QUANTITY
-                          // ==========================
-
-                          quantity: quantity,
-
-                          // ==========================
-                          // ADD
-                          // ==========================
-
-                          onAdd: () {
-                            _addItemToCart(
-                              context,
-                              item,
-                            );
-                          },
-
-                          // ==========================
-                          // REMOVE
-                          // ==========================
-
-                          onRemove: () {
-                            _removeItemFromCart(
-                              context,
+            if (state is! MenuLoading && popularItems.isNotEmpty)
+              // Dynamically fits popular card items using IntrinsicHeight
+              IntrinsicHeight(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: popularItems.map((item) {
+                      return Padding(
+                        padding: const EdgeInsets.only(left: AppSpacing.sm),
+                        child: BlocBuilder<CartBloc, CartState>(
+                          builder: (context, cartState) {
+                            final quantity = _getCartQuantity(
+                              cartState,
                               item.id,
                             );
-                          },
 
-                          // ==========================
-                          // FOOD DETAILS
-                          // ==========================
-
-                          onTap: () {
-                            context.push(
-                              '/food/${item.id}',
+                            return PopularDishCard(
+                              photoUrl: item.photoUrl ?? '',
+                              dishNameAr: item.nameAr,
+                              dishPrice: item.price,
+                              businessNameAr:
+                                  businessNamesById[item.businessId] ?? '',
+                              quantity: quantity,
+                              onAdd: () => _addItemToCart(context, item),
+                              onRemove: () =>
+                                  _removeItemFromCart(context, item.id),
+                              onTap: () => context.push('/food/${item.id}'),
                             );
                           },
-                        );
-                      },
-                    );
-                  },
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
-
-            if (state is! MenuLoading &&
-                popularItems.isEmpty)
-              const SizedBox(
-                height: 210,
+            if (state is! MenuLoading && popularItems.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 child: Center(
-                  child: Text(
-                    'لا توجد أطباق حالياً',
-                  ),
+                  child: Text('لا توجد أطباق حالياً'),
                 ),
               ),
           ],
@@ -614,16 +512,13 @@ class _SearchPageState extends State<SearchPage> {
         if (state is BusinessFetched) {
           return ListView.separated(
             shrinkWrap: true,
-            physics:
-                const NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: state.businesses.length,
-            separatorBuilder: (_, __) =>
-                const Divider(
+            separatorBuilder: (_, __) => const Divider(
               color: AppColors.divider,
             ),
             itemBuilder: (context, index) {
-              final business =
-                  state.businesses[index];
+              final business = state.businesses[index];
 
               return GestureDetector(
                 onTap: () {
@@ -632,8 +527,7 @@ class _SearchPageState extends State<SearchPage> {
                   );
                 },
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     vertical: AppSpacing.sm,
                   ),
                   child: SearchResultCard(

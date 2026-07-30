@@ -75,29 +75,20 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  void _showAddressBottomSheet(
-    BuildContext context,
-    String userId,
-  ) async {
+  void _showAddressBottomSheet(BuildContext context, String userId) async {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (_) {
-        return AddressSelectionBottomSheet(
-          userId: userId,
-        );
+        return AddressSelectionBottomSheet(userId: userId);
       },
     );
 
     if (mounted) {
-      context.read<ProfileBloc>().add(
-            GetProfilesEvent(),
-          );
+      context.read<ProfileBloc>().add(GetProfilesEvent());
     }
   }
 
@@ -110,9 +101,7 @@ class _HomePageState extends State<HomePage> {
           builder: (context, profileState) {
             if (profileState is ProfileLoading ||
                 profileState is ProfileInitial) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (profileState is ProfileError ||
@@ -137,9 +126,7 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
-                        context.read<ProfileBloc>().add(
-                              GetProfilesEvent(),
-                            );
+                        context.read<ProfileBloc>().add(GetProfilesEvent());
                       },
                       child: const Text("Retry"),
                     ),
@@ -154,27 +141,17 @@ class _HomePageState extends State<HomePage> {
             final orderBloc = context.read<OrderBloc>();
 
             if (orderBloc.state is OrderInitial) {
-              orderBloc.add(
-                GetCustomerOrdersEvent(
-                  customerId: profile.id,
-                ),
-              );
+              orderBloc.add(GetCustomerOrdersEvent(customerId: profile.id));
             }
 
             return BlocBuilder<BusinessBloc, BusinessState>(
               builder: (context, businessState) {
                 if (businessState is BusinessLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (businessState is BusinessError) {
-                  return Center(
-                    child: Text(
-                      businessState.message,
-                    ),
-                  );
+                  return Center(child: Text(businessState.message));
                 }
 
                 List<BusinessEntity> businesses = <BusinessEntity>[];
@@ -184,18 +161,18 @@ class _HomePageState extends State<HomePage> {
                 }
 
                 final sorted = [...businesses]
-                  ..sort(
-                    (a, b) => b.rating.compareTo(a.rating),
-                  );
+                  ..sort((a, b) => b.rating.compareTo(a.rating));
 
                 final topRatedBusinesses = sorted
                     .where((b) => b.rating > 4.5)
                     .toList();
 
                 final openNowCandidates = sorted
-                    .where((b) =>
-                        b.isOpen &&
-                        !topRatedBusinesses.any((t) => t.id == b.id))
+                    .where(
+                      (b) =>
+                          b.isOpen &&
+                          !topRatedBusinesses.any((t) => t.id == b.id),
+                    )
                     .toList();
 
                 const String? sponsoredBannerImageUrl = null;
@@ -208,17 +185,12 @@ class _HomePageState extends State<HomePage> {
                       // =====================================================
                       // HEADER
                       // =====================================================
-
                       Container(
                         decoration: const BoxDecoration(
                           color: AppColors.surface,
                           borderRadius: BorderRadius.only(
-                            bottomLeft: Radius.circular(
-                              AppRadius.xl,
-                            ),
-                            bottomRight: Radius.circular(
-                              AppRadius.xl,
-                            ),
+                            bottomLeft: Radius.circular(AppRadius.xl),
+                            bottomRight: Radius.circular(AppRadius.xl),
                           ),
                         ),
                         padding: const EdgeInsets.fromLTRB(
@@ -228,40 +200,29 @@ class _HomePageState extends State<HomePage> {
                           AppSpacing.lg,
                         ),
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             HomeDeliveryHeader(
-                              addressLabel:
-                                  _formatAddress(profile.address),
+                              addressLabel: _formatAddress(profile.address),
                               avatarUrl: profile.photo,
                               onAvatarTap: () async {
                                 await context.push("/profile");
 
                                 if (context.mounted) {
                                   context.read<ProfileBloc>().add(
-                                        GetProfilesEvent(),
-                                      );
+                                    GetProfilesEvent(),
+                                  );
                                 }
                               },
                               onAddressTap: () =>
-                                  _showAddressBottomSheet(
-                                context,
-                                profile.id,
-                              ),
+                                  _showAddressBottomSheet(context, profile.id),
                             ),
 
-                            const SizedBox(
-                              height: AppSpacing.lg,
-                            ),
+                            const SizedBox(height: AppSpacing.lg),
 
-                            HomeGreeting(
-                              userName: profile.userName,
-                            ),
+                            HomeGreeting(userName: profile.userName),
 
-                            const SizedBox(
-                              height: AppSpacing.md,
-                            ),
+                            const SizedBox(height: AppSpacing.md),
 
                             HomeSearchBar(
                               onTap: () => context.go("/search"),
@@ -274,21 +235,18 @@ class _HomePageState extends State<HomePage> {
                       // =====================================================
                       // ONGOING ORDER
                       // =====================================================
-
                       BlocBuilder<OrderBloc, OrderState>(
                         builder: (context, orderState) {
                           if (orderState is! CustomerOrdersFetched) {
                             return const SizedBox.shrink();
                           }
 
-                          final ongoingOrders =
-                              orderState.orders.where((order) {
-                            return order.orderStatus ==
-                                    OrderStatus.pending ||
-                                order.orderStatus ==
-                                    OrderStatus.preparing ||
-                                order.orderStatus ==
-                                    OrderStatus.ready;
+                          final ongoingOrders = orderState.orders.where((
+                            order,
+                          ) {
+                            return order.orderStatus == OrderStatus.pending ||
+                                order.orderStatus == OrderStatus.preparing ||
+                                order.orderStatus == OrderStatus.ready;
                           }).toList();
 
                           if (ongoingOrders.isEmpty) {
@@ -320,272 +278,216 @@ class _HomePageState extends State<HomePage> {
                         },
                       ),
 
-                      const SizedBox(
-                        height: AppSpacing.xl,
-                      ),
+                      const SizedBox(height: AppSpacing.xl),
 
                       // =====================================================
                       // SPONSORED BANNER
                       // =====================================================
-
                       if (sponsoredBannerImageUrl != null) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal:
-                                AppSpacing.pageHorizontal,
+                            horizontal: AppSpacing.pageHorizontal,
                           ),
                           child: SponsoredBanner(
-                            imageUrl:
-                                sponsoredBannerImageUrl,
+                            imageUrl: sponsoredBannerImageUrl,
                             onTap: () {},
                           ),
                         ),
-                        const SizedBox(
-                          height: AppSpacing.xl,
-                        ),
+                        const SizedBox(height: AppSpacing.xl),
                       ],
 
                       // =====================================================
                       // PROMOTIONS
                       // =====================================================
+                      BlocBuilder<PromotionsBloc, PromotionsState>(
+                        builder: (context, promoState) {
+                          if (promoState is PromotionsLoading) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppSpacing.xl,
+                              ),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
 
-                     BlocBuilder<PromotionsBloc, PromotionsState>(
-  builder: (context, promoState) {
-    if (promoState is PromotionsLoading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(
-          vertical: AppSpacing.xl,
-        ),
-        child: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
+                          if (promoState is PromotionsError) {
+                            return const SizedBox.shrink();
+                          }
 
-    if (promoState is PromotionsError) {
-      return const SizedBox.shrink();
-    }
+                          if (promoState is! PromotionsLoaded ||
+                              promoState.promotions.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
 
-    if (promoState is! PromotionsLoaded ||
-        promoState.promotions.isEmpty) {
-      return const SizedBox.shrink();
-    }
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.pageHorizontal,
+                                ),
+                                child: SectionHeader(title: 'عروض وخصومات'),
+                              ),
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: AppSpacing.pageHorizontal,
-          ),
-          child: SectionHeader(
-            title: 'عروض وخصومات',
-          ),
-        ),
+                              const SizedBox(height: AppSpacing.md),
 
-        const SizedBox(
-          height: AppSpacing.md,
-        ),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.only(
+                                  left: AppSpacing.pageHorizontal,
+                                  right: AppSpacing.sm,
+                                ),
+                                child: Row(
+                                  children: [
+                                    for (
+                                      int i = 0;
+                                      i < promoState.promotions.length;
+                                      i++
+                                    ) ...[
+                                      if (i != 0)
+                                        const SizedBox(width: AppSpacing.sm),
 
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.only(
-            left: AppSpacing.pageHorizontal,
-            right: AppSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              for (
-                int i = 0;
-                i < promoState.promotions.length;
-                i++
-              ) ...[
-                if (i != 0)
-                  const SizedBox(
-                    width: AppSpacing.sm,
-                  ),
+                                      PromotionCard(
+                                        businessName: promoState
+                                            .promotions[i]
+                                            .businessName,
+                                        coverUrl:
+                                            promoState.promotions[i].photoUrl,
+                                        itemName:
+                                            promoState.promotions[i].itemName,
+                                        discountPercentage: promoState
+                                            .promotions[i]
+                                            .discountPercentage,
 
-                PromotionCard(
-                  businessName:
-                      promoState.promotions[i].businessName,
-                  coverUrl:
-                      promoState.promotions[i].photoUrl,
-                  itemName:
-                      promoState.promotions[i].itemName,
-                  discountPercentage:
-                      promoState.promotions[i].discountPercentage,
+                                        // num? -> double?
+                                        oldPrice: promoState
+                                            .promotions[i]
+                                            .oldPrice
+                                            ?.toDouble(),
 
-                  // num? -> double?
-                  oldPrice:
-                      promoState.promotions[i].oldPrice?.toDouble(),
+                                        // num? -> double?
+                                        newPrice: promoState
+                                            .promotions[i]
+                                            .newPrice
+                                            ?.toDouble(),
 
-                  // num? -> double?
-                  newPrice:
-                      promoState.promotions[i].newPrice?.toDouble(),
+                                        onTap: () {
+                                          context.push(
+                                            "/business/${promoState.promotions[i].businessId}",
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
 
-                  onTap: () {
-                    context.push(
-                      "/business/${promoState.promotions[i].businessId}",
-                    );
-                  },
-                ),
-              ],
-            ],
-          ),
-        ),
-
-        const SizedBox(
-          height: AppSpacing.xl,
-        ),
-      ],
-    );
-  },
-),
+                              const SizedBox(height: AppSpacing.xl),
+                            ],
+                          );
+                        },
+                      ),
 
                       // =====================================================
                       // TOP RATED
                       // =====================================================
-
                       if (topRatedBusinesses.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(
-                            horizontal:
-                                AppSpacing.pageHorizontal,
+                            horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: SectionHeader(
-                            title: 'الأعلى تقييمًا',
-                          ),
+                          child: SectionHeader(title: 'الأعلى تقييمًا'),
                         ),
 
-                        const SizedBox(
-                          height: AppSpacing.md,
-                        ),
+                        const SizedBox(height: AppSpacing.md),
 
                         SizedBox(
                           height: _recommendedRowHeight,
                           child: ListView.separated(
-                            scrollDirection:
-                                Axis.horizontal,
+                            scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.only(
-                              left:
-                                  AppSpacing.pageHorizontal,
+                              left: AppSpacing.pageHorizontal,
                               right: AppSpacing.sm,
                             ),
-                            itemCount:
-                                topRatedBusinesses.length,
+                            itemCount: topRatedBusinesses.length,
                             separatorBuilder: (_, __) =>
-                                const SizedBox(
-                              width: AppSpacing.sm,
-                            ),
-                            itemBuilder: (
-                              context,
-                              index,
-                            ) {
-                              final business =
-                                  topRatedBusinesses[
-                                      index];
+                                const SizedBox(width: AppSpacing.sm),
+                            itemBuilder: (context, index) {
+                              final business = topRatedBusinesses[index];
 
                               return BusinessCard(
                                 businessId: business.id,
-                                width:
-                                    _recommendedTileWidth,
-                                height: 150,
+                                width: _recommendedTileWidth,
+                                height:
+                                    175, // Adjust slightly from 150 to fit title + pills
                                 compact: true,
-                                businessName:
-                                    business.nameAr,
+                                businessName: business.nameAr,
                                 subtitle:
                                     '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
-                                coverUrl:
-                                    business.coverUrl,
-                                rating:
-                                    business.rating,
-                                ratingCount:
-                                    business.ratingCount,
-                                imageAspectRatio: 1.15,
-                                statusText:
-                                    business.isOpen
-                                        ? 'مفتوح الآن'
-                                        : 'مغلق الآن',
-                                deliveryFeeText:
-                                    'توصيل 5,000',
-                                onTap: () {
-                                  context.push(
-                                    "/business/${business.id}",
-                                  );
-                                },
+                                coverUrl: business.coverUrl,
+                                rating: business.rating,
+                                ratingCount: business.ratingCount,
+                                statusText: business.isOpen
+                                    ? 'مفتوح الآن'
+                                    : 'مغلق الآن',
+                                deliveryFeeText: 'توصيل 5,000',
+                                onTap: () =>
+                                    context.push("/business/${business.id}"),
                               );
                             },
                           ),
                         ),
 
-                        const SizedBox(
-                          height: AppSpacing.xl,
-                        ),
+                        const SizedBox(height: AppSpacing.xl),
                       ],
 
                       // =====================================================
                       // OPEN NOW
                       // =====================================================
-
                       if (openNowCandidates.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(
-                            horizontal:
-                                AppSpacing.pageHorizontal,
+                            horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: SectionHeader(
-                            title: 'مفتوح الآن',
-                          ),
+                          child: SectionHeader(title: 'مفتوح الآن'),
                         ),
 
-                        const SizedBox(
-                          height: AppSpacing.md,
-                        ),
+                        const SizedBox(height: AppSpacing.md),
 
                         ListView.separated(
                           shrinkWrap: true,
-                          physics:
-                              const NeverScrollableScrollPhysics(),
+                          physics: const NeverScrollableScrollPhysics(),
                           padding: const EdgeInsets.symmetric(
-                            horizontal:
-                                AppSpacing.pageHorizontal,
+                            horizontal: AppSpacing.pageHorizontal,
                           ),
                           itemCount: openNowCandidates.length,
                           separatorBuilder: (_, __) =>
-                              const SizedBox(
-                            height: AppSpacing.md,
-                          ),
+                              const SizedBox(height: AppSpacing.md),
                           itemBuilder: (context, index) {
-                            final business =
-                                openNowCandidates[index];
+                            final business = openNowCandidates[index];
 
                             return BusinessCard(
                               businessId: business.id,
+                              // width can be left null to take double.infinity, or set explicitly
+                              height: 250, // Standard vertical card height
+                              compact: false, // Default
                               businessName: business.nameAr,
                               subtitle:
                                   '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
                               coverUrl: business.coverUrl,
                               rating: business.rating,
                               ratingCount: business.ratingCount,
-                              imageAspectRatio: 3.4,
-                              height: 250,
-                              compact: false,
                               statusText: business.isOpen
                                   ? 'مفتوح الآن'
                                   : 'مغلق الآن',
                               deliveryFeeText: 'توصيل 5,000',
-                              onTap: () {
-                                context.push(
-                                  "/business/${business.id}",
-                                );
-                              },
+                              onTap: () =>
+                                  context.push("/business/${business.id}"),
                             );
                           },
                         ),
 
-                        const SizedBox(
-                          height: AppSpacing.xl,
-                        ),
+                        const SizedBox(height: AppSpacing.xl),
                       ],
                     ],
                   ),
@@ -604,10 +506,7 @@ class _HomePageState extends State<HomePage> {
 // ===========================================================================
 
 class _OngoingOrderCard extends StatelessWidget {
-  const _OngoingOrderCard({
-    required this.order,
-    required this.onTap,
-  });
+  const _OngoingOrderCard({required this.order, required this.onTap});
 
   final dynamic order;
   final VoidCallback onTap;
@@ -658,22 +557,14 @@ class _OngoingOrderCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(
-          AppRadius.xl,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(
-            AppSpacing.md,
-          ),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(
-              AppRadius.xl,
-            ),
-            border: Border.all(
-              color: AppColors.primary.withOpacity(0.18),
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: AppColors.primary.withOpacity(0.18)),
             boxShadow: [
               BoxShadow(
                 color: AppColors.shadow,
@@ -690,9 +581,7 @@ class _OngoingOrderCard extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(
-                    AppRadius.lg,
-                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Icon(
                   _statusIcon(status),
@@ -701,24 +590,19 @@ class _OngoingOrderCard extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(
-                width: AppSpacing.md,
-              ),
+              const SizedBox(width: AppSpacing.md),
 
               // Text
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'طلبك الجاري',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style:
-                          AppTextStyles.caption.copyWith(
-                        color:
-                            AppColors.textSecondary,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.textSecondary,
                       ),
                     ),
 
@@ -728,28 +612,21 @@ class _OngoingOrderCard extends StatelessWidget {
                       _statusText(status),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style:
-                          AppTextStyles.bodyMedium.copyWith(
-                        color:
-                            AppColors.textPrimary,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
 
                     if (order.businessName != null &&
-                        order.businessName
-                            .toString()
-                            .isNotEmpty) ...[
+                        order.businessName.toString().isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
                         order.businessName.toString(),
                         maxLines: 1,
-                        overflow:
-                            TextOverflow.ellipsis,
-                        style:
-                            AppTextStyles.caption.copyWith(
-                          color:
-                              AppColors.textSecondary,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -757,9 +634,7 @@ class _OngoingOrderCard extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(
-                width: AppSpacing.sm,
-              ),
+              const SizedBox(width: AppSpacing.sm),
 
               // Arrow
               const Icon(

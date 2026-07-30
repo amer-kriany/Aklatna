@@ -45,6 +45,7 @@ OrderEntity mapToEntity(OrderModel order) {
     businessLogo: order.businessLogo,
     businessName: order.businessName,
     deliveryAddress: order.deliveryAddress,
+    estimatedPreparationTime: order.estimatedPreparationTime
 
   );
 }

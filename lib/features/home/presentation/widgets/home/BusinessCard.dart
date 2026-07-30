@@ -19,7 +19,6 @@ class BusinessCard extends StatelessWidget {
 
   final double? width;
   final double height;
-  final double imageAspectRatio;
 
   final String? statusText;
   final String? deliveryFeeText;
@@ -38,7 +37,6 @@ class BusinessCard extends StatelessWidget {
     this.ratingCount,
     this.width,
     this.height = 245,
-    this.imageAspectRatio = 1.3,
     this.statusText,
     this.deliveryFeeText,
     this.compact = false,
@@ -49,78 +47,60 @@ class BusinessCard extends StatelessWidget {
 
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('الرجاء تسجيل الدخول لإضافة المفضلة'),
-        ),
+        const SnackBar(content: Text('الرجاء تسجيل الدخول لإضافة المفضلة')),
       );
       return;
     }
 
     context.read<FavoriteBloc>().add(
-          ToggleFavoriteEvent(
-            userId: userId,
-            businessId: businessId,
-          ),
-        );
+      ToggleFavoriteEvent(userId: userId, businessId: businessId),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasSubtitle =
-        subtitle != null && subtitle!.trim().isNotEmpty;
-
-    final hasStatus =
-        statusText != null && statusText!.trim().isNotEmpty;
-
+    final hasSubtitle = subtitle != null && subtitle!.trim().isNotEmpty;
+    final hasStatus = statusText != null && statusText!.trim().isNotEmpty;
     final hasDelivery =
-        deliveryFeeText != null &&
-        deliveryFeeText!.trim().isNotEmpty;
+        deliveryFeeText != null && deliveryFeeText!.trim().isNotEmpty;
 
     return SizedBox(
       width: width,
       height: height,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow,
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          clipBehavior: Clip.antiAlias,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadow,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+
             children: [
               // ============================================================
               // IMAGE
               // ============================================================
-              // FIXED: was Expanded(flex: ...) sharing a hardcoded ratio
-              // with the info section below, which overflowed whenever the
-              // info section's actual content (long name + subtitle + two
-              // wrapped pills) needed more height than its fixed flex slice
-              // allowed. Now the image just absorbs whatever space is left
-              // AFTER the info section takes what it actually needs, so the
-              // info section can never overflow itself.
               Expanded(
                 child: Stack(
                   children: [
-                    Positioned.fill(
-                      child: _buildImage(),
-                    ),
+                    Positioned.fill(child: _buildImage()),
 
-                    // Bottom gradient
+                    // Gradient Mask
                     Positioned(
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      height: compact ? 32 : 40,
+                      height: compact ? 24 : 36,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
@@ -128,25 +108,25 @@ class BusinessCard extends StatelessWidget {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.black.withOpacity(0),
-                              Colors.black.withOpacity(0.30),
+                              Colors.black.withOpacity(0.35),
                             ],
                           ),
                         ),
                       ),
                     ),
 
-                    // Rating
+                    // Rating Badge
                     if (rating != null)
                       Positioned(
-                        left: AppSpacing.xs,
-                        bottom: AppSpacing.xs,
+                        left: compact ? 6 : AppSpacing.xs,
+                        bottom: compact ? 6 : AppSpacing.xs,
                         child: _buildRating(),
                       ),
 
-                    // Favorite
+                    // Favorite Button
                     Positioned(
-                      top: AppSpacing.xs,
-                      right: AppSpacing.xs,
+                      top: compact ? 6 : AppSpacing.xs,
+                      right: compact ? 6 : AppSpacing.xs,
                       child: _buildFavoriteButton(context),
                     ),
                   ],
@@ -156,13 +136,10 @@ class BusinessCard extends StatelessWidget {
               // ============================================================
               // INFORMATION
               // ============================================================
-              // No longer Expanded/flex — sized to its own content, so it
-              // can never overflow regardless of name length, subtitle
-              // presence, or whether the pill row wraps to two lines.
               Padding(
                 padding: EdgeInsets.fromLTRB(
                   compact ? 8 : AppSpacing.sm,
-                  compact ? 6 : AppSpacing.xs,
+                  compact ? 5 : AppSpacing.xs,
                   compact ? 8 : AppSpacing.sm,
                   compact ? 7 : AppSpacing.sm,
                 ),
@@ -170,7 +147,7 @@ class BusinessCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Business name + subtitle
+                    // Business name
                     Text(
                       businessName,
                       maxLines: 1,
@@ -178,52 +155,47 @@ class BusinessCard extends StatelessWidget {
                       style: AppTextStyles.h4.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.bold,
-                        fontSize: compact ? 15 : null,
+                        fontSize: compact ? 13 : 16,
                       ),
                     ),
 
+                    // Subtitle
                     if (hasSubtitle) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 1),
                       Text(
                         subtitle!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.regularSmall.copyWith(
                           color: AppColors.textSecondary,
-                          fontSize: compact ? 10 : null,
+                          fontSize: compact ? 10 : 12,
                         ),
                       ),
                     ],
 
-                    // ====================================================
-                    // STATUS + DELIVERY
-                    // ====================================================
+                    // Status + Delivery Pills
                     if (hasStatus || hasDelivery) ...[
-                      SizedBox(height: compact ? 6 : 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: Wrap(
-                          alignment: WrapAlignment.end,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: compact ? 4 : 6,
-                          runSpacing: 4,
+                      SizedBox(height: compact ? 4 : 6),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        clipBehavior: Clip.none,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             if (hasStatus)
                               _buildPill(
                                 text: statusText!,
-                                backgroundColor:
-                                    AppColors.primaryLight,
-                                foregroundColor:
-                                    AppColors.primary,
+                                backgroundColor: AppColors.primaryLight,
+                                foregroundColor: AppColors.primary,
                               ),
-
+                            if (hasStatus && hasDelivery)
+                              SizedBox(width: compact ? 5 : 6),
                             if (hasDelivery)
                               _buildPill(
                                 text: deliveryFeeText!,
-                                backgroundColor:
-                                    AppColors.surfaceVariant,
-                                foregroundColor:
-                                    AppColors.textPrimary,
+                                backgroundColor: AppColors.surfaceVariant,
+                                foregroundColor: AppColors.textPrimary,
                               ),
                           ],
                         ),
@@ -244,51 +216,51 @@ class BusinessCard extends StatelessWidget {
   // ==========================================================================
 
   Widget _buildImage() {
-    if (coverUrl == null || coverUrl!.isEmpty) {
+    if (coverUrl == null || coverUrl!.trim().isEmpty) {
       return Container(
+        width: double.infinity,
+        height: double.infinity,
         color: AppColors.primaryLight,
         alignment: Alignment.center,
         child: Icon(
           Icons.storefront_rounded,
           color: AppColors.primary,
-          size: compact
-              ? AppSizes.iconXl
-              : AppSizes.iconXl * 1.4,
+          size: compact ? 24 : 36,
         ),
       );
     }
 
     return Image.network(
       coverUrl!,
+      width: double.infinity,
+      height: double.infinity,
       fit: BoxFit.cover,
       loadingBuilder: (context, child, progress) {
-        if (progress == null) {
-          return child;
-        }
+        if (progress == null) return child;
 
         return Container(
+          width: double.infinity,
+          height: double.infinity,
           color: AppColors.surfaceVariant,
           child: const Center(
             child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-              ),
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
             ),
           ),
         );
       },
       errorBuilder: (context, error, stackTrace) {
         return Container(
+          width: double.infinity,
+          height: double.infinity,
           color: AppColors.surfaceVariant,
           alignment: Alignment.center,
           child: Icon(
             Icons.broken_image_outlined,
             color: AppColors.textSecondary,
-            size: compact
-                ? AppSizes.iconLg
-                : AppSizes.iconXl,
+            size: compact ? 20 : 30,
           ),
         );
       },
@@ -302,7 +274,7 @@ class BusinessCard extends StatelessWidget {
   Widget _buildRating() {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 7 : AppSpacing.xs,
+        horizontal: compact ? 5 : AppSpacing.xs,
         vertical: compact ? 2 : 3,
       ),
       decoration: BoxDecoration(
@@ -314,28 +286,25 @@ class BusinessCard extends StatelessWidget {
         children: [
           Icon(
             Icons.star_rounded,
-            size: compact ? 11 : 13,
+            size: compact ? 10 : 13,
             color: AppColors.warning,
           ),
-
-          const SizedBox(width: 3),
-
+          const SizedBox(width: 2),
           Text(
             rating!.toStringAsFixed(1),
             style: AppTextStyles.caption.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
-              fontSize: compact ? 9 : null,
+              fontSize: compact ? 9 : 11,
             ),
           ),
-
           if (ratingCount != null) ...[
-            const SizedBox(width: 2),
+            const SizedBox(width: 1),
             Text(
               '($ratingCount)',
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.textSecondary,
-                fontSize: compact ? 9 : null,
+                fontSize: compact ? 9 : 10,
               ),
             ),
           ],
@@ -355,7 +324,7 @@ class BusinessCard extends StatelessWidget {
             favoriteState is FavoriteLoaded &&
             favoriteState.favoriteIds.contains(businessId);
 
-        final size = compact ? 30.0 : 32.0;
+        final size = compact ? 24.0 : 32.0;
 
         return Material(
           color: Colors.white.withOpacity(0.9),
@@ -370,10 +339,8 @@ class BusinessCard extends StatelessWidget {
                 isFavorite
                     ? Icons.favorite_rounded
                     : Icons.favorite_border_rounded,
-                color: isFavorite
-                    ? AppColors.primary
-                    : Colors.black87,
-                size: compact ? 16 : 17,
+                color: isFavorite ? AppColors.primary : Colors.black87,
+                size: compact ? 13 : 17,
               ),
             ),
           ),
@@ -383,7 +350,7 @@ class BusinessCard extends StatelessWidget {
   }
 
   // ==========================================================================
-  // CHIP
+  // PILL
   // ==========================================================================
 
   Widget _buildPill({
@@ -393,23 +360,20 @@ class BusinessCard extends StatelessWidget {
   }) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 7 : 10,
-        vertical: compact ? 4 : 6,
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 3 : 4,
       ),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(
-          AppRadius.full,
-        ),
+        borderRadius: BorderRadius.circular(AppRadius.full),
       ),
       child: Text(
         text,
         maxLines: 1,
-        overflow: TextOverflow.ellipsis,
         style: AppTextStyles.caption.copyWith(
           color: foregroundColor,
           fontWeight: FontWeight.w700,
-          fontSize: compact ? 9 : null,
+          fontSize: compact ? 9.5 : 10.5,
         ),
       ),
     );

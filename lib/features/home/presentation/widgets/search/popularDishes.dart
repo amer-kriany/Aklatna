@@ -3,8 +3,7 @@ import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-/// Bloc-blind.
-/// The parent provides the current quantity and handles cart actions.
+/// Bloc-blind card for popular dishes with responsive spacing.
 class PopularDishCard extends StatelessWidget {
   const PopularDishCard({
     super.key,
@@ -24,19 +23,12 @@ class PopularDishCard extends StatelessWidget {
   final double dishPrice;
 
   final GestureTapCallback onTap;
-
-  /// Current quantity of this item in the cart.
   final int quantity;
-
-  /// Called when + is pressed.
   final VoidCallback onAdd;
-
-  /// Called when - is pressed.
   final VoidCallback onRemove;
 
   bool get _hasValidImageUrl {
     final uri = Uri.tryParse(photoUrl.trim());
-
     return uri != null &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&
         uri.host.isNotEmpty;
@@ -56,112 +48,99 @@ class PopularDishCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // ================= IMAGE =================
+            // ================= IMAGE (USING ASPECT RATIO) =================
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              child: _hasValidImageUrl
-                  ? Image.network(
-                      photoUrl,
-                      height: 100,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      height: 100,
-                      width: double.infinity,
-                      color: AppColors.surface,
-                      alignment: Alignment.center,
-                      child: const Icon(
-                        Icons.fastfood,
-                        color: AppColors.textSecondary,
+              child: AspectRatio(
+                aspectRatio: 16 / 10,
+                child: _hasValidImageUrl
+                    ? Image.network(
+                        photoUrl,
+                        fit: BoxFit.cover,
+                      )
+                    : Container(
+                        color: AppColors.surface,
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.fastfood,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
+              ),
             ),
 
             const SizedBox(height: AppSpacing.xs),
 
             // ================= INFO =================
+            Text(
+              dishNameAr,
+              style: AppTextStyles.bodyLarge.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              businessNameAr,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+
+            const SizedBox(height: AppSpacing.xs),
+
+            // ================= PRICE & CART ACTION =================
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Dish name + restaurant
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        dishNameAr,
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w700,
+                // Price
+                Flexible(
+                  child: RichText(
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: dishPrice.toStringAsFixed(0),
+                          style: AppTextStyles.priceMedium.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        businessNameAr,
-                        style: AppTextStyles.bodySmall.copyWith(
-                          color: AppColors.textSecondary,
+                        TextSpan(
+                          text: ' ل.س',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
 
                 const SizedBox(width: AppSpacing.xs),
 
-                // Price
-                Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        // Price with Currency Label
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: dishPrice.toStringAsFixed(0),
-                                style: AppTextStyles.priceMedium.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 15,
-                                ),
-                              ),
-                              TextSpan(
-                                text: ' ل.س',
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
- ]
-
-                    )
+                // Controls
+                quantity == 0
+                    ? _AddButton(onPressed: onAdd)
+                    : _QuantityControl(
+                        quantity: quantity,
+                        onAdd: onAdd,
+                        onRemove: onRemove,
+                      ),
               ],
-            ),
-
-            const SizedBox(height: AppSpacing.xs),
-
-            // ================= CART CONTROL =================
-            Align(
-              alignment: Alignment.centerRight,
-              child: quantity == 0
-                  ? _AddButton(
-                      onPressed: onAdd,
-                    )
-                  : _QuantityControl(
-                      quantity: quantity,
-                      onAdd: onAdd,
-                      onRemove: onRemove,
-                    ),
             ),
           ],
         ),
@@ -170,14 +149,8 @@ class PopularDishCard extends StatelessWidget {
   }
 }
 
-// ============================================================
-// ADD BUTTON
-// ============================================================
-
 class _AddButton extends StatelessWidget {
-  const _AddButton({
-    required this.onPressed,
-  });
+  const _AddButton({required this.onPressed});
 
   final VoidCallback onPressed;
 
@@ -189,23 +162,18 @@ class _AddButton extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         borderRadius: BorderRadius.circular(AppRadius.full),
-        child: const SizedBox(
-          width: 34,
-          height: 34,
+        child: const Padding(
+          padding: EdgeInsets.all(6),
           child: Icon(
             Icons.add,
             color: AppColors.textOnPrimary,
-            size: 20,
+            size: 16,
           ),
         ),
       ),
     );
   }
 }
-
-// ============================================================
-// QUANTITY CONTROL
-// ============================================================
 
 class _QuantityControl extends StatelessWidget {
   const _QuantityControl({
@@ -220,51 +188,38 @@ class _QuantityControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Counter
-        Container(
-          height: 28,
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          decoration: BoxDecoration(
-            color: AppColors.primaryLight,
-            borderRadius: BorderRadius.circular(AppRadius.full),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _SmallButton(
+            icon: Icons.remove,
+            onPressed: onRemove,
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _SmallButton(
-                icon: Icons.remove,
-                onPressed: onRemove,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Text(
+              '$quantity',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w800,
               ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  '$quantity',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-
-              _SmallButton(
-                icon: Icons.add,
-                onPressed: onAdd,
-              ),
-            ],
+            ),
           ),
-        ),
-      ],
+          _SmallButton(
+            icon: Icons.add,
+            onPressed: onAdd,
+          ),
+        ],
+      ),
     );
   }
 }
-
-// ============================================================
-// SMALL + / - BUTTON
-// ============================================================
 
 class _SmallButton extends StatelessWidget {
   const _SmallButton({
@@ -280,12 +235,11 @@ class _SmallButton extends StatelessWidget {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(AppRadius.full),
-      child: SizedBox(
-        width: 24,
-        height: 24,
+      child: Padding(
+        padding: const EdgeInsets.all(2),
         child: Icon(
           icon,
-          size: 15,
+          size: 14,
           color: AppColors.primary,
         ),
       ),
