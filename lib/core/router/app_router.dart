@@ -8,6 +8,7 @@ import 'package:aklatna/features/addOnes/presentation/bloc/add_ones_bloc.dart';
 import 'package:aklatna/features/addresses/presentation/pages/AddressesPage.dart';
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:aklatna/features/auth/presentation/pages/SignInPage.dart';
+import 'package:aklatna/features/auth/presentation/pages/otpVereficationPage.dart';
 import 'package:aklatna/features/auth/presentation/pages/signUpPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/CheckoutPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/cart_page.dart';
@@ -172,6 +173,11 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+    GoRoute(
+  path: '/verify-otp',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) => OtpVerificationPage(email: state.extra as String),
+),
     GoRoute(
       path: '/checkout',
       parentNavigatorKey: MainShell.rootNavigatorKey,

@@ -66,18 +66,16 @@ class _SignUpPageState extends State<SignUpPage> {
         body: SafeArea(
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
+  if (state is AuthSignUpOtpSent) {
+    context.push('/verify-otp', extra: state.email);
+  }
   if (state is AuthAuthenticated) {
     context.go('/home');
   }
   if (state is AuthError) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(state.message),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.redAccent));
   }
 },
             child: LayoutBuilder(

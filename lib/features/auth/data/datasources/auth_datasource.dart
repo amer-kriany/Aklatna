@@ -5,37 +5,27 @@ class AuthDatasource {
   final supabase = Supabase.instance.client;
 
   // sign up
-  Future<AppuserModel?> signUp({
-    required String email,
-    required String password,
-    required String username,
-    required String phone,
-  }) async {
-    try {
-      final AuthResponse response;
-      response = await supabase.auth.signUp(password: password, email: email,
+  Future<bool> signUp({
+  required String email,
+  required String password,
+  required String username,
+  required String phone,
+}) async {
+  try {
+    final response = await supabase.auth.signUp(
+      password: password,
+      email: email,
       data: {
-    'username': username,
-    'phone_number': phone,
-    'role':"user"
-  },);
-
-      final user = response.user;
-
-      if (user != null) {
-       await Future.delayed(const Duration(milliseconds: 500));
-        final profileData = await supabase
-            .from("profiles")
-            .select()
-            .eq('id', user.id)
-            .single();
-        return AppuserModel.fromSupabase(user, profileData);
-      }
-      return null;
-    } catch (e) {
-      rethrow;
-    }
+        'username': username,
+        'phone_number': phone,
+        'role': "user",
+      },
+    );
+    return response.user != null;
+  } catch (e) {
+    rethrow;
   }
+}
 
  Future<AppuserModel?> signIn(
   String? email,
@@ -108,4 +98,73 @@ class AuthDatasource {
       rethrow;
     }
   }
+  Future<void> resendSignUpOtp(String email) async {
+  try {
+    await supabase.auth.resend(type: OtpType.signup, email: email);
+  } catch (e) {
+    rethrow;
+  }
+}
+Future<AppuserModel?> verifySignUpOtp(String email, String token) async {
+  try {
+    final response = await supabase.auth.verifyOTP(
+      type: OtpType.signup,
+      email: email,
+      token: token,
+    );
+
+    final user = response.user;
+    if (user != null) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      final profileData = await supabase
+          .from("profiles")
+          .select()
+          .eq('id', user.id)
+          .single();
+      return AppuserModel.fromSupabase(user, profileData);
+    }
+    return null;
+  } catch (e) {
+    rethrow;
+  }
+}
+Future<void> requestPasswordReset(String email) async {
+  try {
+    await supabase.auth.resetPasswordForEmail(email);
+  } catch (e) {
+    rethrow;
+  }
+}
+Future<AppuserModel?> verifyRecoveryOtp(String email, String token) async {
+  try {
+    final response = await supabase.auth.verifyOTP(
+      type: OtpType.recovery,
+      email: email,
+      token: token,
+    );
+
+    final user = response.user;
+    if (user != null) {
+      final profileData = await supabase
+          .from("profiles")
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+      if (profileData != null) {
+        return AppuserModel.fromSupabase(user, profileData);
+      }
+    }
+    return null;
+  } catch (e) {
+    rethrow;
+  }
+}
+
+Future<void> updatePassword(String newPassword) async {
+  try {
+    await supabase.auth.updateUser(UserAttributes(password: newPassword));
+  } catch (e) {
+    rethrow;
+  }
+}
 }

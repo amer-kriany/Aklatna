@@ -8,25 +8,25 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.datasource});
 
   @override
-  Future<AppuserEntity> signUp({
-   required String email,
-   required  String password,
-   required  String username,
-    required String phone,
-  }) async {
-    final formattedPhone =  phone.startsWith('+')?phone:
-    phone.startsWith('0')
-        ? '+963${phone.substring(1)}'
-        : '+963$phone';
-    final user = await datasource.signUp(
-      email: email,
-      password: password,
-      username: username,
-      phone: formattedPhone,
-    );
-    if (user == null) throw Exception("Failed to sign up");
-    return mapToEntity(user);
-  }
+Future<bool> signUp({
+  required String email,
+  required String password,
+  required String username,
+  required String phone,
+}) async {
+  final formattedPhone = phone.startsWith('+')
+      ? phone
+      : phone.startsWith('0')
+          ? '+963${phone.substring(1)}'
+          : '+963$phone';
+
+  return datasource.signUp(
+    email: email,
+    password: password,
+    username: username,
+    phone: formattedPhone,
+  );
+}
 
   @override
   Future<AppuserEntity> signIn(
@@ -61,6 +61,33 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> signOut() {
     return datasource.signOut();
   }
+  @override
+Future<AppuserEntity> verifySignUpOtp(String email, String token) async {
+  final user = await datasource.verifySignUpOtp(email, token);
+  if (user == null) throw Exception("فشل التحقق من الرمز");
+  return mapToEntity(user);
+}
+
+@override
+Future<void> resendSignUpOtp(String email) {
+  return datasource.resendSignUpOtp(email);
+}
+
+@override
+Future<void> requestPasswordReset(String email) {
+  return datasource.requestPasswordReset(email);
+}@override
+Future<AppuserEntity?> verifyRecoveryOtp(String email, String token) async {
+  final user = await datasource.verifyRecoveryOtp(email, token);
+  if (user == null) return null;
+  return mapToEntity(user);
+}
+
+@override
+Future<void> updatePassword(String newPassword) {
+  return datasource.updatePassword(newPassword);
+}
+
 
   mapToEntity(AppuserModel model) {
     return AppuserEntity(
