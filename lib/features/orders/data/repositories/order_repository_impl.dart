@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:aklatna/features/orders/data/datasources/order_remote_datasource.dart';
 import 'package:aklatna/features/orders/data/models/order_model.dart';
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
@@ -45,8 +43,9 @@ OrderEntity mapToEntity(OrderModel order) {
     businessLogo: order.businessLogo,
     businessName: order.businessName,
     deliveryAddress: order.deliveryAddress,
-    estimatedPreparationTime: order.estimatedPreparationTime
-
+    // Comes directly from the DB row now (order.estimated_preparation_time,
+    // set by the restaurant per-order), not looked up from BusinessEntity.
+    estimatedPreparationTime: order.estimatedPreparationTime,
   );
 }
 
@@ -68,6 +67,6 @@ OrderModel entityToModel(OrderEntity entity) {
     businessLogo: entity.businessLogo,
     businessName: entity.businessName,
     deliveryAddress: entity.deliveryAddress,
-    
+    estimatedPreparationTime: entity.estimatedPreparationTime,
   );
 }

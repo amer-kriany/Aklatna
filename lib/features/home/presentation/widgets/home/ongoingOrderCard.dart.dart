@@ -17,11 +17,6 @@ class OngoingOrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-   print(
-  'CARD -> status=${order.orderStatus}, '
-  'estimated=${order.estimatedPreparationTime}',
-
-);
     final estimatedTime = order.estimatedPreparationTime;
 
     return InkWell(
@@ -93,10 +88,10 @@ class OngoingOrderCard extends StatelessWidget {
               ],
             ),
 
-            // Estimated preparation time
-            if (order.orderStatus == OrderStatus.preparing &&
-    estimatedTime != null &&
-    estimatedTime > 0) ...[
+            // Predicted ready clock time
+            if (order.orderStatus == OrderStatus.preparing ||order.orderStatus == OrderStatus.ready &&
+                estimatedTime != null &&
+                estimatedTime > 0) ...[
               const SizedBox(height: AppSpacing.md),
 
               Container(
@@ -111,30 +106,31 @@ class OngoingOrderCard extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
+                    Text(
+                      _formatReadyTime(estimatedTime!),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    Text(
+                      'الوقت المتوقع',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+
+                    const SizedBox(width: AppSpacing.xs),
+
                     const Icon(
                       Icons.schedule_rounded,
                       size: 19,
                       color: AppColors.primary,
                     ),
-
-                    const SizedBox(width: AppSpacing.xs),
-
-                    Text(
-  'مدة التحضير المتوقعة',
-  style: AppTextStyles.bodySmall.copyWith(
-    color: AppColors.textSecondary,
-  ),
-),
-
-                    const Spacer(),
-
-                   Text(
-  _formatPreparationTime(estimatedTime),
-  style: AppTextStyles.bodySmall.copyWith(
-    color: AppColors.primary,
-    fontWeight: FontWeight.w700,
-  ),
-),
                   ],
                 ),
               ),
@@ -145,19 +141,25 @@ class OngoingOrderCard extends StatelessWidget {
     );
   }
 
-  String _formatPreparationTime(int minutes) {
-    if (minutes < 60) {
-      return '$minutes دقيقة';
-    }
+  // ============================================================
+  // PREDICTED READY CLOCK TIME
+  // ============================================================
+  //
+  // now + estimatedPreparationTime (minutes), formatted as HH:mm.
+  //
+  // LIMITATION: computed from the CURRENT moment each time this
+  // widget rebuilds, not anchored to when "preparing" actually
+  // started. If the customer reopens the app later, this will
+  // shift forward rather than count down to a fixed clock time.
+  // ============================================================
 
-    final hours = minutes ~/ 60;
-    final remainingMinutes = minutes % 60;
+  String _formatReadyTime(int minutes) {
+    final readyTime = DateTime.now().add(Duration(minutes: minutes));
 
-    if (remainingMinutes == 0) {
-      return '$hours ساعة';
-    }
+    final hour = readyTime.hour.toString().padLeft(2, '0');
+    final minute = readyTime.minute.toString().padLeft(2, '0');
 
-    return '$hours ساعة و$remainingMinutes دقيقة';
+    return '$hour:$minute';
   }
 
   String _statusText(OrderStatus status) {

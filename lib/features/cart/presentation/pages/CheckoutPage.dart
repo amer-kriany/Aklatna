@@ -34,6 +34,57 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String selectedOrderType = 'طلب عادي';
   DateTime? _scheduledFor;
   final TextEditingController _notesController = TextEditingController();
+  bool _blockIfRestaurantNowClosed(BuildContext context, String businessId) {
+    final businessState = context.read<BusinessBloc>().state;
+
+    if (businessState is! BusinessFetched) return false;
+
+    for (final business in businessState.businesses) {
+      if (business.id == businessId) {
+        if (!business.isOpen) {
+          showDialog(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              title: Text(
+                'المطعم مغلق الآن',
+                style: AppTextStyles.h4,
+                textAlign: TextAlign.center,
+              ),
+              content: Text(
+                'المطعم مغلق. لا يمكن إتمام الطلب حالياً',
+                style: AppTextStyles.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(
+                    'حسناً',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+          return true;
+        }
+        break;
+      }
+    }
+    return false;
+  }
 
   @override
   void dispose() {
@@ -133,6 +184,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       ).showSnackBar(const SnackBar(content: Text('اختر وقت الجدولة أولاً')));
       return;
     }
+    if (_blockIfRestaurantNowClosed(context, cartState.businessId!)) {
+      return;
+    }
 
     final profile = profileState.profile;
 
@@ -154,8 +208,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       customername: profile.userName,
       customerPhone: profile.phoneNumber,
       items: cartState.items,
-      deliveryAddress:
-          selectedDeliveryOption == 'توصيل' ? profile.address : null,
+      deliveryAddress: selectedDeliveryOption == 'توصيل'
+          ? profile.address
+          : null,
       totalPrice: totalPrice,
       orderType: selectedDeliveryOption == 'توصيل'
           ? OrderType.delivery

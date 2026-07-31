@@ -1,6 +1,10 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
-import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
+import 'package:aklatna/core/utils/delivery_price_utils.dart';
+import 'package:aklatna/core/utils/distance_utils.dart';
+import 'package:aklatna/features/addresses/domain/entity/addressEntity.dart';
+import 'package:aklatna/features/addresses/presentation/bloc/address_bloc.dart';
+import 'package:aklatna/features/home/presentation/pages/PeriodicRebuildMixin.dart';
 
 import 'package:aklatna/features/home/presentation/widgets/home/AddressSelectionBottomSheet.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/BusinessCard.dart';
@@ -9,14 +13,14 @@ import 'package:aklatna/features/home/presentation/widgets/home/HomeGreeting.dar
 import 'package:aklatna/features/home/presentation/widgets/home/HomeSearchBar.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SectionHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SponseredBanner.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/ongoingOrderCard.dart.dart';
+
 import 'package:aklatna/features/orders/presentation/pages/orderDetailsPage.dart';
-import 'package:aklatna/features/orders/presentation/widgets/orderStatusHelper.dart';
+import 'package:aklatna/features/orders/orderStatus.dart';
+import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 
 import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
 import 'package:aklatna/features/promotions/presentaion/widgets/promotionCard.dart';
-
-import 'package:aklatna/features/orders/orderStatus.dart';
-import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,6 +29,7 @@ import 'package:go_router/go_router.dart';
 import '../../business_type.dart';
 import '../../domain/entity/businessEntity.dart';
 import '../bloc/business_bloc.dart';
+
 import '../../../profile/presentaion/bloc/profile_bloc.dart';
 
 class HomePage extends StatefulWidget {
@@ -34,7 +39,7 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
   static const double _recommendedTileWidth = 160;
   static const double _recommendedRowHeight = 220;
 
@@ -45,7 +50,21 @@ class _HomePageState extends State<HomePage> {
     context.read<BusinessBloc>().add(GetBusinesses());
     context.read<ProfileBloc>().add(GetProfilesEvent());
     context.read<PromotionsBloc>().add(LoadPromotionsEvent());
+
+   
+
+    startPeriodicRebuild();
   }
+
+  @override
+  void dispose() {
+    stopPeriodicRebuild();
+    super.dispose();
+  }
+
+  // ============================================================
+  // ADDRESS
+  // ============================================================
 
   String _formatAddress(String? fullAddress) {
     if (fullAddress == null || fullAddress.trim().isEmpty) {
@@ -65,6 +84,10 @@ class _HomePageState extends State<HomePage> {
     return fullAddress;
   }
 
+  // ============================================================
+  // BUSINESS TYPE
+  // ============================================================
+
   String _typeLabel(BusinessType type) {
     switch (type) {
       case BusinessType.restaurant:
@@ -74,6 +97,10 @@ class _HomePageState extends State<HomePage> {
         return 'محل عصائر';
     }
   }
+
+  // ============================================================
+  // ADDRESS BOTTOM SHEET
+  // ============================================================
 
   void _showAddressBottomSheet(BuildContext context, String userId) async {
     await showModalBottomSheet(
@@ -87,22 +114,67 @@ class _HomePageState extends State<HomePage> {
       },
     );
 
-    if (mounted) {
-      context.read<ProfileBloc>().add(GetProfilesEvent());
+    if (!mounted) {
+      return;
     }
+
+    context.read<ProfileBloc>().add(GetProfilesEvent());
   }
+
+  // ============================================================
+  // DELIVERY FEE
+  // ============================================================
+
+  String _deliveryFeeText(BuildContext context, BusinessEntity business) {
+    final addressState = context.watch<AddressBloc>().state;
+
+    if (addressState is! AddressLoaded) return 'غير متوفر';
+
+    AddressEntity? defaultAddress;
+    for (final address in addressState.addresses) {
+      if (address.isDefault) {
+        defaultAddress = address;
+        break;
+      }
+    }
+
+    if (defaultAddress == null) return 'غير متوفر';
+
+    final distanceKm = DistanceUtils.calculateDistanceKm(
+      customerLatitude: defaultAddress.latitude,
+      customerLongitude: defaultAddress.longitude,
+      restaurantLatitude: business.latitude,
+      restaurantLongitude: business.longitude,
+    );
+
+    final price = DeliveryPriceUtils.calculateDeliveryPrice(distanceKm);
+    return DeliveryPriceUtils.formatDeliveryPrice(price);
+  }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+
       body: SafeArea(
         child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, profileState) {
+            // ========================================================
+            // PROFILE LOADING
+            // ========================================================
+
             if (profileState is ProfileLoading ||
                 profileState is ProfileInitial) {
               return const Center(child: CircularProgressIndicator());
             }
+
+            // ========================================================
+            // PROFILE ERROR
+            // ========================================================
 
             if (profileState is ProfileError ||
                 profileState is! ProfileLoaded) {
@@ -115,20 +187,24 @@ class _HomePageState extends State<HomePage> {
                       size: 64,
                       color: Colors.orange,
                     ),
+
                     const SizedBox(height: 16),
+
                     const Text(
-                      "Profile not found",
+                      'Profile not found',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     const SizedBox(height: 8),
+
                     TextButton(
                       onPressed: () {
                         context.read<ProfileBloc>().add(GetProfilesEvent());
                       },
-                      child: const Text("Retry"),
+                      child: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -137,22 +213,59 @@ class _HomePageState extends State<HomePage> {
 
             final profile = profileState.profile;
 
-            // Make sure orders are loaded for the homepage.
+            // ========================================================
+            // ORDERS
+            // ========================================================
+
             final orderBloc = context.read<OrderBloc>();
 
             if (orderBloc.state is OrderInitial) {
               orderBloc.add(GetCustomerOrdersEvent(customerId: profile.id));
             }
 
+            // ========================================================
+            // ADDRESSES
+            // ========================================================
+            //
+            // BUGFIX: delivery fee display depends on AddressBloc, but
+            // nothing on Home was ever triggering its initial load —
+            // only CartPage/AddressesPage did. That's why delivery fee
+            // showed "غير متوفر" on first launch until the customer
+            // visited Cart at least once. Same guard pattern as the
+            // OrderBloc check right above.
+            // ========================================================
+
+            if (context.read<AddressBloc>().state is AddressInitial) {
+              context.read<AddressBloc>().add(
+                    LoadAddressesEvent(userId: profile.id),
+                  );
+            }
+
+            // ========================================================
+            // BUSINESSES
+            // ========================================================
+
             return BlocBuilder<BusinessBloc, BusinessState>(
               builder: (context, businessState) {
+                // ====================================================
+                // BUSINESS LOADING
+                // ====================================================
+
                 if (businessState is BusinessLoading) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
+                // ====================================================
+                // BUSINESS ERROR
+                // ====================================================
+
                 if (businessState is BusinessError) {
                   return Center(child: Text(businessState.message));
                 }
+
+                // ====================================================
+                // BUSINESS LIST
+                // ====================================================
 
                 List<BusinessEntity> businesses = <BusinessEntity>[];
 
@@ -160,13 +273,41 @@ class _HomePageState extends State<HomePage> {
                   businesses = businessState.businesses;
                 }
 
+                // ====================================================
+                // SORT BY RATING
+                // ====================================================
+
                 final sorted = [...businesses]
                   ..sort((a, b) => b.rating.compareTo(a.rating));
+
+                // ====================================================
+                // TOP RATED
+                // ====================================================
 
                 final topRatedBusinesses = sorted
                     .where((b) => b.rating > 4.5)
                     .toList();
 
+                // ====================================================
+                // OPEN NOW
+                // ====================================================
+                //
+                // THIS IS THE IMPORTANT PART.
+                //
+                // Every second HomePage rebuilds (via PeriodicRebuildMixin).
+                //
+                // Every rebuild:
+                //
+                // b.isOpen
+                //
+                // is evaluated again.
+                //
+                // So when closing_time is reached:
+                //
+                // b.isOpen == false
+                //
+                // and the restaurant automatically disappears.
+                //
                 final openNowCandidates = sorted
                     .where(
                       (b) =>
@@ -177,36 +318,48 @@ class _HomePageState extends State<HomePage> {
 
                 const String? sponsoredBannerImageUrl = null;
 
+                // ====================================================
+                // PAGE
+                // ====================================================
+
                 return SingleChildScrollView(
                   padding: EdgeInsets.zero,
+
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+
                     children: [
-                      // =====================================================
+                      // ==================================================
                       // HEADER
-                      // =====================================================
+                      // ==================================================
                       Container(
                         decoration: const BoxDecoration(
                           color: AppColors.surface,
+
                           borderRadius: BorderRadius.only(
                             bottomLeft: Radius.circular(AppRadius.xl),
                             bottomRight: Radius.circular(AppRadius.xl),
                           ),
                         ),
+
                         padding: const EdgeInsets.fromLTRB(
                           AppSpacing.pageHorizontal,
                           AppSpacing.md,
                           AppSpacing.pageHorizontal,
                           AppSpacing.lg,
                         ),
+
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+
                           children: [
                             HomeDeliveryHeader(
                               addressLabel: _formatAddress(profile.address),
+
                               avatarUrl: profile.photo,
+
                               onAvatarTap: () async {
-                                await context.push("/profile");
+                                await context.push('/profile');
 
                                 if (context.mounted) {
                                   context.read<ProfileBloc>().add(
@@ -214,6 +367,7 @@ class _HomePageState extends State<HomePage> {
                                   );
                                 }
                               },
+
                               onAddressTap: () =>
                                   _showAddressBottomSheet(context, profile.id),
                             ),
@@ -225,16 +379,16 @@ class _HomePageState extends State<HomePage> {
                             const SizedBox(height: AppSpacing.md),
 
                             HomeSearchBar(
-                              onTap: () => context.go("/search"),
+                              onTap: () => context.go('/search'),
                               onMicTap: null,
                             ),
                           ],
                         ),
                       ),
 
-                      // =====================================================
+                      // ==================================================
                       // ONGOING ORDER
-                      // =====================================================
+                      // ==================================================
                       BlocBuilder<OrderBloc, OrderState>(
                         builder: (context, orderState) {
                           if (orderState is! CustomerOrdersFetched) {
@@ -262,8 +416,10 @@ class _HomePageState extends State<HomePage> {
                               AppSpacing.pageHorizontal,
                               0,
                             ),
-                            child: _OngoingOrderCard(
+
+                            child: OngoingOrderCard(
                               order: order,
+
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -280,25 +436,28 @@ class _HomePageState extends State<HomePage> {
 
                       const SizedBox(height: AppSpacing.xl),
 
-                      // =====================================================
-                      // SPONSORED BANNER
-                      // =====================================================
+                      // ==================================================
+                      // SPONSORED
+                      // ==================================================
                       if (sponsoredBannerImageUrl != null) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
+
                           child: SponsoredBanner(
                             imageUrl: sponsoredBannerImageUrl,
+
                             onTap: () {},
                           ),
                         ),
+
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
-                      // =====================================================
+                      // ==================================================
                       // PROMOTIONS
-                      // =====================================================
+                      // ==================================================
                       BlocBuilder<PromotionsBloc, PromotionsState>(
                         builder: (context, promoState) {
                           if (promoState is PromotionsLoading) {
@@ -333,10 +492,12 @@ class _HomePageState extends State<HomePage> {
 
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
+
                                 padding: const EdgeInsets.only(
                                   left: AppSpacing.pageHorizontal,
                                   right: AppSpacing.sm,
                                 ),
+
                                 child: Row(
                                   children: [
                                     for (
@@ -351,21 +512,22 @@ class _HomePageState extends State<HomePage> {
                                         businessName: promoState
                                             .promotions[i]
                                             .businessName,
+
                                         coverUrl:
                                             promoState.promotions[i].photoUrl,
+
                                         itemName:
                                             promoState.promotions[i].itemName,
+
                                         discountPercentage: promoState
                                             .promotions[i]
                                             .discountPercentage,
 
-                                        // num? -> double?
                                         oldPrice: promoState
                                             .promotions[i]
                                             .oldPrice
                                             ?.toDouble(),
 
-                                        // num? -> double?
                                         newPrice: promoState
                                             .promotions[i]
                                             .newPrice
@@ -373,7 +535,7 @@ class _HomePageState extends State<HomePage> {
 
                                         onTap: () {
                                           context.push(
-                                            "/business/${promoState.promotions[i].businessId}",
+                                            '/business/${promoState.promotions[i].businessId}',
                                           );
                                         },
                                       ),
@@ -388,9 +550,9 @@ class _HomePageState extends State<HomePage> {
                         },
                       ),
 
-                      // =====================================================
+                      // ==================================================
                       // TOP RATED
-                      // =====================================================
+                      // ==================================================
                       if (topRatedBusinesses.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(
@@ -403,36 +565,52 @@ class _HomePageState extends State<HomePage> {
 
                         SizedBox(
                           height: _recommendedRowHeight,
+
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
+
                             padding: const EdgeInsets.only(
                               left: AppSpacing.pageHorizontal,
                               right: AppSpacing.sm,
                             ),
+
                             itemCount: topRatedBusinesses.length,
+
                             separatorBuilder: (_, __) =>
                                 const SizedBox(width: AppSpacing.sm),
+
                             itemBuilder: (context, index) {
                               final business = topRatedBusinesses[index];
 
                               return BusinessCard(
                                 businessId: business.id,
+
                                 width: _recommendedTileWidth,
-                                height:
-                                    175, // Adjust slightly from 150 to fit title + pills
+
+                                height: 175,
+
                                 compact: true,
+
                                 businessName: business.nameAr,
+
                                 subtitle:
                                     '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
+
                                 coverUrl: business.coverUrl,
+
                                 rating: business.rating,
+
                                 ratingCount: business.ratingCount,
+
                                 statusText: business.isOpen
                                     ? 'مفتوح الآن'
                                     : 'مغلق الآن',
-                                deliveryFeeText: 'توصيل 5,000',
+
+                                deliveryFeeText:
+                                    _deliveryFeeText(context, business),
+
                                 onTap: () =>
-                                    context.push("/business/${business.id}"),
+                                    context.push('/business/${business.id}'),
                               );
                             },
                           ),
@@ -441,9 +619,9 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
-                      // =====================================================
+                      // ==================================================
                       // OPEN NOW
-                      // =====================================================
+                      // ==================================================
                       if (openNowCandidates.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(
@@ -456,33 +634,48 @@ class _HomePageState extends State<HomePage> {
 
                         ListView.separated(
                           shrinkWrap: true,
+
                           physics: const NeverScrollableScrollPhysics(),
+
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
+
                           itemCount: openNowCandidates.length,
+
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: AppSpacing.md),
+
                           itemBuilder: (context, index) {
                             final business = openNowCandidates[index];
 
                             return BusinessCard(
                               businessId: business.id,
-                              // width can be left null to take double.infinity, or set explicitly
-                              height: 250, // Standard vertical card height
-                              compact: false, // Default
+
+                              height: 250,
+
+                              compact: false,
+
                               businessName: business.nameAr,
+
                               subtitle:
                                   '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
+
                               coverUrl: business.coverUrl,
+
                               rating: business.rating,
+
                               ratingCount: business.ratingCount,
+
                               statusText: business.isOpen
                                   ? 'مفتوح الآن'
                                   : 'مغلق الآن',
-                              deliveryFeeText: 'توصيل 5,000',
+
+                              deliveryFeeText:
+                                  _deliveryFeeText(context, business),
+
                               onTap: () =>
-                                  context.push("/business/${business.id}"),
+                                  context.push('/business/${business.id}'),
                             );
                           },
                         ),
@@ -495,154 +688,6 @@ class _HomePageState extends State<HomePage> {
               },
             );
           },
-        ),
-      ),
-    );
-  }
-}
-
-// ===========================================================================
-// ONGOING ORDER CARD
-// ===========================================================================
-
-class _OngoingOrderCard extends StatelessWidget {
-  const _OngoingOrderCard({required this.order, required this.onTap});
-
-  final dynamic order;
-  final VoidCallback onTap;
-
-  String _statusText(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return 'بانتظار المطعم';
-
-      case OrderStatus.preparing:
-        return 'جاري تحضير طلبك';
-
-      case OrderStatus.ready:
-        return 'طلبك جاهز';
-
-      case OrderStatus.completed:
-        return 'تم إكمال الطلب';
-
-      case OrderStatus.cancelled:
-        return 'تم إلغاء الطلب';
-    }
-  }
-
-  IconData _statusIcon(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return Icons.access_time_rounded;
-
-      case OrderStatus.preparing:
-        return Icons.restaurant_rounded;
-
-      case OrderStatus.ready:
-        return Icons.inventory_2_outlined;
-
-      case OrderStatus.completed:
-        return Icons.check_circle_rounded;
-
-      case OrderStatus.cancelled:
-        return Icons.cancel_outlined;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final status = order.orderStatus;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(AppSpacing.md),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: AppColors.primary.withOpacity(0.18)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow,
-                blurRadius: 12,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Status icon
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-                child: Icon(
-                  _statusIcon(status),
-                  color: AppColors.primary,
-                  size: 25,
-                ),
-              ),
-
-              const SizedBox(width: AppSpacing.md),
-
-              // Text
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'طلبك الجاري',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-
-                    const SizedBox(height: 3),
-
-                    Text(
-                      _statusText(status),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-
-                    if (order.businessName != null &&
-                        order.businessName.toString().isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        order.businessName.toString(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: AppSpacing.sm),
-
-              // Arrow
-              const Icon(
-                Icons.chevron_left_rounded,
-                color: AppColors.textSecondary,
-              ),
-            ],
-          ),
         ),
       ),
     );

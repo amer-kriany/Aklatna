@@ -9,6 +9,7 @@ import 'package:aklatna/features/menu/presentation/widgets/FoodDetailsImage.dart
 import 'package:aklatna/features/menu/presentation/widgets/FoodDetailsInfo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
@@ -96,18 +97,79 @@ class _FoodetailspageState extends State<Foodetailspage> {
                             child: SingleChildScrollView(
                               child: Column(
                                 children: [
-                                  FoodDetailsImage(
-                                    imageUrl: state.item.photoUrl,
-                                    onBack: () => Navigator.pop(context),
-                                    onFavorite: () {},
-                                    isFavorite: false,
-                                  ),
-                                  const SizedBox(height: AppSpacing.lg),
-                                  FoodDetailsInfo(
-                                    title: state.item.nameAr,
-                                    category: state.category.nameAr,
-                                    description: state.item.description ?? '',
-                                  ),
+                                 FoodDetailsImage(
+  imageUrl: state.item.photoUrl,
+  onBack: () => Navigator.pop(context),
+  onFavorite: () {},
+  isFavorite: false,
+),
+
+// ============================================================
+// VIEW RESTAURANT BUTTON
+// ============================================================
+//
+// Lets the customer navigate back to the business page from a food
+// item reached via Search's popular dishes / category grid, where
+// they'd otherwise have no way to know which restaurant this item
+// belongs to.
+// ============================================================
+
+if (business != null)
+  Padding(
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.lg,
+      vertical: AppSpacing.sm,
+    ),
+    child: InkWell(
+      onTap: () => context.push('/business/${business.id}'),
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: business.logoUrl != null && business.logoUrl!.isNotEmpty
+                  ? Image.network(business.logoUrl!, fit: BoxFit.cover)
+                  : Icon(Icons.restaurant_rounded, size: 18, color: AppColors.primary),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                business.nameAr,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ),
+            const Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary),
+          ],
+        ),
+      ),
+    ),
+  ),
+
+const SizedBox(height: AppSpacing.lg),
+
+FoodDetailsInfo(
+  title: state.item.nameAr,
+  category: state.category.nameAr,
+  description: state.item.description ?? '',
+),
                                   if (addonState is AddonLoading)
                                     const Padding(
                                       padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
