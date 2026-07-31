@@ -1,3 +1,4 @@
+import 'package:aklatna/core/errors/authErrorMapper.dart';
 import 'package:aklatna/features/auth/domain/entities/appuser_entity.dart';
 import 'package:aklatna/features/auth/domain/usecases/currentuser_usecase.dart';
 import 'package:aklatna/features/auth/domain/usecases/signin_usecase.dart';
@@ -26,6 +27,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignOutEvent>(_signOut);
     on<GetCurrentUserEvent>(_getCurrentUser);
   }
+
   // sign up
   Future<void> _signUp(
     SignUpEvent event,
@@ -41,7 +43,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(AuthAuthenticated(user: user));
     } catch (e) {
-      emit(AuthError(message: e.toString()));
+      emit(AuthError(message: AuthErrorMapper.map(e)));
     }
   }
 
@@ -50,24 +52,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     SignInEvent event,
     Emitter<AuthState> emit,
   ) async {
-    try{
+    try {
       emit(AuthLoading());
-    final user = await signInUsecase(event.email, event.password, event.phone);
-    emit(AuthAuthenticated(user: user));
-    }catch(e){
-      emit(AuthError(message: e.toString()));
+      final user = await signInUsecase(event.email, event.password, event.phone);
+      emit(AuthAuthenticated(user: user));
+    } catch (e) {
+      emit(AuthError(message: AuthErrorMapper.map(e)));
     }
-    
   }
 
   // sign out
   Future<void> _signOut(SignOutEvent event, Emitter<AuthState> emit) async {
-    try{
+    try {
       emit(AuthLoading());
-    await signOutUsecase();
-    emit(AuthUnauthenticated());
-    }catch(e){
-      emit(AuthError(message: e.toString()));
+      await signOutUsecase();
+      emit(AuthUnauthenticated());
+    } catch (e) {
+      emit(AuthError(message: AuthErrorMapper.map(e)));
     }
   }
 
@@ -76,12 +77,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     GetCurrentUserEvent event,
     Emitter<AuthState> emit,
   ) async {
-    try{
+    try {
       emit(AuthLoading());
-    final user =  await currentUserUsecase();
-     emit(AuthAuthenticated(user: user));
-    }catch(e){
-      emit(AuthError(message: e.toString()));
+      final user = await currentUserUsecase();
+      emit(AuthAuthenticated(user: user));
+    } catch (e) {
+      // "No user found" is thrown by our own repository whenever
+      // there's simply no logged-in session yet — completely normal
+      // at cold start for a logged-out user, not a real error. Showing
+      // an error snackbar for this would scare every first-time user
+      // the moment they open the app.
+      if (e.toString().contains('No user found')) {
+        emit(AuthUnauthenticated());
+        return;
       }
+
+      emit(AuthError(message: AuthErrorMapper.map(e)));
+    }
   }
 }

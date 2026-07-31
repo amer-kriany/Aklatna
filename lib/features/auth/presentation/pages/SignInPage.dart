@@ -47,18 +47,20 @@ class _SignInPageState extends State<SignInPage> {
         body: SafeArea(
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
-              if (state is AuthAuthenticated) {
-                context.go('/home');
-              }
-              if (state is AuthError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: Colors.redAccent,
-                  ),
-                );
-              }
-            },
+  if (state is AuthAuthenticated) {
+    context.go('/home');
+  }
+  if (state is AuthError) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(state.message),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+  }
+},
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(

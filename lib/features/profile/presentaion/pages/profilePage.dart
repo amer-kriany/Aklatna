@@ -13,6 +13,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -22,6 +23,23 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  Future<void> _contactSupport() async {
+  final Uri emailUri = Uri(
+    scheme: 'mailto',
+    path: 'amer.kriany0@gmail.com', // <- put your real support email here
+    queryParameters: {
+      'subject': 'مشكلة في تطبيق أكلاتنا',
+    },
+  );
+
+  final launched = await launchUrl(emailUri);
+
+  if (!launched && mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('لا يوجد تطبيق بريد إلكتروني مثبت')),
+    );
+  }
+}
   @override
   void initState() {
     super.initState();
@@ -225,6 +243,12 @@ class _ProfilePageState extends State<ProfilePage> {
                             label: 'المفضلة',
                             onTap: () => context.push('/favorites'),
                           ),
+                          ProfileMenuRow(
+  icon: Icons.support_agent_outlined,
+  iconColor: AppColors.info,
+  label: 'تواصل معنا',
+  onTap: _contactSupport,
+),
                           ProfileMenuRow(
                             icon: Icons.logout,
                             iconColor: AppColors.error,
