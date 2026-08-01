@@ -123,6 +123,13 @@ class _SignInPageState extends State<SignInPage> {
                                   ),
                                 ),
                               ),
+                              Align(
+  alignment: Alignment.centerLeft,
+  child: TextButton(
+    onPressed: () => context.push('/forgot-password'),
+    child: Text('نسيت كلمة المرور؟', style: TextStyle(color: AppColors.primary)),
+  ),
+),
                               const SizedBox(height: AppSpacing.xxl),
 
                               // Login Action Button

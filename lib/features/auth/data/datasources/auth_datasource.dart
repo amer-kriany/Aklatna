@@ -26,6 +26,16 @@ class AuthDatasource {
     rethrow;
   }
 }
+Future<void> requestPasswordReset(String email) async {
+  try {
+    await supabase.auth.resetPasswordForEmail(
+      email,
+      redirectTo: 'https://amer-kriany.github.io/aklatna_confirm/password_reset',
+    );
+  } catch (e) {
+    rethrow;
+  }
+}
 
  Future<AppuserModel?> signIn(
   String? email,
@@ -128,13 +138,7 @@ Future<AppuserModel?> verifySignUpOtp(String email, String token) async {
     rethrow;
   }
 }
-Future<void> requestPasswordReset(String email) async {
-  try {
-    await supabase.auth.resetPasswordForEmail(email);
-  } catch (e) {
-    rethrow;
-  }
-}
+
 Future<AppuserModel?> verifyRecoveryOtp(String email, String token) async {
   try {
     final response = await supabase.auth.verifyOTP(

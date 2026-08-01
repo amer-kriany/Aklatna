@@ -8,6 +8,7 @@ import 'package:aklatna/features/addresses/presentation/pages/AddressesPage.dart
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:aklatna/features/auth/presentation/pages/SignInPage.dart';
 import 'package:aklatna/features/auth/presentation/pages/checkEmailPage.dart';
+import 'package:aklatna/features/auth/presentation/pages/forgotPasswordPage.dart';
 import 'package:aklatna/features/auth/presentation/pages/otpVereficationPage.dart';
 import 'package:aklatna/features/auth/presentation/pages/signUpPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/CheckoutPage.dart';
@@ -219,6 +220,11 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: MainShell.rootNavigatorKey,
       builder: (context, state) => const FavoritesPage(),
     ),
+    GoRoute(
+  path: '/forgot-password',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) => const ForgotPasswordPage(),
+),
     GoRoute(
       path: '/profile',
       parentNavigatorKey: MainShell.rootNavigatorKey,
