@@ -50,6 +50,7 @@ class AppAssets {
   // Images
   // ---------------------------------------------------------------------
   static const String logo = '$_images/logo.png';
+  static const String appIcon = '$_images/app_icon.png';
   static const String logoWhite = '$_images/logo_white.png';
   static const String placeholderBusiness = '$_images/placeholder_business.png';
   static const String placeholderFood = '$_images/placeholder_food.png';

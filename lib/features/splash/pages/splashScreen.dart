@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:aklatna/core/constants/app_assets.dart';
 import 'package:aklatna/core/services/onboarding_service.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
@@ -198,7 +199,7 @@ class _SplashScreenState extends State<SplashScreen>
                           ],
                         ),
                         child: Image.asset(
-                          'assets/images/logo.png',
+                          AppAssets.logo,
                           fit: BoxFit.contain,
                           filterQuality: FilterQuality.high,
                           errorBuilder: (context, error, stackTrace) =>

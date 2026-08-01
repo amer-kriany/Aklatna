@@ -45,7 +45,7 @@ final GoRouter appRouter = GoRouter(
   final authState = sl<AuthBloc>().state;
   final isGoingToAuth = state.matchedLocation == '/signin' ||
       state.matchedLocation == '/signup' ||
-      state.matchedLocation == '/verify-otp' ||
+      state.matchedLocation == '/check-email' ||   // <-- must be this, not /verify-otp
       state.matchedLocation == '/forgot-password' ||
       state.matchedLocation == '/reset-password';
 
@@ -160,8 +160,11 @@ final GoRouter appRouter = GoRouter(
   path: '/check-email',
   parentNavigatorKey: MainShell.rootNavigatorKey,
   builder: (context, state) {
-    final args = state.extra as Map<String, String>;
-    return CheckEmailPage(email: args['email']!, password: args['password']!);
+    final args = state.extra as Map<String, dynamic>;
+    return CheckEmailPage(
+      email: args['email'] as String,
+      password: args['password'] as String,
+    );
   },
 ),
     GoRoute(
