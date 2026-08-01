@@ -67,7 +67,10 @@ class _SignUpPageState extends State<SignUpPage> {
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
   if (state is AuthSignUpOtpSent) {
-    context.push('/verify-otp', extra: state.email);
+    context.push('/check-email', extra: {
+    'email': state.email,
+    'password': _passwordController.text,
+  });
   }
   if (state is AuthAuthenticated) {
     context.go('/home');

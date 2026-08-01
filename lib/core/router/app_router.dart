@@ -1,6 +1,5 @@
 import 'package:aklatna/core/router/MainShell.dart';
 import 'package:aklatna/core/router/go_router_refresh_stream.dart';
-import 'package:aklatna/core/services/onboarding_service.dart';
 import 'package:aklatna/features/addOnes/data/datasource/addOnesDataSource.dart';
 import 'package:aklatna/features/addOnes/data/repository/addOnesRepoImp.dart';
 import 'package:aklatna/features/addOnes/domain/useCases/getAddOnesUseCase.dart';
@@ -8,6 +7,7 @@ import 'package:aklatna/features/addOnes/presentation/bloc/add_ones_bloc.dart';
 import 'package:aklatna/features/addresses/presentation/pages/AddressesPage.dart';
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:aklatna/features/auth/presentation/pages/SignInPage.dart';
+import 'package:aklatna/features/auth/presentation/pages/checkEmailPage.dart';
 import 'package:aklatna/features/auth/presentation/pages/otpVereficationPage.dart';
 import 'package:aklatna/features/auth/presentation/pages/signUpPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/CheckoutPage.dart';
@@ -34,7 +34,6 @@ import 'package:aklatna/features/orders/presentation/pages/myOrderPage.dart';
 import 'package:aklatna/features/profile/presentaion/pages/profilePage.dart';
 import 'package:aklatna/features/splash/pages/splashScreen.dart';
 import 'package:aklatna/injection_container.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
@@ -42,38 +41,22 @@ final GoRouter appRouter = GoRouter(
   initialLocation: '/splash', // <-- بداية التطبيق من الـ Splash
   navigatorKey: MainShell.rootNavigatorKey,
   refreshListenable: GoRouterRefreshStream(sl<AuthBloc>().stream),
-  redirect: (context, state) async {
-    final authState = sl<AuthBloc>().state;
-    final location = state.matchedLocation;
+  redirect: (context, state) {
+  final authState = sl<AuthBloc>().state;
+  final isGoingToAuth = state.matchedLocation == '/signin' ||
+      state.matchedLocation == '/signup' ||
+      state.matchedLocation == '/verify-otp' ||
+      state.matchedLocation == '/forgot-password' ||
+      state.matchedLocation == '/reset-password';
 
-    // 1. لا تقم بأي إعادة توجيه أثناء وجود المستخدم في شاشة الـ Splash
-    if (location == '/splash') return null;
+  if (authState is AuthInitial || authState is AuthLoading) return null;
 
-    // 2. التحقق من إكمال الـ Onboarding
-    final bool hasCompletedOnboarding = await OnboardingService.isCompleted();
+  final isAuthenticated = authState is AuthAuthenticated;
 
-    if (!hasCompletedOnboarding) {
-      if (location != '/onboarding') return '/onboarding';
-      return null;
-    }
-
-    if (hasCompletedOnboarding && location == '/onboarding') {
-      final isAuthenticated = authState is AuthAuthenticated;
-      return isAuthenticated ? '/home' : '/signin';
-    }
-
-    // 3. التحقق من مصادقة المستخدم (Auth Flow)
-    final isGoingToAuth = location == '/signin' || location == '/signup';
-
-    if (authState is AuthInitial || authState is AuthLoading) return null;
-
-    final isAuthenticated = authState is AuthAuthenticated;
-
-    if (!isAuthenticated && !isGoingToAuth) return '/signin';
-    if (isAuthenticated && isGoingToAuth) return '/home';
-
-    return null;
-  },
+  if (!isAuthenticated && !isGoingToAuth) return '/signin';
+  if (isAuthenticated && isGoingToAuth) return '/home';
+  return null;
+},
   routes: [
     GoRoute(
       path: '/splash',
@@ -173,6 +156,14 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+    GoRoute(
+  path: '/check-email',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) {
+    final args = state.extra as Map<String, String>;
+    return CheckEmailPage(email: args['email']!, password: args['password']!);
+  },
+),
     GoRoute(
   path: '/verify-otp',
   parentNavigatorKey: MainShell.rootNavigatorKey,

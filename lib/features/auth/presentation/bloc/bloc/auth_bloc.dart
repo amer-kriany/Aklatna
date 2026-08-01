@@ -54,6 +54,8 @@ Future<void> _signUp(SignUpEvent event, Emitter<AuthState> emit) async {
     await signUpUsecase(event.email, event.password, event.username, event.phone);
     emit(AuthSignUpOtpSent(email: event.email));
   } catch (e) {
+    print('DEBUG raw signup error: $e');
+    print('DEBUG error type: ${e.runtimeType}');
     emit(AuthError(message: AuthErrorMapper.map(e)));
   }
 }
