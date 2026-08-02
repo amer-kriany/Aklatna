@@ -13,6 +13,8 @@ class AuthTextField extends StatelessWidget {
     this.obscureText = false,
     this.keyboardType,
     this.suffixIcon,
+    this.errorText,
+    this.onChanged,
   });
 
   final String label;
@@ -21,13 +23,14 @@ class AuthTextField extends StatelessWidget {
   final bool obscureText;
   final TextInputType? keyboardType;
   final Widget? suffixIcon;
+  final String? errorText;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. Made Label Bigger & Bold
         Text(
           label,
           style: AppTextStyles.bodyMedium.copyWith(
@@ -41,11 +44,11 @@ class AuthTextField extends StatelessWidget {
           controller: controller,
           obscureText: obscureText,
           keyboardType: keyboardType,
-          // 2. Made Typed Input Text Bigger
+          onChanged: onChanged,
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           decoration: InputDecoration(
             hintText: hint,
-            // 3. Made Hint Text Bigger
+            errorText: errorText,
             hintStyle: const TextStyle(
               fontSize: 15,
               color: AppColors.textSecondary,
@@ -53,7 +56,7 @@ class AuthTextField extends StatelessWidget {
             suffixIcon: suffixIcon,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,
-              vertical: 16, // Increased padding slightly for larger font size
+              vertical: 16,
             ),
           ),
         ),

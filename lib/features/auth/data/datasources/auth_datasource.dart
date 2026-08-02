@@ -30,7 +30,7 @@ Future<void> requestPasswordReset(String email) async {
   try {
     await supabase.auth.resetPasswordForEmail(
       email,
-      redirectTo: 'https://amer-kriany.github.io/aklatna_confirm/password_reset',
+      redirectTo: 'https://amer-kriany.github.io/aklatna_confirm/reset-password.html',
     );
   } catch (e) {
     rethrow;

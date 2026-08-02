@@ -19,9 +19,10 @@ class SignInPage extends StatefulWidget {
 }
 
 class _SignInPageState extends State<SignInPage> {
-  final _phoneController = TextEditingController();
+   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  String? _phoneError;
 
   @override
   void dispose() {
@@ -36,6 +37,18 @@ class _SignInPageState extends State<SignInPage> {
     if (phone.isEmpty || password.isEmpty) return;
 
     context.read<AuthBloc>().add(SignInEvent(phone: phone, password: password));
+  }
+
+  void _onForgotPassword() {
+    final phone = _phoneController.text.trim();
+
+    setState(() {
+      _phoneError = phone.isEmpty ? 'أدخل رقم هاتفك أولاً' : null;
+    });
+
+    if (phone.isEmpty) return;
+
+    context.push('/forgot-password', extra: phone);
   }
 
   @override
@@ -97,12 +110,16 @@ class _SignInPageState extends State<SignInPage> {
                               const SizedBox(height: AppSpacing.xxl),
 
                               // Phone Input Field
-                              AuthTextField(
-                                label: 'رقم الهاتف',
-                                hint: 'أدخل رقم هاتفك',
-                                controller: _phoneController,
-                                keyboardType: TextInputType.phone,
-                              ),
+                             AuthTextField(
+  label: 'رقم الهاتف',
+  hint: 'أدخل رقم هاتفك',
+  controller: _phoneController,
+  keyboardType: TextInputType.phone,
+  errorText: _phoneError,
+  onChanged: (_) {
+    if (_phoneError != null) setState(() => _phoneError = null);
+  },
+),
                               const SizedBox(height: AppSpacing.lg),
 
                               // Password Input Field
@@ -123,10 +140,10 @@ class _SignInPageState extends State<SignInPage> {
                                   ),
                                 ),
                               ),
-                              Align(
+                             Align(
   alignment: Alignment.centerLeft,
   child: TextButton(
-    onPressed: () => context.push('/forgot-password'),
+    onPressed: _onForgotPassword,
     child: Text('نسيت كلمة المرور؟', style: TextStyle(color: AppColors.primary)),
   ),
 ),
