@@ -64,23 +64,26 @@ class _SignUpPageState extends State<SignUpPage> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
-          child: BlocListener<AuthBloc, AuthState>(
-            listener: (context, state) {
-  if (state is AuthSignUpOtpSent) {
-    context.push('/check-email', extra: {
-    'email': state.email,
-    'password': _passwordController.text,
-  });
-  }
-  if (state is AuthAuthenticated) {
-    context.go('/home');
-  }
-  if (state is AuthError) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(state.message), backgroundColor: Colors.redAccent));
-  }
-},
+          child:BlocListener<AuthBloc, AuthState>(
+  listener: (context, state) {
+    if (state is AuthSignUpOtpSent) {
+      context.push('/check-email', extra: {
+        'email': state.email,
+        'password': _passwordController.text,
+        'phone': _phoneController.text.trim(), // <--- Pass the phone forward!
+      });
+    }
+    if (state is AuthError) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(state.message),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+    }
+  },
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(

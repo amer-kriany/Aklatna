@@ -28,15 +28,12 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     emit(ProfileLoading());
     try {
-      print("profile staring");
       final profiles = await getProfilesUsecase();
       if (profiles.isNotEmpty) {
         emit(ProfileLoaded(profile: profiles.first));
       }
-      print("profile loaded");
     } catch (e) {
       emit(ProfileError(message: e.toString()));
-      print("profile failed");
     }
   }
 
@@ -47,7 +44,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   ) async {
     emit(ProfileLoading());
     try {
-      await updateProfileUsecase(event.userId, event.username,event.bio);
+      await updateProfileUsecase(event.userId, event.username,event.bio,event.phone);
       emit(ProfileUpdated());
     } catch (e) {
       emit(ProfileError(message: e.toString()));

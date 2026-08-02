@@ -6,10 +6,10 @@ import 'package:aklatna/features/addOnes/domain/useCases/getAddOnesUseCase.dart'
 import 'package:aklatna/features/addOnes/presentation/bloc/add_ones_bloc.dart';
 import 'package:aklatna/features/addresses/presentation/pages/AddressesPage.dart';
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
+import 'package:aklatna/features/auth/presentation/pages/PhoneConfirmationSection.dart';
 import 'package:aklatna/features/auth/presentation/pages/SignInPage.dart';
 import 'package:aklatna/features/auth/presentation/pages/checkEmailPage.dart';
 import 'package:aklatna/features/auth/presentation/pages/forgotPasswordPage.dart';
-import 'package:aklatna/features/auth/presentation/pages/otpVereficationPage.dart';
 import 'package:aklatna/features/auth/presentation/pages/signUpPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/CheckoutPage.dart';
 import 'package:aklatna/features/cart/presentation/pages/cart_page.dart';
@@ -74,11 +74,21 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: MainShell.rootNavigatorKey,
       builder: (context, state) => const SignInPage(),
     ),
-    GoRoute(
-      path: '/signup',
-      parentNavigatorKey: MainShell.rootNavigatorKey,
-      builder: (context, state) => const SignUpPage(),
-    ),
+   GoRoute(
+  path: '/signup',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) => const SignUpPage(),
+),
+GoRoute(
+  path: '/confirm-phone',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) {
+    final args = state.extra as Map<String, dynamic>;
+    return ConfirmPhonePage(
+      initialPhone: args['phone'] as String,
+    );
+  },
+),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return MainShell(navigationShell: navigationShell);
@@ -165,14 +175,11 @@ final GoRouter appRouter = GoRouter(
     return CheckEmailPage(
       email: args['email'] as String,
       password: args['password'] as String,
+      phone: args['phone'] as String,
     );
   },
 ),
-    GoRoute(
-  path: '/verify-otp',
-  parentNavigatorKey: MainShell.rootNavigatorKey,
-  builder: (context, state) => OtpVerificationPage(email: state.extra as String),
-),
+   
     GoRoute(
       path: '/checkout',
       parentNavigatorKey: MainShell.rootNavigatorKey,

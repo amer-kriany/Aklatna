@@ -1,3 +1,4 @@
+import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,13 +7,13 @@ import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/skeleton.dart';
-import '../bloc/bloc/auth_bloc.dart';
 
 class CheckEmailPage extends StatefulWidget {
   const CheckEmailPage({
     super.key,
     required this.email,
     required this.password,
+    required this.phone,
   });
 
   final String email;
@@ -21,6 +22,7 @@ class CheckEmailPage extends StatefulWidget {
   // a session inside the Flutter app itself, so we need to sign in
   // again client-side after they've confirmed.
   final String password;
+  final String phone;
 
   @override
   State<CheckEmailPage> createState() => _CheckEmailPageState();
@@ -29,8 +31,12 @@ class CheckEmailPage extends StatefulWidget {
 class _CheckEmailPageState extends State<CheckEmailPage> {
   void _onContinue() {
     context.read<AuthBloc>().add(
-      SignInEvent(email: widget.email, password: widget.password, phone: null),
-    );
+          SignInEvent(
+            email: widget.email,
+            password: widget.password,
+            phone: null,
+          ),
+        );
   }
 
   void _onResend() {
@@ -50,7 +56,10 @@ class _CheckEmailPageState extends State<CheckEmailPage> {
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthAuthenticated) {
-                context.go('/home');
+                // Email verified! Move forward to Phone Confirmation step
+                context.go('/confirm-phone', extra: {
+                  'phone': widget.phone,
+                });
               }
               if (state is AuthError) {
                 ScaffoldMessenger.of(context)

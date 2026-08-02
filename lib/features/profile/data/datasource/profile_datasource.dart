@@ -8,9 +8,6 @@ class ProfileDatasource {
   Future<List<Profilemodel>> getProfiles() async {
     try {
       final profiles = await supabase.from("profiles").select();
-      print(profiles);
-      print(profiles.runtimeType);
-      print(Supabase.instance.client.auth.currentUser?.id);
       return profiles.map((e) => Profilemodel.fromSupabase(e)).toList();
     } catch (e) {
       rethrow;
@@ -18,16 +15,25 @@ class ProfileDatasource {
   }
 
   // update profile data
+ // update profile data
   Future<void> updateProfileData(
     String userId,
     String? username,
-    String?bio
+    String? bio,
+    String? phone,
   ) async {
     try {
-      await supabase
-          .from('profiles')
-          .update({'username': username, 'bio':bio})
-          .eq('id', userId);
+      final updates = <String, dynamic>{};
+      if (username != null) updates['username'] = username;
+      if (bio != null) updates['bio'] = bio;
+      if (phone != null) updates['phone_number'] = phone;
+
+      if (updates.isNotEmpty) {
+        await supabase
+            .from('profiles')
+            .update(updates)
+            .eq('id', userId);
+      }
     } catch (e) {
       rethrow;
     }
