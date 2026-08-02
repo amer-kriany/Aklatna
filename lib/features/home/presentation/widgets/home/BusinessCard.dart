@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/skeleton.dart';
 
 class BusinessCard extends StatelessWidget {
   final String businessId;
@@ -242,12 +243,10 @@ class BusinessCard extends StatelessWidget {
           width: double.infinity,
           height: double.infinity,
           color: AppColors.surfaceVariant,
-          child: const Center(
-            child: SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+          child: const Skeleton(
+            width: double.infinity,
+            height: double.infinity,
+            radius: 0,
           ),
         );
       },

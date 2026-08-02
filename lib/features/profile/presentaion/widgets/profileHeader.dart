@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton.dart';
 
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({
@@ -55,23 +56,27 @@ class ProfileHeader extends StatelessWidget {
                               return Container(
                                 color: AppColors.surface,
                                 child: const Center(
-                                  child: SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  child: Skeleton(
+                                    width: 64,
+                                    height: 64,
+                                    isCircle: true,
                                   ),
                                 ),
                               );
                             },
                             // Fallback if image fails to load from network
-                           errorBuilder: (c, e, s) {
-  debugPrint('Image load failed: $e');
-  return Container(
-    color: AppColors.surface,
-    alignment: Alignment.center,
-    child: const Icon(Icons.person, size: AppSizes.iconXl, color: AppColors.textSecondary),
-  );
-},
+                            errorBuilder: (c, e, s) {
+                              debugPrint('Image load failed: $e');
+                              return Container(
+                                color: AppColors.surface,
+                                alignment: Alignment.center,
+                                child: const Icon(
+                                  Icons.person,
+                                  size: AppSizes.iconXl,
+                                  color: AppColors.textSecondary,
+                                ),
+                              );
+                            },
                           )
                         : Container(
                             color: AppColors.surface,
@@ -96,7 +101,10 @@ class ProfileHeader extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.background, width: 2),
+                        border: Border.all(
+                          color: AppColors.background,
+                          width: 2,
+                        ),
                       ),
                       alignment: Alignment.center,
                       child: const Icon(

@@ -1,6 +1,7 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/skeleton.dart';
 
 /// A single sponsored/advertising banner (paid placement).
 /// Pure presentation - doesn't know or care where the image URL comes from,
@@ -36,12 +37,10 @@ class SponsoredBanner extends StatelessWidget {
               if (progress == null) return child;
               return Container(
                 color: AppColors.surfaceVariant,
-                child: const Center(
-                  child: SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
+                child: const Skeleton(
+                  width: double.infinity,
+                  height: double.infinity,
+                  radius: 0,
                 ),
               );
             },

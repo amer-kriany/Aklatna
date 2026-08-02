@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../bloc/bloc/auth_bloc.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
@@ -35,17 +35,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.background,
-          elevation: 0,
-        ),
+        appBar: AppBar(backgroundColor: AppColors.background, elevation: 0),
         body: SafeArea(
           child: BlocListener<AuthBloc, AuthState>(
             listener: (context, state) {
               if (state is AuthPasswordResetEmailSent) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('تحقق من بريدك الإلكتروني لإعادة تعيين كلمة المرور'),
+                    content: Text(
+                      'تحقق من بريدك الإلكتروني لإعادة تعيين كلمة المرور',
+                    ),
                   ),
                 );
               }
@@ -53,7 +52,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ScaffoldMessenger.of(context)
                   ..hideCurrentSnackBar()
                   ..showSnackBar(
-                    SnackBar(content: Text(state.message), backgroundColor: Colors.redAccent),
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: Colors.redAccent,
+                    ),
                   );
               }
             },
@@ -65,12 +67,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   const SizedBox(height: AppSpacing.xl),
                   Text(
                     'نسيت كلمة المرور؟',
-                    style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
+                    style: AppTextStyles.h3.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     'أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين',
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   TextField(
@@ -102,14 +108,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                           ),
                           onPressed: loading ? null : _onSubmit,
                           child: loading
-                              ? const SizedBox(
-                                  width: 20, height: 20,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              ? const Skeleton(
+                                  width: 20,
+                                  height: 20,
+                                  isCircle: true,
+                                  baseColor: Colors.white24,
+                                  highlightColor: Colors.white70,
                                 )
                               : Text(
                                   'إرسال رابط إعادة التعيين',
                                   style: AppTextStyles.bodyMedium.copyWith(
-                                    color: Colors.white, fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                         ),

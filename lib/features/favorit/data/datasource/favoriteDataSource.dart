@@ -1,5 +1,5 @@
 import 'package:aklatna/features/home/data/models/businessModel.dart';
-import 'package:aklatna/features/menu/data/models/menuItemModel.dart'; // adjust import to your real path
+// adjust import to your real path
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FavoriteDatasource {

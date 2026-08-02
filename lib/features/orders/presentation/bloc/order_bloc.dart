@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:aklatna/features/orders/data/models/order_model.dart';
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';

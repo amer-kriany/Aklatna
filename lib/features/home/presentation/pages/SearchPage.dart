@@ -17,6 +17,7 @@ import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/page_skeletons.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -51,18 +52,11 @@ class _SearchPageState extends State<SearchPage> {
 
     _debounce?.cancel();
 
-    _debounce = Timer(
-      const Duration(milliseconds: 350),
-      () {
-        if (value.trim().isEmpty) return;
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (value.trim().isEmpty) return;
 
-        context.read<BusinessBloc>().add(
-              SearchBusinesses(
-                query: value.trim(),
-              ),
-            );
-      },
-    );
+      context.read<BusinessBloc>().add(SearchBusinesses(query: value.trim()));
+    });
   }
 
   @override
@@ -76,30 +70,19 @@ class _SearchPageState extends State<SearchPage> {
   // GET ITEM QUANTITY FROM CART
   // ============================================================
 
-  int _getCartQuantity(
-    CartState cartState,
-    String itemId,
-  ) {
-    final item = cartState.items.where(
-      (item) => item.itemId == itemId,
-    );
+  int _getCartQuantity(CartState cartState, String itemId) {
+    final item = cartState.items.where((item) => item.itemId == itemId);
 
     if (item.isEmpty) return 0;
 
-    return item.fold<int>(
-      0,
-      (sum, item) => sum + item.quantity,
-    );
+    return item.fold<int>(0, (sum, item) => sum + item.quantity);
   }
 
   // ============================================================
   // ADD ITEM TO CART
   // ============================================================
 
-  void _addItemToCart(
-    BuildContext context,
-    Menuitementity item,
-  ) {
+  void _addItemToCart(BuildContext context, Menuitementity item) {
     final businessState = context.read<BusinessBloc>().state;
 
     String? businessName;
@@ -116,37 +99,30 @@ class _SearchPageState extends State<SearchPage> {
     }
 
     context.read<CartBloc>().add(
-          AddItemEvent(
-            item: CartItem(
-              itemId: item.id,
-              nameAr: item.nameAr,
-              description: item.description ?? '',
-              photoUrl: item.photoUrl,
-              price: item.price,
-              quantity: 1,
-              businessId: item.businessId,
-              note: '',
-              selectedAddons: [],
-            ),
-            businessName: businessName,
-            businessLogo: businessLogo,
-          ),
-        );
+      AddItemEvent(
+        item: CartItem(
+          itemId: item.id,
+          nameAr: item.nameAr,
+          description: item.description ?? '',
+          photoUrl: item.photoUrl,
+          price: item.price,
+          quantity: 1,
+          businessId: item.businessId,
+          note: '',
+          selectedAddons: [],
+        ),
+        businessName: businessName,
+        businessLogo: businessLogo,
+      ),
+    );
   }
 
   // ============================================================
   // REMOVE ITEM FROM CART
   // ============================================================
 
-  void _removeItemFromCart(
-    BuildContext context,
-    String itemId,
-  ) {
-    context.read<CartBloc>().add(
-          RemoveItemEvent(
-            itemId: itemId,
-          ),
-        );
+  void _removeItemFromCart(BuildContext context, String itemId) {
+    context.read<CartBloc>().add(RemoveItemEvent(itemId: itemId));
   }
 
   @override
@@ -168,10 +144,7 @@ class _SearchPageState extends State<SearchPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'البحث',
-                    style: AppTextStyles.h2,
-                  ),
+                  Text('البحث', style: AppTextStyles.h2),
                   IconButton(
                     onPressed: () => context.push('/favorites'),
                     icon: const Icon(
@@ -227,17 +200,17 @@ class _SearchPageState extends State<SearchPage> {
           return const SizedBox.shrink();
         }
 
-        final distinctCategoryNames =
-            state.categories.map((c) => c.nameAr).toSet().toList();
+        final distinctCategoryNames = state.categories
+            .map((c) => c.nameAr)
+            .toSet()
+            .toList();
 
         if (distinctCategoryNames.isEmpty) {
           return const SizedBox.shrink();
         }
 
         return Padding(
-          padding: const EdgeInsets.only(
-            bottom: AppSpacing.lg,
-          ),
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -264,8 +237,7 @@ class _SearchPageState extends State<SearchPage> {
                             color: isSelected
                                 ? AppColors.primary
                                 : AppColors.surface,
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.full),
+                            borderRadius: BorderRadius.circular(AppRadius.full),
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.primary
@@ -289,10 +261,7 @@ class _SearchPageState extends State<SearchPage> {
               ),
               if (_selectedCategoryName != null) ...[
                 const SizedBox(height: AppSpacing.md),
-                _buildCategoryResults(
-                  state,
-                  _selectedCategoryName!,
-                ),
+                _buildCategoryResults(state, _selectedCategoryName!),
               ],
             ],
           ),
@@ -305,19 +274,14 @@ class _SearchPageState extends State<SearchPage> {
   // CATEGORY RESULTS
   // ============================================================
 
-  Widget _buildCategoryResults(
-    MenuAllLoaded state,
-    String categoryName,
-  ) {
+  Widget _buildCategoryResults(MenuAllLoaded state, String categoryName) {
     final matchingCategoryIds = state.categories
         .where((c) => c.nameAr == categoryName)
         .map((c) => c.id)
         .toSet();
 
     final matchingItems = state.items
-        .where(
-          (i) => matchingCategoryIds.contains(i.categoryId),
-        )
+        .where((i) => matchingCategoryIds.contains(i.categoryId))
         .toList();
 
     if (matchingItems.isEmpty) {
@@ -329,8 +293,8 @@ class _SearchPageState extends State<SearchPage> {
 
     final businessState = context.watch<BusinessBloc>().state;
 
-    final Map<String, String> businessNamesById = businessState
-            is BusinessFetched
+    final Map<String, String> businessNamesById =
+        businessState is BusinessFetched
         ? {
             for (final business in businessState.businesses)
               business.id: business.nameAr,
@@ -355,9 +319,7 @@ class _SearchPageState extends State<SearchPage> {
           nameAr: item.nameAr,
           price: item.price,
           businessNameAr: businessNamesById[item.businessId],
-          onTap: () => context.push(
-            '/food/${item.id}',
-          ),
+          onTap: () => context.push('/food/${item.id}'),
         );
       },
     );
@@ -370,64 +332,55 @@ class _SearchPageState extends State<SearchPage> {
   Widget _buildIdleContent() {
     return BlocBuilder<MenuBloc, MenuState>(
       builder: (context, state) {
-        final List<Menuitementity> menuItems =
-            state is MenuAllLoaded ? state.items : const <Menuitementity>[];
+        final List<Menuitementity> menuItems = state is MenuAllLoaded
+            ? state.items
+            : const <Menuitementity>[];
 
         final businessState = context.watch<BusinessBloc>().state;
 
         final Map<String, double> businessRatingsById =
             businessState is BusinessFetched
-                ? {
-                    for (final business in businessState.businesses)
-                      business.id: business.rating,
-                  }
-                : const <String, double>{};
+            ? {
+                for (final business in businessState.businesses)
+                  business.id: business.rating,
+              }
+            : const <String, double>{};
 
         final Map<String, String> businessNamesById =
             businessState is BusinessFetched
-                ? {
-                    for (final business in businessState.businesses)
-                      business.id: business.nameAr,
-                  }
-                : const <String, String>{};
+            ? {
+                for (final business in businessState.businesses)
+                  business.id: business.nameAr,
+              }
+            : const <String, String>{};
 
         final rankedItems = [...menuItems]
-          ..sort(
-            (a, b) {
-              final ratingA = businessRatingsById[a.businessId] ?? 0;
-              final ratingB = businessRatingsById[b.businessId] ?? 0;
+          ..sort((a, b) {
+            final ratingA = businessRatingsById[a.businessId] ?? 0;
+            final ratingB = businessRatingsById[b.businessId] ?? 0;
 
-              final byRating = ratingB.compareTo(ratingA);
-              if (byRating != 0) return byRating;
+            final byRating = ratingB.compareTo(ratingA);
+            if (byRating != 0) return byRating;
 
-              return a.sortOrder.compareTo(b.sortOrder);
-            },
-          );
+            return a.sortOrder.compareTo(b.sortOrder);
+          });
 
         final popularItems = rankedItems.take(10).toList();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'أطباق شائعة',
-              style: AppTextStyles.h4,
-            ),
+            Text('أطباق شائعة', style: AppTextStyles.h4),
             const SizedBox(height: AppSpacing.md),
             if (state is MenuLoading)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                  child: CircularProgressIndicator(),
-                ),
+              const SizedBox(
+                height: 180,
+                child: ListSkeleton(itemCount: 3, showLeadingCircle: false),
               ),
             if (state is MenuError)
               Padding(
                 padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Text(
-                  state.message,
-                  style: AppTextStyles.bodyMedium,
-                ),
+                child: Text(state.message, style: AppTextStyles.bodyMedium),
               ),
             if (state is! MenuLoading && popularItems.isNotEmpty)
               // Dynamically fits popular card items using IntrinsicHeight
@@ -468,9 +421,7 @@ class _SearchPageState extends State<SearchPage> {
             if (state is! MenuLoading && popularItems.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                child: Center(
-                  child: Text('لا توجد أطباق حالياً'),
-                ),
+                child: Center(child: Text('لا توجد أطباق حالياً')),
               ),
           ],
         );
@@ -486,26 +437,18 @@ class _SearchPageState extends State<SearchPage> {
     return BlocBuilder<BusinessBloc, BusinessState>(
       builder: (context, state) {
         if (state is BusinessLoading) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const SizedBox(height: 220, child: ListSkeleton(itemCount: 4));
         }
 
         if (state is BusinessUnfound) {
           return Center(
-            child: Text(
-              'ما لقينا نتائج',
-              style: AppTextStyles.bodyMedium,
-            ),
+            child: Text('ما لقينا نتائج', style: AppTextStyles.bodyMedium),
           );
         }
 
         if (state is BusinessError) {
           return Center(
-            child: Text(
-              state.message,
-              style: AppTextStyles.bodyMedium,
-            ),
+            child: Text(state.message, style: AppTextStyles.bodyMedium),
           );
         }
 
@@ -514,25 +457,18 @@ class _SearchPageState extends State<SearchPage> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: state.businesses.length,
-            separatorBuilder: (_, __) => const Divider(
-              color: AppColors.divider,
-            ),
+            separatorBuilder: (_, __) =>
+                const Divider(color: AppColors.divider),
             itemBuilder: (context, index) {
               final business = state.businesses[index];
 
               return GestureDetector(
                 onTap: () {
-                  context.push(
-                    "/business/${business.id}",
-                  );
+                  context.push("/business/${business.id}");
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.sm,
-                  ),
-                  child: SearchResultCard(
-                    business: business,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  child: SearchResultCard(business: business),
                 ),
               );
             },

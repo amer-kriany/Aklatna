@@ -1,13 +1,11 @@
 import 'package:aklatna/features/addresses/data/services/nominatim_service.dart';
+import 'package:aklatna/core/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 class LocationPickerPage extends StatefulWidget {
-  const LocationPickerPage({
-    super.key,
-    this.initialLocation,
-  });
+  const LocationPickerPage({super.key, this.initialLocation});
 
   final LatLng? initialLocation;
 
@@ -16,10 +14,7 @@ class LocationPickerPage extends StatefulWidget {
 }
 
 class _LocationPickerPageState extends State<LocationPickerPage> {
-  static const LatLng _defaultLocation = LatLng(
-    33.4585,
-    36.2394,
-  );
+  static const LatLng _defaultLocation = LatLng(33.4585, 36.2394);
 
   late LatLng _selectedLocation;
 
@@ -31,8 +26,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
   void initState() {
     super.initState();
 
-    _selectedLocation =
-        widget.initialLocation ?? _defaultLocation;
+    _selectedLocation = widget.initialLocation ?? _defaultLocation;
   }
 
   Future<void> _confirmLocation() async {
@@ -43,18 +37,13 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
     });
 
     try {
-      final address = await _nominatimService.reverseGeocode(
-        _selectedLocation,
-      );
+      final address = await _nominatimService.reverseGeocode(_selectedLocation);
 
       if (!mounted) return;
 
       Navigator.pop(
         context,
-        LocationPickerResult(
-          location: _selectedLocation,
-          address: address,
-        ),
+        LocationPickerResult(location: _selectedLocation, address: address),
       );
     } catch (e) {
       if (!mounted) return;
@@ -64,10 +53,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
       // we still have valid coordinates.
       Navigator.pop(
         context,
-        LocationPickerResult(
-          location: _selectedLocation,
-          address: null,
-        ),
+        LocationPickerResult(location: _selectedLocation, address: null),
       );
     }
   }
@@ -93,8 +79,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
             ),
             children: [
               TileLayer(
-                urlTemplate:
-                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.aklatna.app',
               ),
 
@@ -133,9 +118,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                     Expanded(
                       child: Text(
                         'اضغط على الخريطة لتحديد موقع منزلك',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodyMedium,
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),
                   ],
@@ -150,22 +133,18 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
             bottom: 24,
             child: SafeArea(
               child: ElevatedButton.icon(
-                onPressed: _isLoadingAddress
-                    ? null
-                    : _confirmLocation,
+                onPressed: _isLoadingAddress ? null : _confirmLocation,
                 icon: _isLoadingAddress
-                    ? const SizedBox(
+                    ? const Skeleton(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
+                        isCircle: true,
+                        baseColor: Colors.white24,
+                        highlightColor: Colors.white70,
                       )
                     : const Icon(Icons.check),
                 label: Text(
-                  _isLoadingAddress
-                      ? 'جاري تحديد العنوان...'
-                      : 'تأكيد الموقع',
+                  _isLoadingAddress ? 'جاري تحديد العنوان...' : 'تأكيد الموقع',
                 ),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(52),
@@ -183,8 +162,5 @@ class LocationPickerResult {
   final LatLng location;
   final ReverseAddress? address;
 
-  const LocationPickerResult({
-    required this.location,
-    required this.address,
-  });
+  const LocationPickerResult({required this.location, required this.address});
 }

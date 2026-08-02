@@ -7,16 +7,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/constants/app_spacing.dart';
 import '../../../../../core/constants/app_text_style.dart';
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/skeleton.dart';
 
 class CartDeliveryAddressSection extends StatelessWidget {
-  const CartDeliveryAddressSection({
-    super.key,
-    required this.userId,
-  });
+  const CartDeliveryAddressSection({super.key, required this.userId});
 
   final String userId;
 
-  String _formatAddress(AddressEntity address) {
+  String _formatAddress(AddressEntity? address) {
+    if (address == null) return '';
     final parts = <String>[
       address.street,
       if (address.apartment.trim().isNotEmpty) address.apartment,
@@ -31,22 +30,16 @@ class CartDeliveryAddressSection extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (_) {
-        return AddressSelectionBottomSheet(
-          userId: userId,
-        );
+        return AddressSelectionBottomSheet(userId: userId);
       },
     );
 
     // Refresh addresses after the user selects a different address.
     if (context.mounted) {
-      context.read<AddressBloc>().add(
-        LoadAddressesEvent(userId: userId),
-      );
+      context.read<AddressBloc>().add(LoadAddressesEvent(userId: userId));
     }
   }
 
@@ -73,10 +66,7 @@ class CartDeliveryAddressSection extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'عنوان التوصيل',
-                  style: AppTextStyles.regularLarge,
-                ),
+                Text('عنوان التوصيل', style: AppTextStyles.regularLarge),
                 GestureDetector(
                   onTap: () => _showAddressBottomSheet(context),
                   child: Text(
@@ -102,15 +92,14 @@ class CartDeliveryAddressSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: state is AddressLoading
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(AppSpacing.sm),
-                        child: CircularProgressIndicator(),
-                      ),
+                  ? const Skeleton(
+                      width: double.infinity,
+                      height: 18,
+                      radius: AppRadius.sm,
                     )
                   : Text(
                       hasAddress
-                          ? _formatAddress(defaultAddress!)
+                          ? _formatAddress(defaultAddress)
                           : 'لا يوجد عنوان محفوظ',
                       style: AppTextStyles.regularMedium.copyWith(
                         color: hasAddress

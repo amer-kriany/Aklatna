@@ -14,6 +14,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/page_skeletons.dart';
+import '../../../../core/widgets/skeleton.dart';
 
 class Foodetailspage extends StatefulWidget {
   final String itemId;
@@ -25,7 +27,7 @@ class Foodetailspage extends StatefulWidget {
 
 class _FoodetailspageState extends State<Foodetailspage> {
   int _quantity = 1;
-  Set<String> _selectedAddonIds = {};
+  final Set<String> _selectedAddonIds = {};
   final TextEditingController _noteController = TextEditingController();
   bool _businessFetchTriggered = false;
 
@@ -54,16 +56,26 @@ class _FoodetailspageState extends State<Foodetailspage> {
         child: BlocBuilder<MenuBloc, MenuState>(
           builder: (context, state) {
             if (state is MenuLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const DashboardSkeleton();
             }
             if (state is MenuError) {
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.orange),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.orange,
+                    ),
                     const SizedBox(height: 16),
-                    const Text("food not found", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Text(
+                      "food not found",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                   ],
                 ),
@@ -76,13 +88,15 @@ class _FoodetailspageState extends State<Foodetailspage> {
               if (!_businessFetchTriggered) {
                 _businessFetchTriggered = true;
                 context.read<BusinessBloc>().add(
-                      GetBusinessById(id: state.item.businessId),
-                    );
+                  GetBusinessById(id: state.item.businessId),
+                );
               }
 
               return BlocBuilder<AddonBloc, AddOnesState>(
                 builder: (context, addonState) {
-                  final addons = addonState is AddonLoaded ? addonState.addons : <AddonEntity>[];
+                  final addons = addonState is AddonLoaded
+                      ? addonState.addons
+                      : <AddonEntity>[];
                   final addonsTotal = _addonsTotal(addons);
 
                   return BlocBuilder<BusinessBloc, BusinessState>(
@@ -97,124 +111,206 @@ class _FoodetailspageState extends State<Foodetailspage> {
                             child: SingleChildScrollView(
                               child: Column(
                                 children: [
-                                 FoodDetailsImage(
-  imageUrl: state.item.photoUrl,
-  onBack: () => Navigator.pop(context),
-  onFavorite: () {},
-  isFavorite: false,
-),
+                                  FoodDetailsImage(
+                                    imageUrl: state.item.photoUrl,
+                                    onBack: () => Navigator.pop(context),
+                                    onFavorite: () {},
+                                    isFavorite: false,
+                                  ),
 
-// ============================================================
-// VIEW RESTAURANT BUTTON
-// ============================================================
-//
-// Lets the customer navigate back to the business page from a food
-// item reached via Search's popular dishes / category grid, where
-// they'd otherwise have no way to know which restaurant this item
-// belongs to.
-// ============================================================
+                                  // ============================================================
+                                  // VIEW RESTAURANT BUTTON
+                                  // ============================================================
+                                  //
+                                  // Lets the customer navigate back to the business page from a food
+                                  // item reached via Search's popular dishes / category grid, where
+                                  // they'd otherwise have no way to know which restaurant this item
+                                  // belongs to.
+                                  // ============================================================
+                                  if (business != null)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.lg,
+                                        vertical: AppSpacing.sm,
+                                      ),
+                                      child: InkWell(
+                                        onTap: () => context.push(
+                                          '/business/${business.id}',
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.md,
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppSpacing.md,
+                                            vertical: AppSpacing.sm,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.surface,
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.md,
+                                            ),
+                                            border: Border.all(
+                                              color: AppColors.border,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                width: 32,
+                                                height: 32,
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primaryLight,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        AppRadius.sm,
+                                                      ),
+                                                ),
+                                                clipBehavior: Clip.antiAlias,
+                                                child:
+                                                    business.logoUrl != null &&
+                                                        business
+                                                            .logoUrl!
+                                                            .isNotEmpty
+                                                    ? Image.network(
+                                                        business.logoUrl!,
+                                                        fit: BoxFit.cover,
+                                                      )
+                                                    : Icon(
+                                                        Icons
+                                                            .restaurant_rounded,
+                                                        size: 18,
+                                                        color:
+                                                            AppColors.primary,
+                                                      ),
+                                              ),
+                                              const SizedBox(
+                                                width: AppSpacing.sm,
+                                              ),
+                                              Expanded(
+                                                child: Text(
+                                                  business.nameAr,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: AppTextStyles
+                                                      .bodyMedium
+                                                      .copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                ),
+                                              ),
+                                              const Icon(
+                                                Icons.chevron_left_rounded,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
 
-if (business != null)
-  Padding(
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.lg,
-      vertical: AppSpacing.sm,
-    ),
-    child: InkWell(
-      onTap: () => context.push('/business/${business.id}'),
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: business.logoUrl != null && business.logoUrl!.isNotEmpty
-                  ? Image.network(business.logoUrl!, fit: BoxFit.cover)
-                  : Icon(Icons.restaurant_rounded, size: 18, color: AppColors.primary),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            Expanded(
-              child: Text(
-                business.nameAr,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ),
-            const Icon(Icons.chevron_left_rounded, color: AppColors.textSecondary),
-          ],
-        ),
-      ),
-    ),
-  ),
+                                  const SizedBox(height: AppSpacing.lg),
 
-const SizedBox(height: AppSpacing.lg),
-
-FoodDetailsInfo(
-  title: state.item.nameAr,
-  category: state.category.nameAr,
-  description: state.item.description ?? '',
-),
+                                  FoodDetailsInfo(
+                                    title: state.item.nameAr,
+                                    category: state.category.nameAr,
+                                    description: state.item.description ?? '',
+                                  ),
                                   if (addonState is AddonLoading)
                                     const Padding(
-                                      padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                                      child: Center(child: CircularProgressIndicator()),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.lg,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          SizedBox(height: AppSpacing.sm),
+                                          Skeleton(
+                                            width: double.infinity,
+                                            height: 14,
+                                            radius: AppRadius.sm,
+                                          ),
+                                          SizedBox(height: AppSpacing.sm),
+                                          Skeleton(
+                                            width: 220,
+                                            height: 14,
+                                            radius: AppRadius.sm,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   if (addons.isNotEmpty)
                                     Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.lg,
+                                      ),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
                                           const SizedBox(height: AppSpacing.lg),
-                                          Text('إضافات', style: AppTextStyles.h4),
+                                          Text(
+                                            'إضافات',
+                                            style: AppTextStyles.h4,
+                                          ),
                                           const SizedBox(height: AppSpacing.xs),
-                                          ...addons.map((addon) => CheckboxListTile(
-                                                contentPadding: EdgeInsets.zero,
-                                                value: _selectedAddonIds.contains(addon.id),
-                                                activeColor: AppColors.primary,
-                                                title: Text(addon.name, style: AppTextStyles.bodyMedium),
-                                                secondary: Text('+${addon.price.toStringAsFixed(0)}', style: AppTextStyles.priceMedium),
-                                                onChanged: (checked) {
-                                                  setState(() {
-                                                    if (checked == true) {
-                                                      _selectedAddonIds.add(addon.id);
-                                                    } else {
-                                                      _selectedAddonIds.remove(addon.id);
-                                                    }
-                                                  });
-                                                },
-                                              )),
+                                          ...addons.map(
+                                            (addon) => CheckboxListTile(
+                                              contentPadding: EdgeInsets.zero,
+                                              value: _selectedAddonIds.contains(
+                                                addon.id,
+                                              ),
+                                              activeColor: AppColors.primary,
+                                              title: Text(
+                                                addon.name,
+                                                style: AppTextStyles.bodyMedium,
+                                              ),
+                                              secondary: Text(
+                                                '+${addon.price.toStringAsFixed(0)}',
+                                                style:
+                                                    AppTextStyles.priceMedium,
+                                              ),
+                                              onChanged: (checked) {
+                                                setState(() {
+                                                  if (checked == true) {
+                                                    _selectedAddonIds.add(
+                                                      addon.id,
+                                                    );
+                                                  } else {
+                                                    _selectedAddonIds.remove(
+                                                      addon.id,
+                                                    );
+                                                  }
+                                                });
+                                              },
+                                            ),
+                                          ),
                                         ],
                                       ),
                                     ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.lg,
+                                    ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         const SizedBox(height: AppSpacing.lg),
-                                        Text('ملاحظات', style: AppTextStyles.h4),
+                                        Text(
+                                          'ملاحظات',
+                                          style: AppTextStyles.h4,
+                                        ),
                                         const SizedBox(height: AppSpacing.xs),
                                         TextField(
                                           controller: _noteController,
                                           maxLines: 2,
-                                          decoration: const InputDecoration(hintText: 'مثال: بدون بصل'),
+                                          decoration: const InputDecoration(
+                                            hintText: 'مثال: بدون بصل',
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -225,7 +321,9 @@ FoodDetailsInfo(
                             ),
                           ),
                           AddToCartSection(
-                            price: ((state.item.price + addonsTotal) * _quantity).toString(),
+                            price:
+                                ((state.item.price + addonsTotal) * _quantity)
+                                    .toString(),
                             quantity: _quantity,
                             onIncrement: () => setState(() => _quantity++),
                             onDecrement: () {
@@ -233,8 +331,16 @@ FoodDetailsInfo(
                             },
                             onAddToCart: () {
                               final selectedAddons = addons
-                                  .where((a) => _selectedAddonIds.contains(a.id))
-                                  .map((a) => {'id': a.id, 'name': a.name, 'price': a.price})
+                                  .where(
+                                    (a) => _selectedAddonIds.contains(a.id),
+                                  )
+                                  .map(
+                                    (a) => {
+                                      'id': a.id,
+                                      'name': a.name,
+                                      'price': a.price,
+                                    },
+                                  )
                                   .toList();
 
                               context.read<CartBloc>().add(

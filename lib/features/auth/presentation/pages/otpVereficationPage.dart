@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../bloc/bloc/auth_bloc.dart';
 
 class OtpVerificationPage extends StatefulWidget {
@@ -18,14 +19,20 @@ class OtpVerificationPage extends StatefulWidget {
 }
 
 class _OtpVerificationPageState extends State<OtpVerificationPage> {
-  final List<TextEditingController> _controllers =
-      List.generate(5, (_) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    5,
+    (_) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
   @override
   void dispose() {
-    for (final c in _controllers) c.dispose();
-    for (final f in _focusNodes) f.dispose();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    for (final f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -44,15 +51,15 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   void _onConfirm() {
     if (_code.length != 5) return;
     context.read<AuthBloc>().add(
-          VerifySignUpOtpEvent(email: widget.email, token: _code),
-        );
+      VerifySignUpOtpEvent(email: widget.email, token: _code),
+    );
   }
 
   void _onResend() {
     context.read<AuthBloc>().add(ResendSignUpOtpEvent(email: widget.email));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('تم إرسال رمز جديد')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('تم إرسال رمز جديد')));
   }
 
   @override
@@ -87,13 +94,17 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                   Text(
                     'أدخل رمز التحقق',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
+                    style: AppTextStyles.h3.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     'أرسلنا رمزاً إلى ${widget.email}',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   Row(
@@ -109,7 +120,9 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                           keyboardType: TextInputType.number,
                           maxLength: 1,
                           style: AppTextStyles.h3,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
                           decoration: InputDecoration(
                             counterText: '',
                             filled: true,
@@ -120,7 +133,10 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(AppRadius.md),
-                              borderSide: BorderSide(color: AppColors.primary, width: 2),
+                              borderSide: BorderSide(
+                                color: AppColors.primary,
+                                width: 2,
+                              ),
                             ),
                           ),
                           onChanged: (value) => _onChanged(index, value),
@@ -135,7 +151,9 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                       child: Text.rich(
                         TextSpan(
                           text: 'لم يصلك الرمز؟ ',
-                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                           children: [
                             TextSpan(
                               text: 'إعادة الإرسال',
@@ -162,16 +180,22 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                               borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                           ),
-                          onPressed: (_code.length == 5 && !loading) ? _onConfirm : null,
+                          onPressed: (_code.length == 5 && !loading)
+                              ? _onConfirm
+                              : null,
                           child: loading
-                              ? const SizedBox(
-                                  width: 20, height: 20,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              ? const Skeleton(
+                                  width: 20,
+                                  height: 20,
+                                  isCircle: true,
+                                  baseColor: Colors.white24,
+                                  highlightColor: Colors.white70,
                                 )
                               : Text(
                                   'تأكيد',
                                   style: AppTextStyles.bodyMedium.copyWith(
-                                    color: Colors.white, fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                         ),

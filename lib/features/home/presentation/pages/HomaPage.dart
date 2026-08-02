@@ -25,6 +25,7 @@ import 'package:aklatna/features/promotions/presentaion/widgets/promotionCard.da
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/page_skeletons.dart';
 
 import '../../business_type.dart';
 import '../../domain/entity/businessEntity.dart';
@@ -50,8 +51,6 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
     context.read<BusinessBloc>().add(GetBusinesses());
     context.read<ProfileBloc>().add(GetProfilesEvent());
     context.read<PromotionsBloc>().add(LoadPromotionsEvent());
-
-   
 
     startPeriodicRebuild();
   }
@@ -169,7 +168,7 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
 
             if (profileState is ProfileLoading ||
                 profileState is ProfileInitial) {
-              return const Center(child: CircularProgressIndicator());
+              return const DashboardSkeleton();
             }
 
             // ========================================================
@@ -237,8 +236,8 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
 
             if (context.read<AddressBloc>().state is AddressInitial) {
               context.read<AddressBloc>().add(
-                    LoadAddressesEvent(userId: profile.id),
-                  );
+                LoadAddressesEvent(userId: profile.id),
+              );
             }
 
             // ========================================================
@@ -252,7 +251,7 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                 // ====================================================
 
                 if (businessState is BusinessLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DashboardSkeleton();
                 }
 
                 // ====================================================
@@ -465,7 +464,13 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                               padding: EdgeInsets.symmetric(
                                 vertical: AppSpacing.xl,
                               ),
-                              child: Center(child: CircularProgressIndicator()),
+                              child: SizedBox(
+                                height: 110,
+                                child: ListSkeleton(
+                                  itemCount: 2,
+                                  showLeadingCircle: false,
+                                ),
+                              ),
                             );
                           }
 
@@ -606,8 +611,10 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                                     ? 'مفتوح الآن'
                                     : 'مغلق الآن',
 
-                                deliveryFeeText:
-                                    _deliveryFeeText(context, business),
+                                deliveryFeeText: _deliveryFeeText(
+                                  context,
+                                  business,
+                                ),
 
                                 onTap: () =>
                                     context.push('/business/${business.id}'),
@@ -671,8 +678,10 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                                   ? 'مفتوح الآن'
                                   : 'مغلق الآن',
 
-                              deliveryFeeText:
-                                  _deliveryFeeText(context, business),
+                              deliveryFeeText: _deliveryFeeText(
+                                context,
+                                business,
+                              ),
 
                               onTap: () =>
                                   context.push('/business/${business.id}'),

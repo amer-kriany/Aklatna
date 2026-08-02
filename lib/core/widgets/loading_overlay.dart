@@ -1,5 +1,6 @@
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'skeleton.dart';
 
 /// Reusable full-screen loading overlay.
 /// Wrap any screen body with this and toggle `isLoading` from the
@@ -35,8 +36,12 @@ class LoadingOverlay extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    const Skeleton(
+                      width: 46,
+                      height: 46,
+                      isCircle: true,
+                      baseColor: AppColors.shimmerBase,
+                      highlightColor: AppColors.shimmerHighlight,
                     ),
                     if (message != null) ...[
                       const SizedBox(height: 12),

@@ -1,4 +1,3 @@
-import 'package:aklatna/features/profile/data/repository/profileRepoImp.dart';
 import 'package:aklatna/features/profile/domain/repository/profileRepo.dart';
 
 class Updateprofilephotousecase {

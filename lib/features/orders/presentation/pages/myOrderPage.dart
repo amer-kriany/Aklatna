@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/page_skeletons.dart';
 
 import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_state.dart';
@@ -30,11 +31,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
   void initState() {
     super.initState();
 
-    _tabController = TabController(
-      length: 3,
-      vsync: this,
-      initialIndex: 1,
-    );
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 1);
 
     _fetchOrders();
   }
@@ -54,10 +51,8 @@ class _MyOrdersPageState extends State<MyOrdersPage>
 
     if (profileState is ProfileLoaded) {
       context.read<OrderBloc>().add(
-            GetCustomerOrdersEvent(
-              customerId: profileState.profile.id,
-            ),
-          );
+        GetCustomerOrdersEvent(customerId: profileState.profile.id),
+      );
     }
   }
 
@@ -65,25 +60,18 @@ class _MyOrdersPageState extends State<MyOrdersPage>
     _fetchOrders();
 
     await context.read<OrderBloc>().stream.firstWhere(
-          (state) => state is! OrderLoading,
-        );
+      (state) => state is! OrderLoading,
+    );
   }
 
   // ---------------------------------------------------------------------------
   // Open Order Details
   // ---------------------------------------------------------------------------
 
-  void _openOrderDetails(
-    BuildContext context,
-    dynamic order,
-  ) {
+  void _openOrderDetails(BuildContext context, dynamic order) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => OrderDetailsPage(
-          order: order,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => OrderDetailsPage(order: order)),
     );
   }
 
@@ -101,13 +89,8 @@ class _MyOrdersPageState extends State<MyOrdersPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                ),
-                child: Text(
-                  'طلباتي',
-                  style: AppTextStyles.h2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Text('طلباتي', style: AppTextStyles.h2),
               ),
 
               const SizedBox(height: AppSpacing.md),
@@ -135,11 +118,9 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                     // ---------------------------------------------------------
                     // History
                     // ---------------------------------------------------------
-
                     _buildOrdersList(
                       emptyMessage: 'لا توجد طلبات في السجل',
-                      filter: (o) =>
-                          OrderStatusHelper.isHistory(o.orderStatus),
+                      filter: (o) => OrderStatusHelper.isHistory(o.orderStatus),
 
                       // History is NOT tappable.
                       tappable: false,
@@ -148,13 +129,11 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                     // ---------------------------------------------------------
                     // Ongoing
                     // ---------------------------------------------------------
-
                     _buildOngoingList(),
 
                     // ---------------------------------------------------------
                     // Scheduled
                     // ---------------------------------------------------------
-
                     _buildOrdersList(
                       emptyMessage: 'لا توجد طلبات مجدولة',
                       filter: (o) =>
@@ -188,9 +167,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
       child: BlocBuilder<OrderBloc, OrderState>(
         builder: (context, state) {
           if (state is OrderLoading || state is OrderInitial) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const TableSkeleton(rows: 7, columns: 3);
           }
 
           if (state is OrderFailure) {
@@ -198,9 +175,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 const SizedBox(height: 100),
-                Center(
-                  child: Text(state.error),
-                ),
+                Center(child: Text(state.error)),
               ],
             );
           }
@@ -209,23 +184,16 @@ class _MyOrdersPageState extends State<MyOrdersPage>
             return const SizedBox.shrink();
           }
 
-          final filtered = state.orders
-              .where(filter)
-              .toList();
+          final filtered = state.orders.where(filter).toList();
 
           if (filtered.isEmpty) {
             return ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.lg,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               children: [
                 const SizedBox(height: 100),
                 Center(
-                  child: Text(
-                    emptyMessage,
-                    style: AppTextStyles.bodyMedium,
-                  ),
+                  child: Text(emptyMessage, style: AppTextStyles.bodyMedium),
                 ),
               ],
             );
@@ -238,9 +206,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
               vertical: AppSpacing.md,
             ),
             itemCount: filtered.length,
-            separatorBuilder: (_, __) => const SizedBox(
-              height: AppSpacing.sm,
-            ),
+            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
             itemBuilder: (context, index) {
               final order = filtered[index];
 
@@ -249,10 +215,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
 
                 // History / scheduled = no action.
                 onTap: tappable
-                    ? () => _openOrderDetails(
-                          context,
-                          order,
-                        )
+                    ? () => _openOrderDetails(context, order)
                     : () {},
               );
             },
@@ -275,11 +238,8 @@ class _MyOrdersPageState extends State<MyOrdersPage>
             builder: (context, cartState) {
               final hasDraft = cartState.items.isNotEmpty;
 
-              if (orderState is OrderLoading ||
-                  orderState is OrderInitial) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
+              if (orderState is OrderLoading || orderState is OrderInitial) {
+                return const TableSkeleton(rows: 7, columns: 3);
               }
 
               if (orderState is OrderFailure) {
@@ -287,9 +247,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
                     const SizedBox(height: 100),
-                    Center(
-                      child: Text(orderState.error),
-                    ),
+                    Center(child: Text(orderState.error)),
                   ],
                 );
               }
@@ -307,9 +265,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                     o.scheduledFor != null &&
                     o.orderStatus == OrderStatus.pending;
 
-                return OrderStatusHelper.isOngoing(
-                      o.orderStatus,
-                    ) &&
+                return OrderStatusHelper.isOngoing(o.orderStatus) &&
                     !isScheduledPending;
               }).toList();
 
@@ -338,37 +294,29 @@ class _MyOrdersPageState extends State<MyOrdersPage>
                   vertical: AppSpacing.md,
                 ),
                 itemCount: filtered.length + (hasDraft ? 1 : 0),
-                separatorBuilder: (_, __) => const SizedBox(
-                  height: AppSpacing.sm,
-                ),
+                separatorBuilder: (_, __) =>
+                    const SizedBox(height: AppSpacing.sm),
                 itemBuilder: (context, index) {
                   // ---------------------------------------------------------
                   // Draft cart
                   // ---------------------------------------------------------
 
                   if (hasDraft && index == 0) {
-                    return _DraftCartCard(
-                      itemCount: cartState.items.length,
-                    );
+                    return _DraftCartCard(itemCount: cartState.items.length);
                   }
 
                   // ---------------------------------------------------------
                   // Ongoing order
                   // ---------------------------------------------------------
 
-                  final order = filtered[
-                    index - (hasDraft ? 1 : 0)
-                  ];
+                  final order = filtered[index - (hasDraft ? 1 : 0)];
 
                   return OrderCard(
                     order: order,
 
                     // 🔥 ONLY ongoing orders reach this callback.
                     onTap: () {
-                      _openOrderDetails(
-                        context,
-                        order,
-                      );
+                      _openOrderDetails(context, order);
                     },
                   );
                 },
@@ -386,9 +334,7 @@ class _MyOrdersPageState extends State<MyOrdersPage>
 // =============================================================================
 
 class _DraftCartCard extends StatelessWidget {
-  const _DraftCartCard({
-    required this.itemCount,
-  });
+  const _DraftCartCard({required this.itemCount});
 
   final int itemCount;
 
@@ -396,28 +342,17 @@ class _DraftCartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.go('/cart'),
-      borderRadius: BorderRadius.circular(
-        AppRadius.lg,
-      ),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.primaryLight,
-          borderRadius: BorderRadius.circular(
-            AppRadius.lg,
-          ),
-          border: Border.all(
-            color: AppColors.primary,
-          ),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.primary),
         ),
-        padding: const EdgeInsets.all(
-          AppSpacing.md,
-        ),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Row(
           children: [
-            const Icon(
-              Icons.shopping_cart_outlined,
-              color: AppColors.primary,
-            ),
+            const Icon(Icons.shopping_cart_outlined, color: AppColors.primary),
 
             const SizedBox(width: AppSpacing.md),
 
@@ -441,10 +376,7 @@ class _DraftCartCard extends StatelessWidget {
               ),
             ),
 
-            const Icon(
-              Icons.chevron_left,
-              color: AppColors.primary,
-            ),
+            const Icon(Icons.chevron_left, color: AppColors.primary),
           ],
         ),
       ),

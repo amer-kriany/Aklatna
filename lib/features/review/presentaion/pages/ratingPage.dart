@@ -11,6 +11,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton.dart';
 
 // ===========================================================================
 // RATING PAGE
@@ -23,10 +24,7 @@ import '../../../../core/theme/app_colors.dart';
 // ===========================================================================
 
 class RatingPage extends StatefulWidget {
-  const RatingPage({
-    super.key,
-    required this.order,
-  });
+  const RatingPage({super.key, required this.order});
 
   final OrderEntity order;
 
@@ -121,9 +119,9 @@ class _RatingPageState extends State<RatingPage> {
           }
 
           if (state is ReviewError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         child: Directionality(
@@ -250,21 +248,19 @@ class _RatingPageState extends State<RatingPage> {
                               vertical: AppSpacing.md,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadius.md),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                           ),
                           onPressed: (_selectedRating == 0 || submitting)
                               ? null
                               : _submit,
                           child: submitting
-                              ? const SizedBox(
+                              ? const Skeleton(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
+                                  isCircle: true,
+                                  baseColor: Colors.white24,
+                                  highlightColor: Colors.white70,
                                 )
                               : Text(
                                   'إرسال التقييم',

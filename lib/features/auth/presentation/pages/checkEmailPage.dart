@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/skeleton.dart';
 import '../bloc/bloc/auth_bloc.dart';
 
 class CheckEmailPage extends StatefulWidget {
@@ -28,8 +29,8 @@ class CheckEmailPage extends StatefulWidget {
 class _CheckEmailPageState extends State<CheckEmailPage> {
   void _onContinue() {
     context.read<AuthBloc>().add(
-          SignInEvent(email: widget.email, password: widget.password, phone: null),
-        );
+      SignInEvent(email: widget.email, password: widget.password, phone: null),
+    );
   }
 
   void _onResend() {
@@ -71,19 +72,26 @@ class _CheckEmailPageState extends State<CheckEmailPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.mark_email_unread_outlined,
-                      size: 72, color: AppColors.primary),
+                  Icon(
+                    Icons.mark_email_unread_outlined,
+                    size: 72,
+                    color: AppColors.primary,
+                  ),
                   const SizedBox(height: AppSpacing.xl),
                   Text(
                     'تحقق من بريدك الإلكتروني',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.h3.copyWith(fontWeight: FontWeight.bold),
+                    style: AppTextStyles.h3.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     'أرسلنا رابط تأكيد إلى ${widget.email}\nافتح الرابط لإكمال إنشاء الحساب',
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   BlocBuilder<AuthBloc, AuthState>(
@@ -101,14 +109,18 @@ class _CheckEmailPageState extends State<CheckEmailPage> {
                           ),
                           onPressed: loading ? null : _onContinue,
                           child: loading
-                              ? const SizedBox(
-                                  width: 20, height: 20,
-                                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              ? const Skeleton(
+                                  width: 20,
+                                  height: 20,
+                                  isCircle: true,
+                                  baseColor: Colors.white24,
+                                  highlightColor: Colors.white70,
                                 )
                               : Text(
                                   'لقد أكدت بريدي، تابع',
                                   style: AppTextStyles.bodyMedium.copyWith(
-                                    color: Colors.white, fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                         ),
@@ -120,7 +132,9 @@ class _CheckEmailPageState extends State<CheckEmailPage> {
                     onPressed: _onResend,
                     child: Text(
                       'لم يصلك البريد؟ إعادة الإرسال',
-                      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primary),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                 ],

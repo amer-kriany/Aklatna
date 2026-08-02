@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/page_skeletons.dart';
 
 class AddressesPage extends StatefulWidget {
   const AddressesPage({super.key});
@@ -28,9 +29,7 @@ class _AddressesPageState extends State<AddressesPage> {
     if (profileState is ProfileLoaded) {
       _userId = profileState.profile.id;
 
-      context.read<AddressBloc>().add(
-        LoadAddressesEvent(userId: _userId!),
-      );
+      context.read<AddressBloc>().add(LoadAddressesEvent(userId: _userId!));
     }
   }
 
@@ -53,23 +52,17 @@ class _AddressesPageState extends State<AddressesPage> {
     final changed = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AddEditAddressPage(
-          existing: addr,
-          isFirstAddress: false,
-        ),
+        builder: (_) =>
+            AddEditAddressPage(existing: addr, isFirstAddress: false),
       ),
     );
 
     if (changed == true && mounted && _userId != null) {
       // Refresh addresses list
-      context.read<AddressBloc>().add(
-        LoadAddressesEvent(userId: _userId!),
-      );
+      context.read<AddressBloc>().add(LoadAddressesEvent(userId: _userId!));
 
       // Refresh profile/homepage location
-      context.read<ProfileBloc>().add(
-        GetProfilesEvent(),
-      );
+      context.read<ProfileBloc>().add(GetProfilesEvent());
     }
   }
 
@@ -89,22 +82,16 @@ class _AddressesPageState extends State<AddressesPage> {
     final changed = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => AddEditAddressPage(
-          isFirstAddress: isFirstAddress,
-        ),
+        builder: (_) => AddEditAddressPage(isFirstAddress: isFirstAddress),
       ),
     );
 
     if (changed == true && mounted && _userId != null) {
       // Refresh addresses list
-      context.read<AddressBloc>().add(
-        LoadAddressesEvent(userId: _userId!),
-      );
+      context.read<AddressBloc>().add(LoadAddressesEvent(userId: _userId!));
 
       // Refresh profile/homepage location
-      context.read<ProfileBloc>().add(
-        GetProfilesEvent(),
-      );
+      context.read<ProfileBloc>().add(GetProfilesEvent());
     }
   }
 
@@ -113,12 +100,7 @@ class _AddressesPageState extends State<AddressesPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'عناويني',
-            style: AppTextStyles.h4,
-          ),
-        ),
+        appBar: AppBar(title: Text('عناويني', style: AppTextStyles.h4)),
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -130,17 +112,12 @@ class _AddressesPageState extends State<AddressesPage> {
                 Expanded(
                   child: BlocBuilder<AddressBloc, AddressState>(
                     builder: (context, state) {
-                      if (state is AddressLoading ||
-                          state is AddressInitial) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
+                      if (state is AddressLoading || state is AddressInitial) {
+                        return const ListSkeleton(itemCount: 5);
                       }
 
                       if (state is AddressError) {
-                        return Center(
-                          child: Text(state.message),
-                        );
+                        return Center(child: Text(state.message));
                       }
 
                       if (state is! AddressLoaded) {
@@ -166,33 +143,26 @@ class _AddressesPageState extends State<AddressesPage> {
                           return Container(
                             decoration: BoxDecoration(
                               color: AppColors.background,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.lg,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               border: Border.all(
                                 color: addr.isDefault
                                     ? AppColors.primary
                                     : AppColors.border,
                               ),
                             ),
-                            padding: const EdgeInsets.all(
-                              AppSpacing.md,
-                            ),
+                            padding: const EdgeInsets.all(AppSpacing.md),
                             child: Row(
                               children: [
                                 CircleAvatar(
                                   radius: 24,
-                                  backgroundColor:
-                                      AppColors.primaryLight,
+                                  backgroundColor: AppColors.primaryLight,
                                   child: Icon(
                                     _iconForLabel(addr.label),
                                     color: AppColors.primary,
                                   ),
                                 ),
 
-                                const SizedBox(
-                                  width: AppSpacing.md,
-                                ),
+                                const SizedBox(width: AppSpacing.md),
 
                                 Expanded(
                                   child: Column(
@@ -201,21 +171,17 @@ class _AddressesPageState extends State<AddressesPage> {
                                     children: [
                                       Text(
                                         addr.label ?? 'عنوان',
-                                        style:
-                                            AppTextStyles.bodyMedium,
+                                        style: AppTextStyles.bodyMedium,
                                       ),
-                                      const SizedBox(
-                                        height: AppSpacing.xxs,
-                                      ),
+                                      const SizedBox(height: AppSpacing.xxs),
                                       Text(
                                         '${addr.street}'
                                         '${addr.apartment.isNotEmpty ? '، ${addr.apartment}' : ''}'
                                         '، ${addr.city}',
                                         style: AppTextStyles.regularSmall
                                             .copyWith(
-                                          color:
-                                              AppColors.textSecondary,
-                                        ),
+                                              color: AppColors.textSecondary,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -260,9 +226,7 @@ class _AddressesPageState extends State<AddressesPage> {
                   ),
                 ),
 
-                const SizedBox(
-                  height: AppSpacing.md,
-                ),
+                const SizedBox(height: AppSpacing.md),
 
                 SizedBox(
                   width: double.infinity,
@@ -272,9 +236,7 @@ class _AddressesPageState extends State<AddressesPage> {
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppRadius.md,
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                     ),
                     child: Text(

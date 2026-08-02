@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/services/onboarding_service.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
+import 'package:aklatna/core/widgets/skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -50,15 +52,13 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic),
     );
 
-    _textSlideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _entranceController,
-        curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
-      ),
-    );
+    _textSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
+          ),
+        );
 
     _breatheAnimation = Tween<double>(begin: 1.0, end: 1.035).animate(
       CurvedAnimation(parent: _breatheController, curve: Curves.easeInOut),
@@ -180,16 +180,13 @@ class _SplashScreenState extends State<SplashScreen>
             right: 0,
             child: FadeTransition(
               opacity: _fadeAnimation,
-              child: Center(
-                child: SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.4,
-                    valueColor: AlwaysStoppedAnimation(
-                      AppColors.primary.withOpacity(0.6),
-                    ),
-                  ),
+              child: const Center(
+                child: Skeleton(
+                  width: 90,
+                  height: 10,
+                  radius: AppRadius.full,
+                  baseColor: AppColors.shimmerBase,
+                  highlightColor: AppColors.shimmerHighlight,
                 ),
               ),
             ),
