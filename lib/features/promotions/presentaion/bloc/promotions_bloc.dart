@@ -1,4 +1,3 @@
-import 'package:aklatna/features/promotions/data/dataSource/promotionDataSource.dart';
 import 'package:aklatna/features/promotions/domain/entities/promotionEntity.dart';
 import 'package:aklatna/features/promotions/domain/usecases/promotionsUseCase.dart';
 import 'package:bloc/bloc.dart';

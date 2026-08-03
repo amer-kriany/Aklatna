@@ -2,7 +2,7 @@ import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_spacing.dart';
-
+import 'skeleton.dart';
 
 enum AppButtonType { primary, outlined, text }
 
@@ -34,21 +34,25 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final child = isLoading
-        ? SizedBox(
+        ? Skeleton(
             width: 20,
             height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                type == AppButtonType.primary ? AppColors.textOnPrimary : AppColors.primary,
-              ),
-            ),
+            isCircle: true,
+            baseColor: type == AppButtonType.primary
+                ? AppColors.textOnPrimary.withValues(alpha: 0.35)
+                : AppColors.primary.withValues(alpha: 0.2),
+            highlightColor: type == AppButtonType.primary
+                ? AppColors.textOnPrimary.withValues(alpha: 0.7)
+                : AppColors.primary.withValues(alpha: 0.35),
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (icon != null) ...[icon!, const SizedBox(width: AppSpacing.xs)],
+              if (icon != null) ...[
+                icon!,
+                const SizedBox(width: AppSpacing.xs),
+              ],
               Text(label),
             ],
           );
@@ -85,6 +89,8 @@ class AppButton extends StatelessWidget {
         break;
     }
 
-    return isFullWidth ? SizedBox(width: double.infinity, child: button) : button;
+    return isFullWidth
+        ? SizedBox(width: double.infinity, child: button)
+        : button;
   }
 }

@@ -6,6 +6,7 @@ import 'package:aklatna/features/addresses/presentation/widgets/AddEditAddressPa
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/widgets/page_skeletons.dart';
 
 class AddressSelectionBottomSheet extends StatefulWidget {
   const AddressSelectionBottomSheet({super.key, required this.userId});
@@ -73,8 +74,8 @@ class _AddressSelectionBottomSheetState
                 builder: (context, state) {
                   if (state is AddressLoading) {
                     return const SizedBox(
-                      height: 120,
-                      child: Center(child: CircularProgressIndicator()),
+                      height: 220,
+                      child: ListSkeleton(itemCount: 3),
                     );
                   }
 
@@ -118,66 +119,70 @@ class _AddressSelectionBottomSheetState
                             ),
                           ),
                           child: ListTile(
-  onTap: () async {
-    if (!isSelected) {
-      final addressBloc = context.read<AddressBloc>();
+                            onTap: () async {
+                              if (!isSelected) {
+                                final addressBloc = context.read<AddressBloc>();
 
-      // 1. Dispatch set default event
-      addressBloc.add(
-        SetDefaultAddressEvent(
-          userId: widget.userId,
-          addressId: addr.id,
-        ),
-      );
+                                // 1. Dispatch set default event
+                                addressBloc.add(
+                                  SetDefaultAddressEvent(
+                                    userId: widget.userId,
+                                    addressId: addr.id,
+                                  ),
+                                );
 
-      // 2. Wait until AddressBloc finishes reloading addresses from the backend
-      await addressBloc.stream.firstWhere(
-        (state) => state is AddressLoaded || state is AddressError,
-      );
+                                // 2. Wait until AddressBloc finishes reloading addresses from the backend
+                                await addressBloc.stream.firstWhere(
+                                  (state) =>
+                                      state is AddressLoaded ||
+                                      state is AddressError,
+                                );
 
-      // 3. Trigger profile refresh so the home page updates on the first try
-      if (context.mounted) {
-        context.read<ProfileBloc>().add(GetProfilesEvent());
-      }
-    }
+                                // 3. Trigger profile refresh so the home page updates on the first try
+                                if (context.mounted) {
+                                  context.read<ProfileBloc>().add(
+                                    GetProfilesEvent(),
+                                  );
+                                }
+                              }
 
-    // 4. Pop the bottom sheet safely
-    if (context.mounted) {
-      Navigator.pop(context);
-    }
-  },
-  leading: CircleAvatar(
-    backgroundColor: isSelected
-        ? AppColors.primaryLight
-        : AppColors.background,
-    child: Icon(
-      _iconForLabel(addr.label),
-      color: isSelected
-          ? AppColors.primary
-          : AppColors.textSecondary,
-    ),
-  ),
-  title: Text(
-    addr.label ?? 'عنوان',
-    style: AppTextStyles.bodyMedium.copyWith(
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-  subtitle: Text(
-    '${addr.street}${addr.apartment.isNotEmpty ? '، ${addr.apartment}' : ''}، ${addr.city}',
-    maxLines: 1,
-    overflow: TextOverflow.ellipsis,
-    style: AppTextStyles.regularSmall.copyWith(
-      color: AppColors.textSecondary,
-    ),
-  ),
-  trailing: isSelected
-      ? const Icon(
-          Icons.check_circle_rounded,
-          color: AppColors.primary,
-        )
-      : null,
-)
+                              // 4. Pop the bottom sheet safely
+                              if (context.mounted) {
+                                Navigator.pop(context);
+                              }
+                            },
+                            leading: CircleAvatar(
+                              backgroundColor: isSelected
+                                  ? AppColors.primaryLight
+                                  : AppColors.background,
+                              child: Icon(
+                                _iconForLabel(addr.label),
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
+                            title: Text(
+                              addr.label ?? 'عنوان',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              '${addr.street}${addr.apartment.isNotEmpty ? '، ${addr.apartment}' : ''}، ${addr.city}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.regularSmall.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            trailing: isSelected
+                                ? const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: AppColors.primary,
+                                  )
+                                : null,
+                          ),
                         );
                       },
                     );

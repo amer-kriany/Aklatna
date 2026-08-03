@@ -45,11 +45,6 @@ class Promotionmodel {
       return int.tryParse(value?.toString() ?? '') ?? 0;
     }
 
-    double asDoubleOrZero(dynamic value) {
-      if (value is num) return value.toDouble();
-      return double.tryParse(value?.toString() ?? '') ?? 0.0;
-    }
-
     DateTime asDateOrEpoch(dynamic value) {
       if (value is DateTime) return value;
       return DateTime.tryParse(value?.toString() ?? '') ??

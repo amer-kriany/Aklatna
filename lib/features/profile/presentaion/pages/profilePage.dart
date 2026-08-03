@@ -13,6 +13,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/widgets/page_skeletons.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -22,6 +24,131 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  Future<void> _contactSupport() async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'amer.kriany0@gmail.com', // <- put your real support email here
+      queryParameters: {'subject': 'مشكلة في تطبيق أكلاتنا'},
+    );
+
+    final launched = await launchUrl(emailUri);
+
+    if (!launched && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لا يوجد تطبيق بريد إلكتروني مثبت')),
+      );
+    }
+  }
+  void _showSignOutConfirmationDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (dialogContext) {
+      return Directionality(
+        textDirection: TextDirection.rtl,
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          backgroundColor: AppColors.background,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Minimalist Red Warning Icon
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.logout_rounded,
+                    color: AppColors.error,
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Title
+                Text(
+                  'تسجيل الخروج',
+                  style: AppTextStyles.h4.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+
+                // Subtitle / Description
+                Text(
+                  'هل أنت تأكد من أنك تريد تسجيل الخروج؟',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+
+                // Action Buttons Row
+                Row(
+                  children: [
+                    // Cancel Button
+                    Expanded(
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        child: Text(
+                          'إلغاء',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Confirm Sign Out Button (Destructive Red Fill)
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          backgroundColor: AppColors.error,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(dialogContext).pop();
+                          context.read<AuthBloc>().add(SignOutEvent());
+                        },
+                        child: Text(
+                          'تأكيد الخروج',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
+
   @override
   void initState() {
     super.initState();
@@ -57,9 +184,9 @@ class _ProfilePageState extends State<ProfilePage> {
       final file = File(pickedFile.path);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('جاري رفع الصورة...')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('جاري رفع الصورة...')));
 
       final fileExt = pickedFile.path.split('.').last;
       final filePath = '$userId/avatar.$fileExt';
@@ -70,10 +197,7 @@ class _ProfilePageState extends State<ProfilePage> {
       await storage.uploadBinary(
         filePath,
         await file.readAsBytes(),
-        fileOptions: FileOptions(
-          contentType: 'image/$fileExt',
-          upsert: true,
-        ),
+        fileOptions: FileOptions(contentType: 'image/$fileExt', upsert: true),
       );
 
       // 4. Generate URL with timestamp cache buster
@@ -84,11 +208,8 @@ class _ProfilePageState extends State<ProfilePage> {
       // 5. Dispatch Event
       if (mounted) {
         context.read<ProfileBloc>().add(
-              UpdateProfilePhotoEvent(
-                userId: userId,
-                photo: updatedPhotoUrl,
-              ),
-            );
+          UpdateProfilePhotoEvent(userId: userId, photo: updatedPhotoUrl),
+        );
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم تحديث الصورة الشخصية بنجاح')),
@@ -170,7 +291,7 @@ class _ProfilePageState extends State<ProfilePage> {
             child: BlocBuilder<ProfileBloc, ProfileState>(
               builder: (context, state) {
                 if (state is ProfileLoading || state is ProfileInitial) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const ProfileSkeleton();
                 }
                 if (state is ProfileError) {
                   return Center(child: Text(state.message));
@@ -214,11 +335,11 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                           ProfileMenuRow(
-  icon: Icons.location_on_outlined,
-  iconColor: AppColors.info,
-  label: 'العناوين',
-  onTap: () => context.push('/addresses'),
-),
+                            icon: Icons.location_on_outlined,
+                            iconColor: AppColors.info,
+                            label: 'العناوين',
+                            onTap: () => context.push('/addresses'),
+                          ),
                           ProfileMenuRow(
                             icon: Icons.favorite_border,
                             iconColor: Colors.pink,
@@ -226,11 +347,16 @@ class _ProfilePageState extends State<ProfilePage> {
                             onTap: () => context.push('/favorites'),
                           ),
                           ProfileMenuRow(
+                            icon: Icons.support_agent_outlined,
+                            iconColor: AppColors.info,
+                            label: 'تواصل معنا',
+                            onTap: _contactSupport,
+                          ),
+                          ProfileMenuRow(
                             icon: Icons.logout,
                             iconColor: AppColors.error,
                             label: 'تسجيل الخروج',
-                            onTap: () =>
-                                context.read<AuthBloc>().add(SignOutEvent()),
+                            onTap: () =>_showSignOutConfirmationDialog(context),
                           ),
                         ],
                       ),

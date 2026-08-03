@@ -1,39 +1,87 @@
-import 'package:flutter/material.dart';
-
-/// Shared helpers for checking business opening hours.
-/// Used by restaurant cards, "Open Now" homepage section, etc.
 class BusinessTimeUtils {
-  const BusinessTimeUtils._();
+  /// Returns true when the business is currently open.
+  ///
+  /// Examples:
+  /// 09:00 -> 17:00
+  /// 18:00 -> 04:00 (overnight)
+  static bool isOpenNow(
+    String openingTime,
+    String closingTime,
+  ) {
+    final now = DateTime.now();
 
-  /// Returns true if the current time falls within [openingTime] - [closingTime].
-  /// Handles overnight hours too (e.g. 18:00 - 02:00).
-  static bool isOpenNow(String openingTime, String closingTime) {
-    final now = TimeOfDay.now();
-    return isOpenAt(now, openingTime, closingTime);
-  }
+    final openMinutes = _timeToMinutes(openingTime);
+    final closeMinutes = _timeToMinutes(closingTime);
 
-  /// Same as [isOpenNow] but for a specific [time] (useful for testing).
-  static bool isOpenAt(TimeOfDay time, String openingTime, String closingTime) {
-    final open = _parseTime(openingTime);
-    final close = _parseTime(closingTime);
-
-    final nowMinutes = time.hour * 60 + time.minute;
-    final openMinutes = open.hour * 60 + open.minute;
-    final closeMinutes = close.hour * 60 + close.minute;
-
-    if (closeMinutes > openMinutes) {
-      // Same-day hours, e.g. 09:00 - 23:00
-      return nowMinutes >= openMinutes && nowMinutes <= closeMinutes;
-    } else {
-      // Overnight hours, e.g. 18:00 - 02:00
-      return nowMinutes >= openMinutes || nowMinutes <= closeMinutes;
+    if (openMinutes == null || closeMinutes == null) {
+      return false;
     }
+
+    final nowMinutes =
+        now.hour * 60 + now.minute;
+
+    // ============================================================
+    // SAME OPEN/CLOSE TIME
+    // ============================================================
+    //
+    // 00:00 -> 00:00 could mean 24 hours.
+    //
+    if (openMinutes == closeMinutes) {
+      return true;
+    }
+
+    // ============================================================
+    // NORMAL BUSINESS HOURS
+    // ============================================================
+    //
+    // Example:
+    // 09:00 -> 17:00
+    //
+    // Open:
+    // 09:00 <= now < 17:00
+    //
+    if (openMinutes < closeMinutes) {
+      return nowMinutes >= openMinutes &&
+          nowMinutes < closeMinutes;
+    }
+
+    // ============================================================
+    // OVERNIGHT BUSINESS HOURS
+    // ============================================================
+    //
+    // Example:
+    // 18:00 -> 04:00
+    //
+    // Open:
+    // 18:00 -> 23:59
+    // OR
+    // 00:00 -> 03:59
+    //
+    return nowMinutes >= openMinutes ||
+        nowMinutes < closeMinutes;
   }
 
-  static TimeOfDay _parseTime(String time) {
-    final parts = time.split(':');
-    final hour = parts.isNotEmpty ? int.tryParse(parts[0]) ?? 0 : 0;
-    final minute = parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0;
-    return TimeOfDay(hour: hour.clamp(0, 23), minute: minute.clamp(0, 59));
+  static int? _timeToMinutes(String value) {
+    try {
+      final parts = value.split(':');
+
+      if (parts.length < 2) {
+        return null;
+      }
+
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+
+      if (hour < 0 ||
+          hour > 23 ||
+          minute < 0 ||
+          minute > 59) {
+        return null;
+      }
+
+      return hour * 60 + minute;
+    } catch (_) {
+      return null;
+    }
   }
 }

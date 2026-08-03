@@ -39,7 +39,13 @@ OrderEntity mapToEntity(OrderModel order) {
     createdAt: order.createdAt,
     orderStatus: order.orderStatus,
     scheduledFor: order.scheduledFor,
-    description: order.description
+    description: order.description,
+    businessLogo: order.businessLogo,
+    businessName: order.businessName,
+    deliveryAddress: order.deliveryAddress,
+    // Comes directly from the DB row now (order.estimated_preparation_time,
+    // set by the restaurant per-order), not looked up from BusinessEntity.
+    estimatedPreparationTime: order.estimatedPreparationTime,
   );
 }
 
@@ -57,6 +63,10 @@ OrderModel entityToModel(OrderEntity entity) {
     createdAt: entity.createdAt,
     orderStatus: entity.orderStatus,
     scheduledFor: entity.scheduledFor,
-    description: entity.description
+    description: entity.description,
+    businessLogo: entity.businessLogo,
+    businessName: entity.businessName,
+    deliveryAddress: entity.deliveryAddress,
+    estimatedPreparationTime: entity.estimatedPreparationTime,
   );
 }

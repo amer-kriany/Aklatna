@@ -17,8 +17,9 @@ class Profilerepoimp implements Profilerepo {
     String userId,
     String? username,
     String? bio,
+    String? phone,
   ) async {
-    await profileDatasource.updateProfileData(userId, username,bio);
+    await profileDatasource.updateProfileData(userId, username,bio, phone);
   }
 
   @override

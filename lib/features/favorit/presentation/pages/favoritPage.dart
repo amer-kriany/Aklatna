@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
+import '../../../../core/widgets/page_skeletons.dart';
+import '../../../../core/widgets/skeleton_switch.dart';
 
 class FavoritesPage extends StatefulWidget {
   const FavoritesPage({super.key});
@@ -36,43 +38,52 @@ class _FavoritesPageState extends State<FavoritesPage> {
         body: SafeArea(
           child: BlocBuilder<FavoriteBloc, FavoriteState>(
             builder: (context, state) {
-              if (state is FavoriteLoading || state is FavoriteInitial) {
-                return const Center(child: CircularProgressIndicator());
-              }
               if (state is FavoriteError) {
                 return Center(child: Text(state.message));
               }
-              if (state is! FavoriteLoaded) {
-                return const SizedBox.shrink();
-              }
-              if (state.businesses.isEmpty) {
-                return Center(
-                  child: Text(
-                    'لا توجد مطاعم مفضلة بعد',
-                    style: AppTextStyles.bodyMedium,
-                  ),
-                );
-              }
 
-              return ListView.separated(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.lg,
-                  vertical: AppSpacing.md,
+              return SkeletonSwitch(
+                isLoading: state is FavoriteLoading || state is FavoriteInitial,
+                skeleton: const ListSkeleton(
+                  itemCount: 5,
+                  showLeadingCircle: false,
                 ),
-                itemCount: state.businesses.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: AppSpacing.md),
-                itemBuilder: (context, index) {
-                  final business = state.businesses[index];
-                  return BusinessCard(
-                    businessId: business.id,
-                    businessName: business.nameAr,
-                    coverUrl: business.coverUrl,
-                    rating: business.rating,
-                    ratingCount: business.ratingCount,
-                    onTap: () => context.push('/business/${business.id}'),
-                  );
-                },
+                child: Builder(
+                  builder: (_) {
+                    if (state is! FavoriteLoaded) {
+                      return const SizedBox.shrink();
+                    }
+                    if (state.businesses.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'لا توجد مطاعم مفضلة بعد',
+                          style: AppTextStyles.bodyMedium,
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.md,
+                      ),
+                      itemCount: state.businesses.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.md),
+                      itemBuilder: (context, index) {
+                        final business = state.businesses[index];
+                        return BusinessCard(
+                          businessId: business.id,
+                          businessName: business.nameAr,
+                          coverUrl: business.coverUrl,
+                          rating: business.rating,
+                          ratingCount: business.ratingCount,
+                          onTap: () => context.push('/business/${business.id}'),
+                        );
+                      },
+                    );
+                  },
+                ),
               );
             },
           ),

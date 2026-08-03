@@ -1,7 +1,6 @@
 import 'package:aklatna/features/favorit/data/datasource/favoriteDataSource.dart';
 import 'package:aklatna/features/favorit/domain/repository/favoritRepository.dart';
 import 'package:aklatna/features/home/domain/entity/businessEntity.dart';
-import 'package:aklatna/features/menu/domain/entity/menuItemEntity.dart';
 
 class FavoriteRepositoryImpl implements FavoriteRepository {
   final FavoriteDatasource datasource;

@@ -6,6 +6,8 @@ class AddressEntity {
   final String city;
   final String apartment;
   final bool isDefault;
+  final double? latitude;
+  final double? longitude;
 
   AddressEntity({
     required this.id,
@@ -15,5 +17,7 @@ class AddressEntity {
     required this.city,
     required this.apartment,
     required this.isDefault,
+    this.latitude,
+    this.longitude,
   });
 }

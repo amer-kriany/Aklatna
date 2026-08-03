@@ -18,3 +18,20 @@ final class AuthError extends AuthState {
   final String message;
   const AuthError({required this.message});
 }
+class AuthSignUpOtpSent extends AuthState {
+  final String email;
+  const AuthSignUpOtpSent({required this.email});
+  @override
+  List<Object> get props => [email];
+}
+
+class AuthPasswordResetEmailSent extends AuthState {
+  final String email;
+  const AuthPasswordResetEmailSent({required this.email});
+  @override
+  List<Object> get props => [email];
+}
+
+class AuthRecoveryVerified extends AuthState {}
+
+class AuthPasswordUpdated extends AuthState {}

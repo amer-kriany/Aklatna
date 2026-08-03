@@ -27,219 +27,299 @@ class PromotionCard extends StatelessWidget {
   final double? width;
   final String currencySymbol;
 
-  static const double _coverAspectRatio = 1.35;
-  static const double _cardRadius = AppRadius.xl;
-  static const double _defaultImageWidth =
-      180; // baseline when no explicit width given
+  static const double _coverAspectRatio = 1.45;
 
   @override
   Widget build(BuildContext context) {
-    final double savingsAmount =
-        (oldPrice != null && newPrice != null && oldPrice! > newPrice!)
-        ? (oldPrice! - newPrice!) + 1
-        : 0;
+    final screenWidth = MediaQuery.sizeOf(context).width;
 
-    return Container(
-      width: width,
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(_cardRadius),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      clipBehavior: Clip.antiAlias,
+    final double cardWidth = width ??
+        (screenWidth * 0.44).clamp(
+          165.0,
+          210.0,
+        );
+
+    final double savingsAmount =
+        oldPrice != null &&
+                newPrice != null &&
+                oldPrice! > newPrice!
+            ? oldPrice! - newPrice!
+            : 0.0;
+
+    return SizedBox(
+      width: cardWidth,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(_cardRadius),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  SizedBox(
-                    width: width ?? _defaultImageWidth,
-                    child: AspectRatio(
-                      aspectRatio: _coverAspectRatio,
-                      child: _buildCoverImage(),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Container(
+            width: cardWidth,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(
+                AppRadius.lg,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadow.withOpacity(0.08),
+                  blurRadius: 8,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ============================================================
+                // IMAGE
+                // ============================================================
+
+                SizedBox(
+                  width: cardWidth,
+                  child: AspectRatio(
+                    aspectRatio: _coverAspectRatio,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _buildCoverImage(),
+
+                        Positioned(
+                          top: AppSpacing.sm,
+                          right: AppSpacing.sm,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(
+                                AppRadius.full,
+                              ),
+                            ),
+                            child: Text(
+                              'خصم $discountPercentage%',
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.textOnPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Positioned(
-                    top: AppSpacing.sm,
-                    right: AppSpacing.sm,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                      ),
-                      child: Text(
-                        'خصم $discountPercentage%',
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textOnPrimary,
+                ),
+
+                // ============================================================
+                // ITEM INFO
+                // ============================================================
+
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                    AppSpacing.xs,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        itemName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.h4.copyWith(
+                          color: AppColors.textPrimary,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md,
-                  AppSpacing.md,
-                  AppSpacing.md,
-                  AppSpacing.sm,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      itemName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.h4.copyWith(
-                        color: AppColors.textPrimary,
+
+                      const SizedBox(height: 5),
+
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.storefront_rounded,
+                            size: 14,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 4),
+
+                          Expanded(
+                            child: Text(
+                              businessName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style:
+                                  AppTextStyles.regularSmall.copyWith(
+                                color: AppColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.storefront_rounded,
-                          size: 16,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: AppSpacing.xs),
-                        Flexible(
-                          child: Text(
-                            businessName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.regularSmall.copyWith(
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                child: Divider(
-                  height: 1,
-                  thickness: 0.6,
-                  color: AppColors.divider,
+
+                // ============================================================
+                // DIVIDER
+                // ============================================================
+
+                const Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                  ),
+                  child: Divider(
+                    height: 10,
+                    thickness: 0.5,
+                    color: AppColors.divider,
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (oldPrice != null)
-                          Text(
-                            '${_formatPrice(oldPrice!)} $currencySymbol',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              decoration: TextDecoration.lineThrough,
-                              color: AppColors.textHint,
-                            ),
-                          ),
-                        const SizedBox(height: 2),
-                        if (newPrice != null)
-                          Text(
-                            '${_formatPrice(newPrice!)} $currencySymbol',
-                            style: AppTextStyles.priceMedium.copyWith(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                      ],
-                    ),
-                    if (savingsAmount > 0) ...[
-                      const SizedBox(width: AppSpacing.md),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.sm,
-                          vertical: AppSpacing.xs,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryLight,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                        ),
+
+                // ============================================================
+                // PRICES
+                // ============================================================
+
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.sm,
+                    0,
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
                         child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              'وفر',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
+                            if (oldPrice != null)
+                              Text(
+                                '${_formatPrice(oldPrice!)} $currencySymbol',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    AppTextStyles.bodySmall.copyWith(
+                                  decoration:
+                                      TextDecoration.lineThrough,
+                                  color: AppColors.textHint,
+                                  fontSize: 9,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '${_formatPrice(savingsAmount)} $currencySymbol',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
+
+                            const SizedBox(height: 1),
+
+                            if (newPrice != null)
+                              Text(
+                                '${_formatPrice(newPrice!)} $currencySymbol',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    AppTextStyles.priceMedium.copyWith(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.primary,
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),
+
+                      if (savingsAmount > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryLight,
+                            borderRadius: BorderRadius.circular(
+                              AppRadius.sm,
+                            ),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'وفر',
+                                style:
+                                    AppTextStyles.caption.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 8,
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                '${_formatPrice(savingsAmount)} $currencySymbol',
+                                style:
+                                    AppTextStyles.caption.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  String _formatPrice(double price) {
-    return price.toInt().toString().replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => ',',
-    );
-  }
-
   Widget _buildCoverImage() {
-    final bool hasValidUrl = coverUrl != null && coverUrl!.isNotEmpty;
-    if (!hasValidUrl) return const _ImagePlaceholder();
+    if (coverUrl == null || coverUrl!.trim().isEmpty) {
+      return const _ImagePlaceholder();
+    }
+
     return Image.network(
       coverUrl!,
       fit: BoxFit.cover,
-      errorBuilder: (c, e, s) => const _ImagePlaceholder(),
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (
+        context,
+        error,
+        stackTrace,
+      ) {
+        return const _ImagePlaceholder();
+      },
     );
+  }
+
+  String _formatPrice(double price) {
+    return price
+        .toInt()
+        .toString()
+        .replaceAllMapped(
+          RegExp(r'\B(?=(\d{3})+(?!\d))'),
+          (match) => ',',
+        );
   }
 }
 
 class _ImagePlaceholder extends StatelessWidget {
   const _ImagePlaceholder();
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -248,7 +328,7 @@ class _ImagePlaceholder extends StatelessWidget {
       child: Icon(
         Icons.restaurant_rounded,
         color: AppColors.primary,
-        size: AppSizes.iconXl * 1.4,
+        size: AppSizes.iconXl,
       ),
     );
   }

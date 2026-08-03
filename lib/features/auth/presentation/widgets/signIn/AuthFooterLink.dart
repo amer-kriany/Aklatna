@@ -1,5 +1,4 @@
 import 'package:aklatna/core/theme/app_colors.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 
 class AuthFooterLink extends StatelessWidget {

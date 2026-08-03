@@ -2,16 +2,20 @@ import 'package:aklatna/features/addOnes/domain/enitity/addOnesEntity.dart';
 import 'package:aklatna/features/addOnes/presentation/bloc/add_ones_bloc.dart';
 import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
 import 'package:aklatna/features/cart/presentation/bloc/cart_bloc.dart';
+import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/menu/presentation/widgets/AddToCartSection.dart';
 import 'package:aklatna/features/menu/presentation/widgets/FoodDetailsImage.dart';
 import 'package:aklatna/features/menu/presentation/widgets/FoodDetailsInfo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/page_skeletons.dart';
+import '../../../../core/widgets/skeleton.dart';
 
 class Foodetailspage extends StatefulWidget {
   final String itemId;
@@ -23,8 +27,9 @@ class Foodetailspage extends StatefulWidget {
 
 class _FoodetailspageState extends State<Foodetailspage> {
   int _quantity = 1;
-  Set<String> _selectedAddonIds = {};
+  final Set<String> _selectedAddonIds = {};
   final TextEditingController _noteController = TextEditingController();
+  bool _businessFetchTriggered = false;
 
   @override
   void initState() {
@@ -51,131 +56,316 @@ class _FoodetailspageState extends State<Foodetailspage> {
         child: BlocBuilder<MenuBloc, MenuState>(
           builder: (context, state) {
             if (state is MenuLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const DashboardSkeleton();
             }
             if (state is MenuError) {
               return Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.orange),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.orange,
+                    ),
                     const SizedBox(height: 16),
-                    const Text("food not found", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Text(
+                      "food not found",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                   ],
                 ),
               );
             }
             if (state is MenuLoaded) {
+              // Fetch the business once we know its id from the loaded item.
+              // Guarded so this only fires once per page instance, not on
+              // every rebuild.
+              if (!_businessFetchTriggered) {
+                _businessFetchTriggered = true;
+                context.read<BusinessBloc>().add(
+                  GetBusinessById(id: state.item.businessId),
+                );
+              }
+
               return BlocBuilder<AddonBloc, AddOnesState>(
                 builder: (context, addonState) {
-                  final addons = addonState is AddonLoaded ? addonState.addons : <AddonEntity>[];
+                  final addons = addonState is AddonLoaded
+                      ? addonState.addons
+                      : <AddonEntity>[];
                   final addonsTotal = _addonsTotal(addons);
 
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              FoodDetailsImage(
-                                imageUrl: state.item.photoUrl,
-                                onBack: () => Navigator.pop(context),
-                                onFavorite: () {},
-                                isFavorite: false,
-                              ),
-                              const SizedBox(height: AppSpacing.lg),
-                              FoodDetailsInfo(
-                                title: state.item.nameAr,
-                                category: state.category.nameAr,
-                                description: state.item.description ?? '',
-                              ),
-                              if (addonState is AddonLoading)
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: AppSpacing.md),
-                                  child: Center(child: CircularProgressIndicator()),
-                                ),
-                              if (addons.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const SizedBox(height: AppSpacing.lg),
-                                      Text('إضافات', style: AppTextStyles.h4),
-                                      const SizedBox(height: AppSpacing.xs),
-                                      ...addons.map((addon) => CheckboxListTile(
-                                            contentPadding: EdgeInsets.zero,
-                                            value: _selectedAddonIds.contains(addon.id),
-                                            activeColor: AppColors.primary,
-                                            title: Text(addon.name, style: AppTextStyles.bodyMedium),
-                                            secondary: Text('+${addon.price.toStringAsFixed(0)}', style: AppTextStyles.priceMedium),
-                                            onChanged: (checked) {
-                                              setState(() {
-                                                if (checked == true) {
-                                                  _selectedAddonIds.add(addon.id);
-                                                } else {
-                                                  _selectedAddonIds.remove(addon.id);
-                                                }
-                                              });
-                                            },
-                                          )),
-                                    ],
-                                  ),
-                                ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: AppSpacing.lg),
-                                    Text('ملاحظات', style: AppTextStyles.h4),
-                                    const SizedBox(height: AppSpacing.xs),
-                                    TextField(
-                                      controller: _noteController,
-                                      maxLines: 2,
-                                      decoration: const InputDecoration(hintText: 'مثال: بدون بصل'),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.xl),
-                            ],
-                          ),
-                        ),
-                      ),
-                      AddToCartSection(
-                        price: ((state.item.price + addonsTotal) * _quantity).toString(),
-                        quantity: _quantity,
-                        onIncrement: () => setState(() => _quantity++),
-                        onDecrement: () {
-                          if (_quantity > 1) setState(() => _quantity--);
-                        },
-                        onAddToCart: () {
-                          final selectedAddons = addons
-                              .where((a) => _selectedAddonIds.contains(a.id))
-                              .map((a) => {'id': a.id, 'name': a.name, 'price': a.price})
-                              .toList();
+                  return BlocBuilder<BusinessBloc, BusinessState>(
+                    builder: (context, businessState) {
+                      final business = businessState is BusinessDetailLoaded
+                          ? businessState.business
+                          : null;
 
-                          context.read<CartBloc>().add(
-                            AddItemEvent(
-                              item: CartItem(
-                                itemId: state.item.id,
-                                nameAr: state.item.nameAr,
-                                description: state.item.description ?? '',
-                                photoUrl: state.item.photoUrl,
-                                price: state.item.price + addonsTotal,
-                                quantity: _quantity,
-                                businessId: state.item.businessId,
-                                note: _noteController.text.trim(),
-                                selectedAddons: selectedAddons,
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Column(
+                                children: [
+                                  FoodDetailsImage(
+                                    imageUrl: state.item.photoUrl,
+                                    onBack: () => Navigator.pop(context),
+                                    onFavorite: () {},
+                                    isFavorite: false,
+                                  ),
+
+                                  // ============================================================
+                                  // VIEW RESTAURANT BUTTON
+                                  // ============================================================
+                                  //
+                                  // Lets the customer navigate back to the business page from a food
+                                  // item reached via Search's popular dishes / category grid, where
+                                  // they'd otherwise have no way to know which restaurant this item
+                                  // belongs to.
+                                  // ============================================================
+                                  if (business != null)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.lg,
+                                        vertical: AppSpacing.sm,
+                                      ),
+                                      child: InkWell(
+                                        onTap: () => context.push(
+                                          '/business/${business.id}',
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.md,
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppSpacing.md,
+                                            vertical: AppSpacing.sm,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.surface,
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.md,
+                                            ),
+                                            border: Border.all(
+                                              color: AppColors.border,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                width: 32,
+                                                height: 32,
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.primaryLight,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        AppRadius.sm,
+                                                      ),
+                                                ),
+                                                clipBehavior: Clip.antiAlias,
+                                                child:
+                                                    business.logoUrl != null &&
+                                                        business
+                                                            .logoUrl!
+                                                            .isNotEmpty
+                                                    ? Image.network(
+                                                        business.logoUrl!,
+                                                        fit: BoxFit.cover,
+                                                      )
+                                                    : Icon(
+                                                        Icons
+                                                            .restaurant_rounded,
+                                                        size: 18,
+                                                        color:
+                                                            AppColors.primary,
+                                                      ),
+                                              ),
+                                              const SizedBox(
+                                                width: AppSpacing.sm,
+                                              ),
+                                              Expanded(
+                                                child: Text(
+                                                  business.nameAr,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: AppTextStyles
+                                                      .bodyMedium
+                                                      .copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                ),
+                                              ),
+                                              const Icon(
+                                                Icons.chevron_left_rounded,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                  const SizedBox(height: AppSpacing.lg),
+
+                                  FoodDetailsInfo(
+                                    title: state.item.nameAr,
+                                    category: state.category.nameAr,
+                                    description: state.item.description ?? '',
+                                  ),
+                                  if (addonState is AddonLoading)
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.lg,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          SizedBox(height: AppSpacing.sm),
+                                          Skeleton(
+                                            width: double.infinity,
+                                            height: 14,
+                                            radius: AppRadius.sm,
+                                          ),
+                                          SizedBox(height: AppSpacing.sm),
+                                          Skeleton(
+                                            width: 220,
+                                            height: 14,
+                                            radius: AppRadius.sm,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  if (addons.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.lg,
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const SizedBox(height: AppSpacing.lg),
+                                          Text(
+                                            'إضافات',
+                                            style: AppTextStyles.h4,
+                                          ),
+                                          const SizedBox(height: AppSpacing.xs),
+                                          ...addons.map(
+                                            (addon) => CheckboxListTile(
+                                              contentPadding: EdgeInsets.zero,
+                                              value: _selectedAddonIds.contains(
+                                                addon.id,
+                                              ),
+                                              activeColor: AppColors.primary,
+                                              title: Text(
+                                                addon.name,
+                                                style: AppTextStyles.bodyMedium,
+                                              ),
+                                              secondary: Text(
+                                                '+${addon.price.toStringAsFixed(0)}',
+                                                style:
+                                                    AppTextStyles.priceMedium,
+                                              ),
+                                              onChanged: (checked) {
+                                                setState(() {
+                                                  if (checked == true) {
+                                                    _selectedAddonIds.add(
+                                                      addon.id,
+                                                    );
+                                                  } else {
+                                                    _selectedAddonIds.remove(
+                                                      addon.id,
+                                                    );
+                                                  }
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.lg,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: AppSpacing.lg),
+                                        Text(
+                                          'ملاحظات',
+                                          style: AppTextStyles.h4,
+                                        ),
+                                        const SizedBox(height: AppSpacing.xs),
+                                        TextField(
+                                          controller: _noteController,
+                                          maxLines: 2,
+                                          decoration: const InputDecoration(
+                                            hintText: 'مثال: بدون بصل',
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.xl),
+                                ],
                               ),
                             ),
-                          );
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ],
+                          ),
+                          AddToCartSection(
+                            price:
+                                ((state.item.price + addonsTotal) * _quantity)
+                                    .toString(),
+                            quantity: _quantity,
+                            onIncrement: () => setState(() => _quantity++),
+                            onDecrement: () {
+                              if (_quantity > 1) setState(() => _quantity--);
+                            },
+                            onAddToCart: () {
+                              final selectedAddons = addons
+                                  .where(
+                                    (a) => _selectedAddonIds.contains(a.id),
+                                  )
+                                  .map(
+                                    (a) => {
+                                      'id': a.id,
+                                      'name': a.name,
+                                      'price': a.price,
+                                    },
+                                  )
+                                  .toList();
+
+                              context.read<CartBloc>().add(
+                                AddItemEvent(
+                                  item: CartItem(
+                                    itemId: state.item.id,
+                                    nameAr: state.item.nameAr,
+                                    description: state.item.description ?? '',
+                                    photoUrl: state.item.photoUrl,
+                                    price: state.item.price + addonsTotal,
+                                    quantity: _quantity,
+                                    businessId: state.item.businessId,
+                                    note: _noteController.text.trim(),
+                                    selectedAddons: selectedAddons,
+                                  ),
+                                  businessName: business?.nameAr,
+                                  businessLogo: business?.logoUrl,
+                                ),
+                              );
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
               );

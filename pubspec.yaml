@@ -36,33 +36,27 @@ dependencies:
   # ━━━━━━━━━━━━━━━━━━━━━━━━
   # Error Handling
   # ━━━━━━━━━━━━━━━━━━━━━━━━
-  dartz: ^0.10.1
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━
   # Local Storage
   # ━━━━━━━━━━━━━━━━━━━━━━━━
-  flutter_secure_storage: ^9.2.4
   shared_preferences: ^2.5.5
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━
   # Network
   # ━━━━━━━━━━━━━━━━━━━━━━━━
-  connectivity_plus: ^6.1.4
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━
   # Images
   # ━━━━━━━━━━━━━━━━━━━━━━━━
-  cached_network_image: ^3.4.1
   image_picker: ^1.2.3
+  cupertino_icons: ^1.0.8
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━
   # UI Helpers
   # ━━━━━━━━━━━━━━━━━━━━━━━━
-  flutter_svg: ^2.0.17
   shimmer: ^3.0.0              # loading skeletons
-  fluttertoast: ^8.2.12        # toast messages
   url_launcher: ^6.3.2         # open phone / whatsapp
-  intl: ^0.20.2                # date + number formatting
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━
   # Environment Variables
@@ -72,12 +66,16 @@ dependencies:
   google_fonts: ^8.1.0
   speech_to_text: ^7.4.0
   permission_handler: ^12.0.3
+  flutter_map: ^8.3.1
+  latlong2: ^0.10.1
+  http: ^1.6.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
   bloc_test: ^10.0.0
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -98,3 +96,8 @@ flutter:
         weight: 600
       - asset: assets/fonts/PlusJakartaSans-Bold.ttf
         weight: 700
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/app_icon.png"

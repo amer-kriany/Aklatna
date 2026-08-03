@@ -1,3 +1,4 @@
+import 'package:aklatna/features/cart/presentation/widgets/checkout/orderCountDownDialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/distance_utils.dart';
+import '../../../../core/utils/delivery_price_utils.dart';
+import '../../../addresses/domain/entity/addressEntity.dart';
+import '../../../addresses/presentation/bloc/address_bloc.dart';
+import '../../../home/presentation/bloc/business_bloc.dart';
 import '../../../cart/presentation/bloc/cart_bloc.dart';
 import '../../../cart/presentation/widgets/checkout/CheckoutAppBar.dart';
 import '../../../cart/presentation/widgets/checkout/ConfirmButton.dart';
@@ -28,6 +34,57 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String selectedOrderType = 'طلب عادي';
   DateTime? _scheduledFor;
   final TextEditingController _notesController = TextEditingController();
+  bool _blockIfRestaurantNowClosed(BuildContext context, String businessId) {
+    final businessState = context.read<BusinessBloc>().state;
+
+    if (businessState is! BusinessFetched) return false;
+
+    for (final business in businessState.businesses) {
+      if (business.id == businessId) {
+        if (!business.isOpen) {
+          showDialog(
+            context: context,
+            builder: (dialogContext) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+              ),
+              title: Text(
+                'المطعم مغلق الآن',
+                style: AppTextStyles.h4,
+                textAlign: TextAlign.center,
+              ),
+              content: Text(
+                'المطعم مغلق. لا يمكن إتمام الطلب حالياً',
+                style: AppTextStyles.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                  ),
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: Text(
+                    'حسناً',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+          return true;
+        }
+        break;
+      }
+    }
+    return false;
+  }
 
   @override
   void dispose() {
@@ -61,7 +118,54 @@ class _CheckoutPageState extends State<CheckoutPage> {
     setState(() => _scheduledFor = scheduled);
   }
 
-  void _onConfirm() {
+  // ============================================================
+  // DELIVERY PRICE CALC
+  // ============================================================
+  //
+  // Same pattern used in CartPage: distance from customer's default
+  // address to the business, converted to a price via
+  // DeliveryPriceUtils. Returns 0 (not null) if pickup or if location
+  // data is unavailable, since this feeds directly into total_price
+  // which is stored in the DB — a null there would be a real bug.
+  // ============================================================
+
+  double _calculateDeliveryPrice(BuildContext context, String businessId) {
+    if (selectedDeliveryOption != 'توصيل') return 0;
+
+    final addressState = context.read<AddressBloc>().state;
+    final businessState = context.read<BusinessBloc>().state;
+
+    if (addressState is! AddressLoaded) return 0;
+    if (businessState is! BusinessFetched) return 0;
+
+    AddressEntity? defaultAddress;
+
+    for (final address in addressState.addresses) {
+      if (address.isDefault) {
+        defaultAddress = address;
+        break;
+      }
+    }
+
+    if (defaultAddress == null) return 0;
+
+    for (final business in businessState.businesses) {
+      if (business.id == businessId) {
+        final distanceKm = DistanceUtils.calculateDistanceKm(
+          customerLatitude: defaultAddress.latitude,
+          customerLongitude: defaultAddress.longitude,
+          restaurantLatitude: business.latitude,
+          restaurantLongitude: business.longitude,
+        );
+
+        return DeliveryPriceUtils.calculateDeliveryPrice(distanceKm) ?? 0;
+      }
+    }
+
+    return 0;
+  }
+
+  Future<void> _onConfirm() async {
     final orderState = context.read<OrderBloc>().state;
     if (orderState is OrderPlacing) return;
 
@@ -80,8 +184,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
       ).showSnackBar(const SnackBar(content: Text('اختر وقت الجدولة أولاً')));
       return;
     }
+    if (_blockIfRestaurantNowClosed(context, cartState.businessId!)) {
+      return;
+    }
 
     final profile = profileState.profile;
+
+    // BUGFIX: total_price previously only included item subtotal —
+    // delivery fee was never added, meaning every stored order
+    // undercharged the actual amount the restaurant should collect
+    // (this app is cash-only, so this directly affects real money
+    // changing hands).
+    final deliveryPrice = _calculateDeliveryPrice(
+      context,
+      cartState.businessId!,
+    );
+
+    final totalPrice = cartState.totalPrice + deliveryPrice;
 
     final order = OrderEntity(
       businessId: cartState.businessId!,
@@ -92,7 +211,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
       deliveryAddress: selectedDeliveryOption == 'توصيل'
           ? profile.address
           : null,
-      totalPrice: cartState.totalPrice,
+      totalPrice: totalPrice,
       orderType: selectedDeliveryOption == 'توصيل'
           ? OrderType.delivery
           : OrderType.pickup,
@@ -101,7 +220,24 @@ class _CheckoutPageState extends State<CheckoutPage> {
       description: _notesController.text.trim().isEmpty
           ? null
           : _notesController.text.trim(),
+      businessName: cartState.businessName,
+      businessLogo: cartState.businessLogo,
     );
+
+    // ================================================================
+    // COUNTDOWN CONFIRMATION
+    // ================================================================
+    //
+    // Order is NOT placed yet — this shows a 5s countdown with a cancel
+    // button. Only if it resolves to `true` (timer ran out naturally,
+    // customer didn't cancel) do we actually dispatch PlaceOrderEvent.
+    // ================================================================
+
+    final shouldPlaceOrder = await OrderCountdownDialog.show(context);
+
+    if (shouldPlaceOrder != true) return;
+
+    if (!mounted) return;
 
     context.read<OrderBloc>().add(PlaceOrderEvent(order: order));
   }

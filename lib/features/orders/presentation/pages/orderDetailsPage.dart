@@ -1,5 +1,11 @@
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:aklatna/features/addresses/domain/entity/addressEntity.dart';
+import 'package:aklatna/features/addresses/presentation/bloc/address_bloc.dart';
+import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
+import 'package:aklatna/core/utils/distance_utils.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
@@ -49,7 +55,7 @@ class OrderDetailsPage extends StatelessWidget {
                 const SizedBox(height: AppSpacing.lg),
 
                 // Delivery information
-                _buildDeliveryInfo(),
+                _buildDeliveryInfo(context),
 
                 const SizedBox(height: AppSpacing.xl),
 
@@ -65,7 +71,7 @@ class OrderDetailsPage extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.lg),
 
-                // Total
+                // Total (with delivery fee breakdown)
                 _buildPriceSummary(),
 
                 // Description
@@ -183,23 +189,37 @@ class OrderDetailsPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'حالة الطلب',
-            style: AppTextStyles.h4,
-          ),
-
+          Text('حالة الطلب', style: AppTextStyles.h4),
           const SizedBox(height: AppSpacing.lg),
-
-          _buildStatusTimeline(),
+          if (order.orderStatus == OrderStatus.cancelled)
+            _buildCancelledState()
+          else
+            _buildStatusTimeline(),
         ],
       ),
+    );
+  }
+
+  Widget _buildCancelledState() {
+    return Row(
+      children: [
+        Icon(Icons.cancel_rounded, color: AppColors.error, size: 28),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Text(
+            'تم إلغاء هذا الطلب',
+            style: AppTextStyles.bodyMedium.copyWith(
+              fontWeight: FontWeight.bold,
+              color: AppColors.error,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -216,7 +236,6 @@ class OrderDetailsPage extends StatelessWidget {
           icon: Icons.receipt_long_rounded,
           isLast: false,
         ),
-
         _statusStep(
           title: 'جاري تحضير الطلب',
           subtitle: 'المطعم يقوم بتحضير طلبك',
@@ -225,29 +244,22 @@ class OrderDetailsPage extends StatelessWidget {
           icon: Icons.restaurant_rounded,
           isLast: false,
         ),
-
         _statusStep(
-          title: 'تم تجهيز الطلب',
-          subtitle: 'طلبك جاهز للتوصيل',
+          title: 'الطلب جاهز',
+          subtitle: order.orderType == OrderType.delivery
+              ? 'طلبك جاهز للتوصيل'
+              : 'طلبك جاهز للاستلام',
           stepIndex: 2,
           currentIndex: currentIndex,
           icon: Icons.inventory_2_rounded,
           isLast: false,
         ),
-
         _statusStep(
-          title: 'الطلب في الطريق',
-          subtitle: 'مندوب التوصيل في طريقه إليك',
+          title: 'تم الإكمال',
+          subtitle: order.orderType == OrderType.delivery
+              ? 'تم توصيل طلبك'
+              : 'تم استلام طلبك',
           stepIndex: 3,
-          currentIndex: currentIndex,
-          icon: Icons.delivery_dining_rounded,
-          isLast: false,
-        ),
-
-        _statusStep(
-          title: 'تم التسليم',
-          subtitle: 'تم توصيل طلبك',
-          stepIndex: 4,
           currentIndex: currentIndex,
           icon: Icons.check_circle_rounded,
           isLast: true,
@@ -357,7 +369,49 @@ class OrderDetailsPage extends StatelessWidget {
   // DELIVERY INFORMATION
   // ===========================================================================
 
-  Widget _buildDeliveryInfo() {
+  Widget _buildDeliveryInfo(BuildContext context) {
+    // ============================================================
+    // DISTANCE CALC (info only — this is unrelated to the delivery
+    // FEE breakdown in _buildPriceSummary, which is derived from
+    // stored totalPrice and doesn't have this staleness issue)
+    // ============================================================
+    //
+    // NOTE: uses the customer's CURRENT default address coordinates,
+    // not a snapshot from when this order was placed.
+    // ============================================================
+
+    String? distanceText;
+
+    final addressState = context.watch<AddressBloc>().state;
+    final businessState = context.watch<BusinessBloc>().state;
+
+    if (addressState is AddressLoaded && businessState is BusinessFetched) {
+      AddressEntity? defaultAddress;
+
+      for (final address in addressState.addresses) {
+        if (address.isDefault) {
+          defaultAddress = address;
+          break;
+        }
+      }
+
+      if (defaultAddress != null) {
+        for (final business in businessState.businesses) {
+          if (business.id == order.businessId) {
+            final distanceKm = DistanceUtils.calculateDistanceKm(
+              customerLatitude: defaultAddress.latitude,
+              customerLongitude: defaultAddress.longitude,
+              restaurantLatitude: business.latitude,
+              restaurantLongitude: business.longitude,
+            );
+
+            distanceText = DistanceUtils.formatDistance(distanceKm);
+            break;
+          }
+        }
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -385,6 +439,15 @@ class OrderDetailsPage extends StatelessWidget {
                   icon: Icons.location_on_outlined,
                   title: 'عنوان التوصيل',
                   value: order.deliveryAddress!,
+                ),
+                const Divider(),
+              ],
+
+              if (distanceText != null) ...[
+                _infoRow(
+                  icon: Icons.social_distance_outlined,
+                  title: 'المسافة',
+                  value: distanceText,
                 ),
                 const Divider(),
               ],
@@ -586,10 +649,29 @@ class OrderDetailsPage extends StatelessWidget {
   }
 
   // ===========================================================================
-  // PRICE SUMMARY
+  // PRICE SUMMARY (with delivery fee breakdown)
+  // ===========================================================================
+  //
+  // Delivery fee is DERIVED as totalPrice - itemsSubtotal, rather than
+  // recalculated from current distance/address. This is intentional:
+  // totalPrice is the authoritative, correctly-stored amount from when
+  // the order was actually placed (post-fix), so deriving from it is
+  // exact — recomputing via current address would reintroduce the
+  // "customer's address may have changed since" staleness problem.
   // ===========================================================================
 
   Widget _buildPriceSummary() {
+    final itemsSubtotal = order.items.fold<double>(
+      0,
+      (sum, item) => sum + (item.price * item.quantity),
+    );
+
+    // Clamp to 0 as a safety net against float rounding producing a
+    // tiny negative value, or against pre-fix legacy orders where
+    // totalPrice might be less than itemsSubtotal for other reasons.
+    final deliveryFee =
+        (order.totalPrice - itemsSubtotal).clamp(0, double.infinity);
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -599,23 +681,63 @@ class OrderDetailsPage extends StatelessWidget {
           color: AppColors.border,
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          Text(
-            'الإجمالي',
-            style: AppTextStyles.h4,
+          _priceRow(
+            'المجموع الفرعي',
+            '${itemsSubtotal.toStringAsFixed(0)} ل.س',
           ),
 
-          Text(
-            '${order.totalPrice.toStringAsFixed(0)} ل.س',
-            style: AppTextStyles.h4.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          const SizedBox(height: AppSpacing.sm),
+
+          _priceRow(
+            'رسوم التوصيل',
+            order.orderType == OrderType.delivery
+                ? '${deliveryFee.toStringAsFixed(0)} ل.س'
+                : 'لا يوجد (استلام)',
+          ),
+
+          const SizedBox(height: AppSpacing.sm),
+          const Divider(),
+          const SizedBox(height: AppSpacing.xs),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'الإجمالي',
+                style: AppTextStyles.h4,
+              ),
+
+              Text(
+                '${order.totalPrice.toStringAsFixed(0)} ل.س',
+                style: AppTextStyles.h4.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _priceRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTextStyles.regularMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: AppTextStyles.bodyMedium,
+        ),
+      ],
     );
   }
 
@@ -663,9 +785,14 @@ class OrderDetailsPage extends StatelessWidget {
     switch (status) {
       case OrderStatus.pending:
         return 0;
-
-      default:
-        return 0;
+      case OrderStatus.preparing:
+        return 1;
+      case OrderStatus.ready:
+        return 2;
+      case OrderStatus.completed:
+        return 3;
+      case OrderStatus.cancelled:
+        return -1; // handled separately, see _buildOrderStatus
     }
   }
 

@@ -1,5 +1,11 @@
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
+import 'package:aklatna/core/utils/delivery_price_utils.dart';
+import 'package:aklatna/core/utils/distance_utils.dart';
+import 'package:aklatna/features/addresses/domain/entity/addressEntity.dart';
+import 'package:aklatna/features/addresses/presentation/bloc/address_bloc.dart';
+import 'package:aklatna/features/home/presentation/pages/PeriodicRebuildMixin.dart';
+
 import 'package:aklatna/features/home/presentation/widgets/home/AddressSelectionBottomSheet.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/BusinessCard.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/HomeDeliveryHeader.dart';
@@ -7,15 +13,24 @@ import 'package:aklatna/features/home/presentation/widgets/home/HomeGreeting.dar
 import 'package:aklatna/features/home/presentation/widgets/home/HomeSearchBar.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SectionHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SponseredBanner.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/ongoingOrderCard.dart.dart';
+
+import 'package:aklatna/features/orders/presentation/pages/orderDetailsPage.dart';
+import 'package:aklatna/features/orders/orderStatus.dart';
+import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
+
 import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
 import 'package:aklatna/features/promotions/presentaion/widgets/promotionCard.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/page_skeletons.dart';
 
 import '../../business_type.dart';
 import '../../domain/entity/businessEntity.dart';
 import '../bloc/business_bloc.dart';
+
 import '../../../profile/presentaion/bloc/profile_bloc.dart';
 
 class HomePage extends StatefulWidget {
@@ -25,39 +40,66 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
   static const double _recommendedTileWidth = 160;
-  static const double _recommendedRowHeight = 210;
+  static const double _recommendedRowHeight = 220;
 
   @override
   void initState() {
     super.initState();
+
     context.read<BusinessBloc>().add(GetBusinesses());
     context.read<ProfileBloc>().add(GetProfilesEvent());
     context.read<PromotionsBloc>().add(LoadPromotionsEvent());
+
+    startPeriodicRebuild();
   }
 
+  @override
+  void dispose() {
+    stopPeriodicRebuild();
+    super.dispose();
+  }
+
+  // ============================================================
+  // ADDRESS
+  // ============================================================
+
   String _formatAddress(String? fullAddress) {
-    if (fullAddress == null || fullAddress.trim().isEmpty) return '';
+    if (fullAddress == null || fullAddress.trim().isEmpty) {
+      return '';
+    }
+
     final parts = fullAddress
         .split(',')
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
+
     if (parts.length >= 2) {
       return '${parts.first}, ${parts.last}';
     }
+
     return fullAddress;
   }
+
+  // ============================================================
+  // BUSINESS TYPE
+  // ============================================================
 
   String _typeLabel(BusinessType type) {
     switch (type) {
       case BusinessType.restaurant:
         return 'مطعم';
+
       case BusinessType.juice_shop:
         return 'محل عصائر';
     }
   }
+
+  // ============================================================
+  // ADDRESS BOTTOM SHEET
+  // ============================================================
 
   void _showAddressBottomSheet(BuildContext context, String userId) async {
     await showModalBottomSheet(
@@ -71,22 +113,67 @@ class _HomePageState extends State<HomePage> {
       },
     );
 
-    if (mounted) {
-      context.read<ProfileBloc>().add(GetProfilesEvent());
+    if (!mounted) {
+      return;
     }
+
+    context.read<ProfileBloc>().add(GetProfilesEvent());
   }
+
+  // ============================================================
+  // DELIVERY FEE
+  // ============================================================
+
+  String _deliveryFeeText(BuildContext context, BusinessEntity business) {
+    final addressState = context.watch<AddressBloc>().state;
+
+    if (addressState is! AddressLoaded) return 'غير متوفر';
+
+    AddressEntity? defaultAddress;
+    for (final address in addressState.addresses) {
+      if (address.isDefault) {
+        defaultAddress = address;
+        break;
+      }
+    }
+
+    if (defaultAddress == null) return 'غير متوفر';
+
+    final distanceKm = DistanceUtils.calculateDistanceKm(
+      customerLatitude: defaultAddress.latitude,
+      customerLongitude: defaultAddress.longitude,
+      restaurantLatitude: business.latitude,
+      restaurantLongitude: business.longitude,
+    );
+
+    final price = DeliveryPriceUtils.calculateDeliveryPrice(distanceKm);
+    return DeliveryPriceUtils.formatDeliveryPrice(price);
+  }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+
       body: SafeArea(
         child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, profileState) {
+            // ========================================================
+            // PROFILE LOADING
+            // ========================================================
+
             if (profileState is ProfileLoading ||
                 profileState is ProfileInitial) {
-              return const Center(child: CircularProgressIndicator());
+              return const DashboardSkeleton();
             }
+
+            // ========================================================
+            // PROFILE ERROR
+            // ========================================================
 
             if (profileState is ProfileError ||
                 profileState is! ProfileLoaded) {
@@ -99,19 +186,24 @@ class _HomePageState extends State<HomePage> {
                       size: 64,
                       color: Colors.orange,
                     ),
+
                     const SizedBox(height: 16),
+
                     const Text(
-                      "Profile not found",
+                      'Profile not found',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
                     const SizedBox(height: 8),
+
                     TextButton(
-                      onPressed: () =>
-                          context.read<ProfileBloc>().add(GetProfilesEvent()),
-                      child: const Text("Retry"),
+                      onPressed: () {
+                        context.read<ProfileBloc>().add(GetProfilesEvent());
+                      },
+                      child: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -120,91 +212,251 @@ class _HomePageState extends State<HomePage> {
 
             final profile = profileState.profile;
 
+            // ========================================================
+            // ORDERS
+            // ========================================================
+
+            final orderBloc = context.read<OrderBloc>();
+
+            if (orderBloc.state is OrderInitial) {
+              orderBloc.add(GetCustomerOrdersEvent(customerId: profile.id));
+            }
+
+            // ========================================================
+            // ADDRESSES
+            // ========================================================
+            //
+            // BUGFIX: delivery fee display depends on AddressBloc, but
+            // nothing on Home was ever triggering its initial load —
+            // only CartPage/AddressesPage did. That's why delivery fee
+            // showed "غير متوفر" on first launch until the customer
+            // visited Cart at least once. Same guard pattern as the
+            // OrderBloc check right above.
+            // ========================================================
+
+            if (context.read<AddressBloc>().state is AddressInitial) {
+              context.read<AddressBloc>().add(
+                LoadAddressesEvent(userId: profile.id),
+              );
+            }
+
+            // ========================================================
+            // BUSINESSES
+            // ========================================================
+
             return BlocBuilder<BusinessBloc, BusinessState>(
               builder: (context, businessState) {
+                // ====================================================
+                // BUSINESS LOADING
+                // ====================================================
+
                 if (businessState is BusinessLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const DashboardSkeleton();
                 }
+
+                // ====================================================
+                // BUSINESS ERROR
+                // ====================================================
+
                 if (businessState is BusinessError) {
                   return Center(child: Text(businessState.message));
                 }
 
+                // ====================================================
+                // BUSINESS LIST
+                // ====================================================
+
                 List<BusinessEntity> businesses = <BusinessEntity>[];
+
                 if (businessState is BusinessFetched) {
                   businesses = businessState.businesses;
                 }
 
+                // ====================================================
+                // SORT BY RATING
+                // ====================================================
+
                 final sorted = [...businesses]
                   ..sort((a, b) => b.rating.compareTo(a.rating));
-                final popularBusiness = sorted.isNotEmpty ? sorted.first : null;
-                final recommendedBusinesses = sorted.length > 1
-                    ? sorted.sublist(1)
-                    : <BusinessEntity>[];
+
+                // ====================================================
+                // TOP RATED
+                // ====================================================
+
+                final topRatedBusinesses = sorted
+                    .where((b) => b.rating > 4.5)
+                    .toList();
+
+                // ====================================================
+                // OPEN NOW
+                // ====================================================
+                //
+                // THIS IS THE IMPORTANT PART.
+                //
+                // Every second HomePage rebuilds (via PeriodicRebuildMixin).
+                //
+                // Every rebuild:
+                //
+                // b.isOpen
+                //
+                // is evaluated again.
+                //
+                // So when closing_time is reached:
+                //
+                // b.isOpen == false
+                //
+                // and the restaurant automatically disappears.
+                //
+                final openNowCandidates = sorted
+                    .where(
+                      (b) =>
+                          b.isOpen &&
+                          !topRatedBusinesses.any((t) => t.id == b.id),
+                    )
+                    .toList();
 
                 const String? sponsoredBannerImageUrl = null;
 
+                // ====================================================
+                // PAGE
+                // ====================================================
+
                 return SingleChildScrollView(
                   padding: EdgeInsets.zero,
+
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+
                     children: [
+                      // ==================================================
+                      // HEADER
+                      // ==================================================
                       Container(
                         decoration: const BoxDecoration(
                           color: AppColors.surface,
+
                           borderRadius: BorderRadius.only(
                             bottomLeft: Radius.circular(AppRadius.xl),
                             bottomRight: Radius.circular(AppRadius.xl),
                           ),
                         ),
+
                         padding: const EdgeInsets.fromLTRB(
                           AppSpacing.pageHorizontal,
                           AppSpacing.md,
                           AppSpacing.pageHorizontal,
                           AppSpacing.lg,
                         ),
+
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+
                           children: [
                             HomeDeliveryHeader(
                               addressLabel: _formatAddress(profile.address),
+
                               avatarUrl: profile.photo,
+
                               onAvatarTap: () async {
-                                await context.push("/profile");
+                                await context.push('/profile');
+
                                 if (context.mounted) {
                                   context.read<ProfileBloc>().add(
                                     GetProfilesEvent(),
                                   );
                                 }
                               },
+
                               onAddressTap: () =>
                                   _showAddressBottomSheet(context, profile.id),
                             ),
+
                             const SizedBox(height: AppSpacing.lg),
+
                             HomeGreeting(userName: profile.userName),
+
                             const SizedBox(height: AppSpacing.md),
+
                             HomeSearchBar(
-                              onTap: () => context.go("/search"),
+                              onTap: () => context.go('/search'),
                               onMicTap: null,
                             ),
                           ],
                         ),
                       ),
+
+                      // ==================================================
+                      // ONGOING ORDER
+                      // ==================================================
+                      BlocBuilder<OrderBloc, OrderState>(
+                        builder: (context, orderState) {
+                          if (orderState is! CustomerOrdersFetched) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final ongoingOrders = orderState.orders.where((
+                            order,
+                          ) {
+                            return order.orderStatus == OrderStatus.pending ||
+                                order.orderStatus == OrderStatus.preparing ||
+                                order.orderStatus == OrderStatus.ready;
+                          }).toList();
+
+                          if (ongoingOrders.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final order = ongoingOrders.first;
+
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.pageHorizontal,
+                              AppSpacing.lg,
+                              AppSpacing.pageHorizontal,
+                              0,
+                            ),
+
+                            child: OngoingOrderCard(
+                              order: order,
+
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        OrderDetailsPage(order: order),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+
                       const SizedBox(height: AppSpacing.xl),
 
+                      // ==================================================
+                      // SPONSORED
+                      // ==================================================
                       if (sponsoredBannerImageUrl != null) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
+
                           child: SponsoredBanner(
                             imageUrl: sponsoredBannerImageUrl,
+
                             onTap: () {},
                           ),
                         ),
+
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
-                      // ---- Promotions section — responsive, no fixed height/width ----
+                      // ==================================================
+                      // PROMOTIONS
+                      // ==================================================
                       BlocBuilder<PromotionsBloc, PromotionsState>(
                         builder: (context, promoState) {
                           if (promoState is PromotionsLoading) {
@@ -212,7 +464,13 @@ class _HomePageState extends State<HomePage> {
                               padding: EdgeInsets.symmetric(
                                 vertical: AppSpacing.xl,
                               ),
-                              child: Center(child: CircularProgressIndicator()),
+                              child: SizedBox(
+                                height: 110,
+                                child: ListSkeleton(
+                                  itemCount: 2,
+                                  showLeadingCircle: false,
+                                ),
+                              ),
                             );
                           }
 
@@ -234,120 +492,203 @@ class _HomePageState extends State<HomePage> {
                                 ),
                                 child: SectionHeader(title: 'عروض وخصومات'),
                               ),
+
                               const SizedBox(height: AppSpacing.md),
+
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
+
                                 padding: const EdgeInsets.only(
                                   left: AppSpacing.pageHorizontal,
                                   right: AppSpacing.sm,
                                 ),
-                                child: IntrinsicHeight(
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      for (
-                                        int i = 0;
-                                        i < promoState.promotions.length;
-                                        i++
-                                      ) ...[
-                                        if (i != 0)
-                                          const SizedBox(width: AppSpacing.sm),
-                                        PromotionCard(
-                                          businessName: promoState
-                                              .promotions[i]
-                                              .businessName,
-                                          coverUrl:
-                                              promoState.promotions[i].photoUrl,
-                                          itemName:
-                                              promoState.promotions[i].itemName,
-                                          discountPercentage: promoState
-                                              .promotions[i]
-                                              .discountPercentage,
-                                          oldPrice:
-                                              promoState.promotions[i].oldPrice,
-                                          newPrice:
-                                              promoState.promotions[i].newPrice,
-                                          onTap: () => context.push(
-                                            "/business/${promoState.promotions[i].businessId}",
-                                          ),
-                                        ),
-                                      ],
+
+                                child: Row(
+                                  children: [
+                                    for (
+                                      int i = 0;
+                                      i < promoState.promotions.length;
+                                      i++
+                                    ) ...[
+                                      if (i != 0)
+                                        const SizedBox(width: AppSpacing.sm),
+
+                                      PromotionCard(
+                                        businessName: promoState
+                                            .promotions[i]
+                                            .businessName,
+
+                                        coverUrl:
+                                            promoState.promotions[i].photoUrl,
+
+                                        itemName:
+                                            promoState.promotions[i].itemName,
+
+                                        discountPercentage: promoState
+                                            .promotions[i]
+                                            .discountPercentage,
+
+                                        oldPrice: promoState
+                                            .promotions[i]
+                                            .oldPrice
+                                            ?.toDouble(),
+
+                                        newPrice: promoState
+                                            .promotions[i]
+                                            .newPrice
+                                            ?.toDouble(),
+
+                                        onTap: () {
+                                          context.push(
+                                            '/business/${promoState.promotions[i].businessId}',
+                                          );
+                                        },
+                                      ),
                                     ],
-                                  ),
+                                  ],
                                 ),
                               ),
+
                               const SizedBox(height: AppSpacing.xl),
                             ],
                           );
                         },
                       ),
 
-                      if (recommendedBusinesses.isNotEmpty) ...[
+                      // ==================================================
+                      // TOP RATED
+                      // ==================================================
+                      if (topRatedBusinesses.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: SectionHeader(title: 'موصى لك'),
+                          child: SectionHeader(title: 'الأعلى تقييمًا'),
                         ),
+
                         const SizedBox(height: AppSpacing.md),
+
                         SizedBox(
                           height: _recommendedRowHeight,
+
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
+
                             padding: const EdgeInsets.only(
                               left: AppSpacing.pageHorizontal,
                               right: AppSpacing.sm,
                             ),
-                            itemCount: recommendedBusinesses.length,
+
+                            itemCount: topRatedBusinesses.length,
+
                             separatorBuilder: (_, __) =>
                                 const SizedBox(width: AppSpacing.sm),
+
                             itemBuilder: (context, index) {
-                              final business = recommendedBusinesses[index];
+                              final business = topRatedBusinesses[index];
+
                               return BusinessCard(
                                 businessId: business.id,
+
                                 width: _recommendedTileWidth,
+
+                                height: 175,
+
+                                compact: true,
+
                                 businessName: business.nameAr,
+
                                 subtitle:
                                     '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
+
                                 coverUrl: business.coverUrl,
+
                                 rating: business.rating,
+
                                 ratingCount: business.ratingCount,
-                                imageAspectRatio: 1.2,
+
+                                statusText: business.isOpen
+                                    ? 'مفتوح الآن'
+                                    : 'مغلق الآن',
+
+                                deliveryFeeText: _deliveryFeeText(
+                                  context,
+                                  business,
+                                ),
+
                                 onTap: () =>
-                                    context.push("/business/${business.id}"),
+                                    context.push('/business/${business.id}'),
                               );
                             },
                           ),
                         ),
+
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
-                      if (popularBusiness != null) ...[
+                      // ==================================================
+                      // OPEN NOW
+                      // ==================================================
+                      if (openNowCandidates.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: SectionHeader(title: 'الأكثر طلبًا'),
+                          child: SectionHeader(title: 'مفتوح الآن'),
                         ),
+
                         const SizedBox(height: AppSpacing.md),
-                        Padding(
+
+                        ListView.separated(
+                          shrinkWrap: true,
+
+                          physics: const NeverScrollableScrollPhysics(),
+
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child: BusinessCard(
-                            businessId: popularBusiness.id,
-                            businessName: popularBusiness.nameAr,
-                            subtitle:
-                                '${_typeLabel(popularBusiness.type)} · ${_formatAddress(popularBusiness.adress)}',
-                            coverUrl: popularBusiness.coverUrl,
-                            rating: popularBusiness.rating,
-                            ratingCount: popularBusiness.ratingCount,
-                            imageAspectRatio: 3.4,
-                            onTap: () =>
-                                context.push("/business/${popularBusiness.id}"),
-                          ),
+
+                          itemCount: openNowCandidates.length,
+
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: AppSpacing.md),
+
+                          itemBuilder: (context, index) {
+                            final business = openNowCandidates[index];
+
+                            return BusinessCard(
+                              businessId: business.id,
+
+                              height: 250,
+
+                              compact: false,
+
+                              businessName: business.nameAr,
+
+                              subtitle:
+                                  '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
+
+                              coverUrl: business.coverUrl,
+
+                              rating: business.rating,
+
+                              ratingCount: business.ratingCount,
+
+                              statusText: business.isOpen
+                                  ? 'مفتوح الآن'
+                                  : 'مغلق الآن',
+
+                              deliveryFeeText: _deliveryFeeText(
+                                context,
+                                business,
+                              ),
+
+                              onTap: () =>
+                                  context.push('/business/${business.id}'),
+                            );
+                          },
                         ),
+
                         const SizedBox(height: AppSpacing.xl),
                       ],
                     ],

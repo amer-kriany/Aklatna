@@ -8,6 +8,8 @@ class AddressModel {
   final String city;
   final String apartment;
   final bool isDefault;
+  final double? latitude;
+  final double? longitude;
 
   AddressModel({
     required this.id,
@@ -17,9 +19,17 @@ class AddressModel {
     required this.city,
     required this.apartment,
     required this.isDefault,
+    this.latitude,
+    this.longitude,
   });
 
   factory AddressModel.fromJson(Map<String, dynamic> json) {
+    double? asDouble(dynamic value) {
+      if (value == null) return null;
+      if (value is num) return value.toDouble();
+      return double.tryParse(value.toString());
+    }
+
     return AddressModel(
       id: json['id'].toString(),
       userId: json['user_id']?.toString() ?? '',
@@ -28,16 +38,21 @@ class AddressModel {
       city: json['city']?.toString() ?? '',
       apartment: json['apartment']?.toString() ?? '',
       isDefault: json['is_default'] == true,
+
+      latitude: asDouble(json['latitude']),
+      longitude: asDouble(json['longitude']),
     );
   }
 
   AddressEntity toEntity() => AddressEntity(
-    id: id,
-    userId: userId,
-    label: label,
-    street: street,
-    city: city,
-    apartment: apartment,
-    isDefault: isDefault,
-  );
+        id: id,
+        userId: userId,
+        label: label,
+        street: street,
+        city: city,
+        apartment: apartment,
+        isDefault: isDefault,
+        latitude: latitude,
+        longitude: longitude,
+      );
 }

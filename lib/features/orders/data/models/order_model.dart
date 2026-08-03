@@ -1,7 +1,6 @@
 import 'package:aklatna/features/cart/domain/entities/cartItem.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:aklatna/features/orders/order_type.dart';
-import 'package:dartz/dartz.dart';
 
 class OrderModel {
   final String? id;
@@ -20,6 +19,12 @@ class OrderModel {
   final OrderType orderType;
   final OrderStatus orderStatus;
   final DateTime? scheduledFor;
+
+  // Set by the restaurant (via the dashboard) once they start preparing
+  // this specific order — a per-order estimate, not a fixed business
+  // default. Column: order.estimated_preparation_time (int, minutes).
+  final int? estimatedPreparationTime;
+
   OrderModel({
     this.id,
     this.orderNumber,
@@ -33,7 +38,11 @@ class OrderModel {
     required this.totalPrice,
     required this.orderType,
     required this.orderStatus,
-    this.scheduledFor, this.description, this.businessLogo, this.businessName,
+    this.scheduledFor,
+    this.description,
+    this.businessLogo,
+    this.businessName,
+    this.estimatedPreparationTime,
   });
 
   Map<String, dynamic> toJson() {
@@ -47,11 +56,13 @@ class OrderModel {
       'total_price': totalPrice,
       'order_type': orderType.name,
       'description': description,
-      'business_logo':businessLogo,
-      'business_name':businessName,
+      'business_logo': businessLogo,
+      'business_name': businessName,
       'order_status': 'pending',
       'scheduled_for': scheduledFor?.toIso8601String(),
       // id, created_at, order_number — DB-generated, not sent from client
+      // estimated_preparation_time — set later by the restaurant
+      // dashboard once they start preparing, not sent at placement time
     };
   }
 
@@ -62,6 +73,12 @@ class OrderModel {
     double asDoubleOrZero(dynamic value) {
       if (value is num) return value.toDouble();
       return double.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    int? asNullableInt(dynamic value) {
+      if (value == null) return null;
+      if (value is num) return value.toInt();
+      return int.tryParse(value.toString());
     }
 
     DateTime asDateOrEpoch(dynamic value) {
@@ -94,17 +111,15 @@ class OrderModel {
     }
 
     List<CartItem> asCartItems(dynamic value) {
-      try{
-         if (value is! List) return <CartItem>[];
-      return value
-          .whereType<Map>()
-          .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e)))
-          .toList();
-      }catch(e){
-        Println("Error parsing cart items in order: $e");
-    return <CartItem>[];
+      try {
+        if (value is! List) return <CartItem>[];
+        return value
+            .whereType<Map>()
+            .map((e) => CartItem.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+      } catch (e) {
+        return <CartItem>[];
       }
-     
     }
 
     return OrderModel(
@@ -124,7 +139,9 @@ class OrderModel {
       orderStatus: asOrderStatus(orders['order_status']),
       description: asNullableString(orders['description']),
       scheduledFor: asNullableDate(orders['scheduled_for']),
-
+      estimatedPreparationTime: asNullableInt(
+        orders['estimated_preparation_time'],
+      ),
     );
   }
 }

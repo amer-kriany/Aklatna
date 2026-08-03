@@ -4,7 +4,9 @@ import 'package:aklatna/features/favorit/presentation/bloc/favorite_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/widgets/skeleton.dart';
 
 class BusinessCard extends StatelessWidget {
   final String businessId;
@@ -13,9 +15,17 @@ class BusinessCard extends StatelessWidget {
   final String? coverUrl;
   final double? rating;
   final int? ratingCount;
+
   final VoidCallback onTap;
+
   final double? width;
-  final double imageAspectRatio;
+  final double height;
+
+  final String? statusText;
+  final String? deliveryFeeText;
+
+  /// Makes the card suitable for small horizontal lists.
+  final bool compact;
 
   const BusinessCard({
     super.key,
@@ -27,11 +37,15 @@ class BusinessCard extends StatelessWidget {
     this.rating,
     this.ratingCount,
     this.width,
-    this.imageAspectRatio = 1.3,
+    this.height = 245,
+    this.statusText,
+    this.deliveryFeeText,
+    this.compact = false,
   });
 
   void _onToggleFavorite(BuildContext context) {
     final userId = Supabase.instance.client.auth.currentUser?.id;
+
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('الرجاء تسجيل الدخول لإضافة المفضلة')),
@@ -40,188 +54,327 @@ class BusinessCard extends StatelessWidget {
     }
 
     context.read<FavoriteBloc>().add(
-          ToggleFavoriteEvent(
-            userId: userId,
-            businessId: businessId,
-          ),
-        );
+      ToggleFavoriteEvent(userId: userId, businessId: businessId),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
+    final hasSubtitle = subtitle != null && subtitle!.trim().isNotEmpty;
+    final hasStatus = statusText != null && statusText!.trim().isNotEmpty;
+    final hasDelivery =
+        deliveryFeeText != null && deliveryFeeText!.trim().isNotEmpty;
+
+    return SizedBox(
+      width: width,
+      height: height,
       child: Container(
-        width: width,
         decoration: BoxDecoration(
           color: AppColors.background,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: [
             BoxShadow(
               color: AppColors.shadow,
-              blurRadius: 14,
-              offset: const Offset(0, 6),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                AspectRatio(
-                  aspectRatio: imageAspectRatio,
-                  child: _buildImage(),
-                ),
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: 40,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withOpacity(0),
-                          Colors.black.withOpacity(0.30),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                if (rating != null)
-                  Positioned(
-                    left: AppSpacing.xs,
-                    bottom: AppSpacing.xs,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.95),
-                        borderRadius: BorderRadius.circular(AppRadius.full),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.star_rounded, size: 13, color: AppColors.warning),
-                          const SizedBox(width: 3),
-                          Text(
-                            rating!.toStringAsFixed(1),
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          if (ratingCount != null) ...[
-                            const SizedBox(width: 2),
-                            Text(
-                              '($ratingCount)',
-                              style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                Positioned(
-                  top: AppSpacing.xs,
-                  right: AppSpacing.xs,
-                  child: BlocBuilder<FavoriteBloc, FavoriteState>(
-                    builder: (context, favoriteState) {
-                      final isFavorite = favoriteState is FavoriteLoaded &&
-                          favoriteState.favoriteIds.contains(businessId);
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
 
-                      return Material(
-                        color: Colors.white.withOpacity(0.9),
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: () => _onToggleFavorite(context),
-                          child: SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: Icon(
-                              isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                              color: isFavorite ? AppColors.primary : Colors.black87,
-                              size: 17,
-                            ),
+            children: [
+              // ============================================================
+              // IMAGE
+              // ============================================================
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: _buildImage()),
+
+                    // Gradient Mask
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      height: compact ? 24 : 36,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withOpacity(0),
+                              Colors.black.withOpacity(0.35),
+                            ],
                           ),
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+
+                    // Rating Badge
+                    if (rating != null)
+                      Positioned(
+                        left: compact ? 6 : AppSpacing.xs,
+                        bottom: compact ? 6 : AppSpacing.xs,
+                        child: _buildRating(),
+                      ),
+
+                    // Favorite Button
+                    Positioned(
+                      top: compact ? 6 : AppSpacing.xs,
+                      right: compact ? 6 : AppSpacing.xs,
+                      child: _buildFavoriteButton(context),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, 2),
-              child: Text(
-                businessName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.h4.copyWith(color: AppColors.textPrimary),
               ),
-            ),
-            if (subtitle != null && subtitle!.isNotEmpty)
+
+              // ============================================================
+              // INFORMATION
+              // ============================================================
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.sm, 0, AppSpacing.sm, AppSpacing.sm),
-                child: Text(
-                  subtitle!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.regularSmall.copyWith(color: AppColors.textSecondary),
+                padding: EdgeInsets.fromLTRB(
+                  compact ? 8 : AppSpacing.sm,
+                  compact ? 5 : AppSpacing.xs,
+                  compact ? 8 : AppSpacing.sm,
+                  compact ? 7 : AppSpacing.sm,
                 ),
-              )
-            else
-              const SizedBox(height: AppSpacing.sm),
-          ],
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Business name
+                    Text(
+                      businessName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.h4.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: compact ? 13 : 16,
+                      ),
+                    ),
+
+                    // Subtitle
+                    if (hasSubtitle) ...[
+                      const SizedBox(height: 1),
+                      Text(
+                        subtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.regularSmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: compact ? 10 : 12,
+                        ),
+                      ),
+                    ],
+
+                    // Status + Delivery Pills
+                    if (hasStatus || hasDelivery) ...[
+                      SizedBox(height: compact ? 4 : 6),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        clipBehavior: Clip.none,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (hasStatus)
+                              _buildPill(
+                                text: statusText!,
+                                backgroundColor: AppColors.primaryLight,
+                                foregroundColor: AppColors.primary,
+                              ),
+                            if (hasStatus && hasDelivery)
+                              SizedBox(width: compact ? 5 : 6),
+                            if (hasDelivery)
+                              _buildPill(
+                                text: deliveryFeeText!,
+                                backgroundColor: AppColors.surfaceVariant,
+                                foregroundColor: AppColors.textPrimary,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  // ==========================================================================
+  // IMAGE
+  // ==========================================================================
+
   Widget _buildImage() {
-    if (coverUrl == null || coverUrl!.isEmpty) {
+    if (coverUrl == null || coverUrl!.trim().isEmpty) {
       return Container(
+        width: double.infinity,
+        height: double.infinity,
         color: AppColors.primaryLight,
         alignment: Alignment.center,
         child: Icon(
           Icons.storefront_rounded,
           color: AppColors.primary,
-          size: AppSizes.iconXl * 1.4,
+          size: compact ? 24 : 36,
         ),
       );
     }
 
     return Image.network(
       coverUrl!,
+      width: double.infinity,
+      height: double.infinity,
       fit: BoxFit.cover,
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
+
         return Container(
+          width: double.infinity,
+          height: double.infinity,
           color: AppColors.surfaceVariant,
-          child: const Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+          child: const Skeleton(
+            width: double.infinity,
+            height: double.infinity,
+            radius: 0,
           ),
         );
       },
       errorBuilder: (context, error, stackTrace) {
         return Container(
+          width: double.infinity,
+          height: double.infinity,
           color: AppColors.surfaceVariant,
+          alignment: Alignment.center,
           child: Icon(
             Icons.broken_image_outlined,
             color: AppColors.textSecondary,
-            size: AppSizes.iconXl,
+            size: compact ? 20 : 30,
           ),
         );
       },
+    );
+  }
+
+  // ==========================================================================
+  // RATING
+  // ==========================================================================
+
+  Widget _buildRating() {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 5 : AppSpacing.xs,
+        vertical: compact ? 2 : 3,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.star_rounded,
+            size: compact ? 10 : 13,
+            color: AppColors.warning,
+          ),
+          const SizedBox(width: 2),
+          Text(
+            rating!.toStringAsFixed(1),
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: compact ? 9 : 11,
+            ),
+          ),
+          if (ratingCount != null) ...[
+            const SizedBox(width: 1),
+            Text(
+              '($ratingCount)',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: compact ? 9 : 10,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================================
+  // FAVORITE
+  // ==========================================================================
+
+  Widget _buildFavoriteButton(BuildContext context) {
+    return BlocBuilder<FavoriteBloc, FavoriteState>(
+      builder: (context, favoriteState) {
+        final isFavorite =
+            favoriteState is FavoriteLoaded &&
+            favoriteState.favoriteIds.contains(businessId);
+
+        final size = compact ? 24.0 : 32.0;
+
+        return Material(
+          color: Colors.white.withOpacity(0.9),
+          shape: const CircleBorder(),
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: () => _onToggleFavorite(context),
+            child: SizedBox(
+              width: size,
+              height: size,
+              child: Icon(
+                isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                color: isFavorite ? AppColors.primary : Colors.black87,
+                size: compact ? 13 : 17,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // ==========================================================================
+  // PILL
+  // ==========================================================================
+
+  Widget _buildPill({
+    required String text,
+    required Color backgroundColor,
+    required Color foregroundColor,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 10,
+        vertical: compact ? 3 : 4,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(AppRadius.full),
+      ),
+      child: Text(
+        text,
+        maxLines: 1,
+        style: AppTextStyles.caption.copyWith(
+          color: foregroundColor,
+          fontWeight: FontWeight.w700,
+          fontSize: compact ? 9.5 : 10.5,
+        ),
+      ),
     );
   }
 }

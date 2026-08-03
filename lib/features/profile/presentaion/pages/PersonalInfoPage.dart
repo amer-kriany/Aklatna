@@ -21,20 +21,32 @@ class PersonalInfoPage extends StatefulWidget {
 class _PersonalInfoPageState extends State<PersonalInfoPage> {
   late final TextEditingController _usernameController;
   late final TextEditingController _bioController;
+  late final TextEditingController _phoneController;
 
-  @override
+ @override
   void initState() {
     super.initState();
     final state = context.read<ProfileBloc>().state;
     final profile = state is ProfileLoaded ? state.profile : null;
+
     _usernameController = TextEditingController(text: profile?.userName ?? '');
     _bioController = TextEditingController(text: profile?.bio ?? '');
+
+    // Strips +963 if present in DB so the user sees just the local number in the field,
+    // OR ensures +963 is prepended.
+    String initialPhone = profile?.phoneNumber ?? '';
+    if (initialPhone.startsWith('+963')) {
+      initialPhone = initialPhone.replaceFirst('+963', '');
+    }
+    
+    _phoneController = TextEditingController(text: initialPhone);
   }
 
   @override
   void dispose() {
     _usernameController.dispose();
     _bioController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -43,7 +55,8 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) return;
 
-      final pickedFile = await ImagePicker().pickImage(source: source, imageQuality: 80);
+      final pickedFile =
+          await ImagePicker().pickImage(source: source, imageQuality: 80);
       if (pickedFile == null) return;
 
       final file = File(pickedFile.path);
@@ -58,12 +71,13 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
       );
 
       final publicUrl = storage.getPublicUrl(filePath);
-      final updatedPhotoUrl = '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
+      final updatedPhotoUrl =
+          '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
 
       if (mounted) {
         context.read<ProfileBloc>().add(
-          UpdateProfilePhotoEvent(userId: user.id, photo: updatedPhotoUrl),
-        );
+              UpdateProfilePhotoEvent(userId: user.id, photo: updatedPhotoUrl),
+            );
       }
     } catch (e) {
       if (mounted) {
@@ -77,18 +91,24 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
   void _showPhotoOptionsSheet() {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('تغيير الصورة الشخصية', style: AppTextStyles.h4),
                 const SizedBox(height: AppSpacing.md),
                 ListTile(
-                  leading: const Icon(Icons.photo_library_outlined, color: AppColors.primary),
+                  leading: const Icon(Icons.photo_library_outlined,
+                      color: AppColors.primary),
                   title: const Text('اختيار من المعرض'),
                   onTap: () {
                     Navigator.pop(context);
@@ -96,7 +116,8 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                   },
                 ),
                 ListTile(
-                  leading: const Icon(Icons.camera_alt_outlined, color: AppColors.primary),
+                  leading: const Icon(Icons.camera_alt_outlined,
+                      color: AppColors.primary),
                   title: const Text('التقاط صورة بالكاميرا'),
                   onTap: () {
                     Navigator.pop(context);
@@ -111,17 +132,24 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
     );
   }
 
-  void _onSave() {
+ void _onSave() {
     final state = context.read<ProfileBloc>().state;
     if (state is! ProfileLoaded) return;
 
+    final rawPhone = _phoneController.text.trim();
+    // If user already included +963, avoid duplicating it
+    final fullPhone = rawPhone.startsWith('+963') 
+        ? rawPhone 
+        : '+963$rawPhone';
+
     context.read<ProfileBloc>().add(
-      UpdateProfileEvent(
-        userId: state.profile.id,
-        username: _usernameController.text.trim(),
-        bio: _bioController.text.trim(),
-      ),
-    );
+          UpdateProfileEvent(
+            userId: state.profile.id,
+            username: _usernameController.text.trim(),
+            bio: _bioController.text.trim(),
+            phone: fullPhone,
+          ),
+        );
   }
 
   @override
@@ -129,7 +157,8 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(title: Text('المعلومات الشخصية', style: AppTextStyles.h4)),
+        appBar:
+            AppBar(title: Text('المعلومات الشخصية', style: AppTextStyles.h4)),
         body: SafeArea(
           child: BlocListener<ProfileBloc, ProfileState>(
             listener: (context, state) {
@@ -144,15 +173,20 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
               }
             },
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   BlocBuilder<ProfileBloc, ProfileState>(
                     builder: (context, state) {
-                      final photoUrl = state is ProfileLoaded ? state.profile.photo : null;
+                      final photoUrl =
+                          state is ProfileLoaded ? state.profile.photo : null;
                       final hasValidPhoto = photoUrl != null &&
-                          (photoUrl.startsWith('http://') || photoUrl.startsWith('https://'));
+                          (photoUrl.startsWith('http://') ||
+                              photoUrl.startsWith('https://'));
 
                       return Center(
                         child: Stack(
@@ -170,13 +204,21 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                                         errorBuilder: (c, e, s) => Container(
                                           color: AppColors.surface,
                                           alignment: Alignment.center,
-                                          child: const Icon(Icons.person, size: AppSizes.iconXl, color: AppColors.textSecondary),
+                                          child: const Icon(
+                                            Icons.person,
+                                            size: AppSizes.iconXl,
+                                            color: AppColors.textSecondary,
+                                          ),
                                         ),
                                       )
                                     : Container(
                                         color: AppColors.surface,
                                         alignment: Alignment.center,
-                                        child: const Icon(Icons.person, size: AppSizes.iconXl, color: AppColors.textSecondary),
+                                        child: const Icon(
+                                          Icons.person,
+                                          size: AppSizes.iconXl,
+                                          color: AppColors.textSecondary,
+                                        ),
                                       ),
                               ),
                             ),
@@ -185,17 +227,25 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                               right: -2,
                               child: InkWell(
                                 onTap: _showPhotoOptionsSheet,
-                                borderRadius: BorderRadius.circular(AppRadius.full),
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.full),
                                 child: Container(
                                   width: 28,
                                   height: 28,
                                   decoration: BoxDecoration(
                                     color: AppColors.primary,
                                     shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.background, width: 2),
+                                    border: Border.all(
+                                      color: AppColors.background,
+                                      width: 2,
+                                    ),
                                   ),
                                   alignment: Alignment.center,
-                                  child: const Icon(Icons.edit, color: AppColors.textOnPrimary, size: 14),
+                                  child: const Icon(
+                                    Icons.edit,
+                                    color: AppColors.textOnPrimary,
+                                    size: 14,
+                                  ),
                                 ),
                               ),
                             ),
@@ -205,9 +255,24 @@ class _PersonalInfoPageState extends State<PersonalInfoPage> {
                     },
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  AuthTextField(label: 'الاسم', hint: 'أدخل اسمك', controller: _usernameController),
+                  AuthTextField(
+                    label: 'الاسم',
+                    hint: 'أدخل اسمك',
+                    controller: _usernameController,
+                  ),
                   const SizedBox(height: AppSpacing.lg),
-                  AuthTextField(label: 'نبذة عني', hint: 'اكتب نبذة قصيرة', controller: _bioController),
+                  AuthTextField(
+                    label: 'رقم الهاتف',
+                    hint: 'أدخل رقم هاتفك',
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                  AuthTextField(
+                    label: 'نبذة عني',
+                    hint: 'اكتب نبذة قصيرة',
+                    controller: _bioController,
+                  ),
                   const SizedBox(height: AppSpacing.xl),
                   BlocBuilder<ProfileBloc, ProfileState>(
                     builder: (context, state) {

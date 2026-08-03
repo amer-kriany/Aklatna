@@ -1,3 +1,4 @@
+import 'package:aklatna/features/addresses/domain/entity/addressEntity.dart';
 import 'package:aklatna/features/addresses/presentation/bloc/address_bloc.dart';
 import 'package:aklatna/features/addresses/presentation/widgets/AddEditAddressPage.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
@@ -7,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/page_skeletons.dart';
 
 class AddressesPage extends StatefulWidget {
   const AddressesPage({super.key});
@@ -21,9 +23,12 @@ class _AddressesPageState extends State<AddressesPage> {
   @override
   void initState() {
     super.initState();
+
     final profileState = context.read<ProfileBloc>().state;
+
     if (profileState is ProfileLoaded) {
       _userId = profileState.profile.id;
+
       context.read<AddressBloc>().add(LoadAddressesEvent(userId: _userId!));
     }
   }
@@ -36,6 +41,57 @@ class _AddressesPageState extends State<AddressesPage> {
         return Icons.work_outline;
       default:
         return Icons.location_on_outlined;
+    }
+  }
+
+  // ---------------------------------------------------------
+  // EDIT ADDRESS
+  // ---------------------------------------------------------
+
+  Future<void> _editAddress(AddressEntity addr) async {
+    final changed = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            AddEditAddressPage(existing: addr, isFirstAddress: false),
+      ),
+    );
+
+    if (changed == true && mounted && _userId != null) {
+      // Refresh addresses list
+      context.read<AddressBloc>().add(LoadAddressesEvent(userId: _userId!));
+
+      // Refresh profile/homepage location
+      context.read<ProfileBloc>().add(GetProfilesEvent());
+    }
+  }
+
+  // ---------------------------------------------------------
+  // ADD NEW ADDRESS
+  // ---------------------------------------------------------
+
+  Future<void> _addNewAddress() async {
+    final state = context.read<AddressBloc>().state;
+
+    bool isFirstAddress = false;
+
+    if (state is AddressLoaded) {
+      isFirstAddress = state.addresses.isEmpty;
+    }
+
+    final changed = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddEditAddressPage(isFirstAddress: isFirstAddress),
+      ),
+    );
+
+    if (changed == true && mounted && _userId != null) {
+      // Refresh addresses list
+      context.read<AddressBloc>().add(LoadAddressesEvent(userId: _userId!));
+
+      // Refresh profile/homepage location
+      context.read<ProfileBloc>().add(GetProfilesEvent());
     }
   }
 
@@ -57,14 +113,17 @@ class _AddressesPageState extends State<AddressesPage> {
                   child: BlocBuilder<AddressBloc, AddressState>(
                     builder: (context, state) {
                       if (state is AddressLoading || state is AddressInitial) {
-                        return const Center(child: CircularProgressIndicator());
+                        return const ListSkeleton(itemCount: 5);
                       }
+
                       if (state is AddressError) {
                         return Center(child: Text(state.message));
                       }
+
                       if (state is! AddressLoaded) {
                         return const SizedBox.shrink();
                       }
+
                       if (state.addresses.isEmpty) {
                         return Center(
                           child: Text(
@@ -80,6 +139,7 @@ class _AddressesPageState extends State<AddressesPage> {
                             const SizedBox(height: AppSpacing.sm),
                         itemBuilder: (context, index) {
                           final addr = state.addresses[index];
+
                           return Container(
                             decoration: BoxDecoration(
                               color: AppColors.background,
@@ -101,7 +161,9 @@ class _AddressesPageState extends State<AddressesPage> {
                                     color: AppColors.primary,
                                   ),
                                 ),
+
                                 const SizedBox(width: AppSpacing.md),
+
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -113,7 +175,9 @@ class _AddressesPageState extends State<AddressesPage> {
                                       ),
                                       const SizedBox(height: AppSpacing.xxs),
                                       Text(
-                                        '${addr.street}${addr.apartment.isNotEmpty ? '، ${addr.apartment}' : ''}، ${addr.city}',
+                                        '${addr.street}'
+                                        '${addr.apartment.isNotEmpty ? '، ${addr.apartment}' : ''}'
+                                        '، ${addr.city}',
                                         style: AppTextStyles.regularSmall
                                             .copyWith(
                                               color: AppColors.textSecondary,
@@ -122,23 +186,20 @@ class _AddressesPageState extends State<AddressesPage> {
                                     ],
                                   ),
                                 ),
-                                // Edit button
+
+                                // EDIT
                                 IconButton(
                                   icon: const Icon(
                                     Icons.edit_outlined,
                                     color: AppColors.primary,
                                     size: AppSizes.iconSm,
                                   ),
-                                  onPressed: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => AddEditAddressPage(
-                                        existing: addr,
-                                        isFirstAddress: false,
-                                      ),
-                                    ),
-                                  ),
+                                  onPressed: () {
+                                    _editAddress(addr);
+                                  },
                                 ),
+
+                                // DELETE
                                 IconButton(
                                   icon: const Icon(
                                     Icons.delete_outline,
@@ -164,29 +225,14 @@ class _AddressesPageState extends State<AddressesPage> {
                     },
                   ),
                 ),
+
                 const SizedBox(height: AppSpacing.md),
+
                 SizedBox(
                   width: double.infinity,
                   height: AppSizes.buttonHeight,
                   child: FilledButton(
-                    onPressed: () {
-                      final state = context.read<AddressBloc>().state;
-
-                      bool isFirstAddress = false;
-
-                      if (state is AddressLoaded) {
-                        isFirstAddress = state.addresses.isEmpty;
-                      }
-
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AddEditAddressPage(
-                            isFirstAddress: isFirstAddress,
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: _addNewAddress,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(

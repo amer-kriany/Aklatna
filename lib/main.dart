@@ -1,4 +1,6 @@
 import 'package:aklatna/core/router/app_router.dart';
+import 'package:aklatna/core/router/MainShell.dart';
+import 'package:aklatna/core/services/onboarding_service.dart';
 import 'package:aklatna/features/addresses/data/dataSource/addressDataSource.dart';
 import 'package:aklatna/features/addresses/data/repository/addressRepoImp.dart';
 import 'package:aklatna/features/addresses/domain/usecases/useCases.dart';
@@ -29,6 +31,7 @@ import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usec
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
+import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:aklatna/features/profile/data/datasource/profile_datasource.dart';
 import 'package:aklatna/features/profile/data/repository/profileRepoImp.dart';
 import 'package:aklatna/features/profile/domain/usecases/getProfilesUsecase.dart';
@@ -39,6 +42,9 @@ import 'package:aklatna/features/promotions/data/dataSource/promotionDataSource.
 import 'package:aklatna/features/promotions/data/repository/promotionsRepoImp.dart';
 import 'package:aklatna/features/promotions/domain/usecases/promotionsUseCase.dart';
 import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
+import 'package:aklatna/features/review/data/datasource/reviewRemoteDatasource.dart';
+import 'package:aklatna/features/review/data/repository/reviewRepoImp.dart';
+import 'package:aklatna/features/review/presentaion/pages/ratingPage.dart';
 import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -56,7 +62,11 @@ void main() async {
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
   setupInjection();
-  // data sources
+
+  // Check if user has already completed onboarding
+  final bool hasCompletedOnboarding = await OnboardingService.isCompleted();
+
+  // Data sources
   final getBusinessDatasource = BusinessDatasrouce();
   final getMenuDataSource = Menudatasource();
   final profileDatasource = ProfileDatasource();
@@ -66,7 +76,7 @@ void main() async {
   final addressDatasource = AddressDatasource();
   final promotiondatasource = Promotiondatasource();
 
-  // repositories
+  // Repositories
   final promotionrepo = Promotionsrepoimp(
     promotiondatasource: promotiondatasource,
   );
@@ -81,8 +91,9 @@ void main() async {
   );
   final menuRepo = Menurepoimp(menudatasource: getMenuDataSource);
   final profileRepo = Profilerepoimp(profileDatasource: profileDatasource);
-  //use cases
-  final getpromotions = GetPromotionsUseCase( promotionrepo);
+
+  // Use cases
+  final getpromotions = GetPromotionsUseCase(promotionrepo);
   final getCostomerOrdersUseCase = GetCustomerOrdersUseCase(
     orderRepositoryImpl: orderRepo,
   );
@@ -164,24 +175,84 @@ void main() async {
           ),
         ),
       ],
-      child: MyApp(),
+      child: MyApp(hasCompletedOnboarding: hasCompletedOnboarding),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  const MyApp({
+    super.key, 
+    this.hasCompletedOnboarding = false, // Default to false
+  });
+
+  final bool hasCompletedOnboarding;
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+
+class _MyAppState extends State<MyApp> {
+  final Set<String> _checkedOrderIds = {};
+
+  final ReviewRepositoryImpl _reviewRepo = ReviewRepositoryImpl(
+    reviewRemoteDatasource: ReviewRemoteDatasource(),
+  );
+
+  Future<void> _maybePromptForCompletedOrders(List<dynamic> orders) async {
+    for (final order in orders) {
+      final orderId = order.id;
+      final status = order.orderStatus;
+
+      if (orderId == null) continue;
+      if (status != OrderStatus.completed) continue;
+      if (_checkedOrderIds.contains(orderId)) continue;
+
+      _checkedOrderIds.add(orderId);
+
+      final alreadyReviewed = await _reviewRepo.hasReviewForOrder(orderId);
+
+      if (alreadyReviewed) continue;
+
+      final navState = MainShell.rootNavigatorKey.currentState;
+
+      if (navState != null) {
+        navState.push(
+          MaterialPageRoute(
+            builder: (_) => RatingPage(order: order),
+            fullscreenDialog: true,
+          ),
+        );
+      }
+      break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<ProfileBloc, ProfileState>(
-      listener: (context, state) {
-        if (state is ProfileLoaded) {
-          context.read<FavoriteBloc>().add(
-            LoadFavoritesEvent(userId: state.profile.id),
-          );
-        }
-      },
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ProfileBloc, ProfileState>(
+          listener: (context, state) {
+            if (state is ProfileLoaded) {
+              context.read<FavoriteBloc>().add(
+                LoadFavoritesEvent(userId: state.profile.id),
+              );
+              context.read<OrderBloc>().add(
+                GetCustomerOrdersEvent(customerId: state.profile.id),
+              );
+            }
+          },
+        ),
+        BlocListener<OrderBloc, OrderState>(
+          listener: (context, state) {
+            if (state is CustomerOrdersFetched) {
+              _maybePromptForCompletedOrders(state.orders);
+            }
+          },
+        ),
+      ],
       child: MaterialApp.router(
         routerConfig: appRouter,
         debugShowCheckedModeBanner: false,

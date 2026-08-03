@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
+import '../../../../core/widgets/page_skeletons.dart';
+import '../../../../core/widgets/skeleton_switch.dart';
 
 class JobsPage extends StatefulWidget {
   const JobsPage({super.key});
@@ -29,10 +31,7 @@ class _JobsPageState extends State<JobsPage> {
 
     try {
       if (await canLaunchUrl(uri)) {
-        await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -64,35 +63,42 @@ class _JobsPageState extends State<JobsPage> {
                 Expanded(
                   child: BlocBuilder<JobBloc, JobState>(
                     builder: (context, state) {
-                      if (state is JobLoading || state is JobInitial) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
                       if (state is JobError) {
                         return Center(child: Text(state.message));
                       }
-                      if (state is! JobLoaded) {
-                        return const SizedBox.shrink();
-                      }
-                      if (state.jobs.isEmpty) {
-                        return Center(
-                          child: Text(
-                            'لا توجد وظائف متاحة حالياً',
-                            style: AppTextStyles.bodyMedium,
-                          ),
-                        );
-                      }
 
-                      return ListView.separated(
-                        itemCount: state.jobs.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: AppSpacing.md),
-                        itemBuilder: (context, index) {
-                          final job = state.jobs[index];
-                          return JobCard(
-                            job: job,
-                            onCall: () => _callNumber(job.contactPhone),
-                          );
-                        },
+                      return SkeletonSwitch(
+                        isLoading: state is JobLoading || state is JobInitial,
+                        skeleton: const ListSkeleton(itemCount: 5),
+                        child: Builder(
+                          builder: (_) {
+                            if (state is! JobLoaded) {
+                              return const SizedBox.shrink();
+                            }
+
+                            if (state.jobs.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  'لا توجد وظائف متاحة حالياً',
+                                  style: AppTextStyles.bodyMedium,
+                                ),
+                              );
+                            }
+
+                            return ListView.separated(
+                              itemCount: state.jobs.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: AppSpacing.md),
+                              itemBuilder: (context, index) {
+                                final job = state.jobs[index];
+                                return JobCard(
+                                  job: job,
+                                  onCall: () => _callNumber(job.contactPhone),
+                                );
+                              },
+                            );
+                          },
+                        ),
                       );
                     },
                   ),

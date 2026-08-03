@@ -10,5 +10,6 @@ abstract class Profilerepo {
     String userId,
     String? username,
     String? bio,
+    String? phone,
   );
 }
