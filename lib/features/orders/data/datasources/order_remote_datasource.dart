@@ -55,4 +55,47 @@ class OrderRemoteDatasource {
           return OrderModel.fromSupabase(rows.first);
         });
   }
+  // ============================================================
+  // DRIVER
+  // ============================================================
+
+  Future<List<OrderModel>> getAvailableOrders() async {
+    final orders = await supabase
+        .from('order')
+        .select()
+        .eq('order_status', 'ready')
+        .isFilter('driver_id', null)
+        .order('created_at');
+
+    return orders
+        .map<OrderModel>((e) => OrderModel.fromSupabase(e))
+        .toList();
+  }
+
+  Future<void> acceptOrder({
+    required String orderId,
+    required String driverId,
+  }) async {
+    await supabase.from('order').update({
+      'driver_id': driverId,
+    }).eq('id', orderId);
+  }
+
+  Future<void> markOutForDelivery({
+    required String orderId,
+  }) async {
+    await supabase.from('order').update({
+      'order_status': 'out_for_delivery',
+      'picked_up_at': DateTime.now().toIso8601String(),
+    }).eq('id', orderId);
+  }
+
+  Future<void> completeOrder({
+  required String orderId,
+}) async {
+  await supabase.from('order').update({
+    'order_status': 'completed',
+    'delivered_at': DateTime.now().toIso8601String(),
+  }).eq('id', orderId);
+}
 }

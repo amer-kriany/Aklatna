@@ -27,7 +27,11 @@ import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/orders/data/datasources/order_remote_datasource.dart';
 import 'package:aklatna/features/orders/data/repositories/order_repository_impl.dart';
+import 'package:aklatna/features/orders/domain/usecases/accept_order_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/complete_order_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/get_available_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
@@ -104,6 +108,10 @@ void main() async {
   final getJobsUsecase = GetJobsUsecase(jobRepoimp: jobRepo);
   final orderstatususecase = Orderstatususecase(orderRepositoryImpl: orderRepo);
   final placeOrderUsecase = PlaceOrderUsecase(orderRepositoryImpl: orderRepo);
+  final getAvailableOrdersUseCase = GetAvailableOrdersUseCase(repository: orderRepo);
+  final acceptOrderUseCase = AcceptOrderUseCase(repository: orderRepo);
+  final markOutForDeliveryUseCase = MarkOutForDeliveryUseCase(repository: orderRepo);
+  final completeOrderUseCase = CompleteOrderUseCase(repository: orderRepo);
 
   final getBusinessUsecase = GetbusinessUsecase(repository: businessRepository);
   final searchBusinessesusecase = Searchbusinessesusecase(
@@ -167,13 +175,18 @@ void main() async {
           ),
         ),
         BlocProvider(create: (context) => CartBloc()),
-        BlocProvider(
-          create: (context) => OrderBloc(
-            watchOrderStatusUsecase: orderstatususecase,
-            placeOrderUsecase: placeOrderUsecase,
-            customerOrdersUsecase: getCostomerOrdersUseCase,
-          ),
-        ),
+       BlocProvider(
+  create: (context) => OrderBloc(
+    watchOrderStatusUsecase: orderstatususecase,
+    placeOrderUsecase: placeOrderUsecase,
+    customerOrdersUsecase: getCostomerOrdersUseCase,
+
+    getAvailableOrdersUseCase: getAvailableOrdersUseCase,
+    acceptOrderUseCase: acceptOrderUseCase,
+    markOutForDeliveryUseCase: markOutForDeliveryUseCase,
+    completeOrderUseCase: completeOrderUseCase,
+  ),
+),
       ],
       child: MyApp(hasCompletedOnboarding: hasCompletedOnboarding),
     ),

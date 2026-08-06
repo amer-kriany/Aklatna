@@ -55,6 +55,7 @@ class AppColors {
   static const Color statusReady = success;
   static const Color statusCompleted = Color(0xFF6B6B72);
   static const Color statusCancelled = error;
+  static const Color statusOutForDelivery = primary;
 
   // ---------------------------------------------------------------------
   // Business state

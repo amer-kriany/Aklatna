@@ -1,7 +1,11 @@
 import 'dart:async';
 
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
+import 'package:aklatna/features/orders/domain/usecases/accept_order_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/complete_order_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/get_available_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
@@ -15,6 +19,10 @@ part 'order_state.dart';
 class OrderBloc extends Bloc<OrderEvent, OrderState> {
   final Orderstatususecase watchOrderStatusUsecase;
   final PlaceOrderUsecase placeOrderUsecase;
+  final GetAvailableOrdersUseCase getAvailableOrdersUseCase;
+final AcceptOrderUseCase acceptOrderUseCase;
+final MarkOutForDeliveryUseCase markOutForDeliveryUseCase;
+final CompleteOrderUseCase completeOrderUseCase;
   final GetCustomerOrdersUseCase customerOrdersUsecase;
 
   StreamSubscription<OrderEntity>? _orderStatusSubscription;
@@ -30,11 +38,15 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   OrderBloc({
     required this.placeOrderUsecase,
     required this.customerOrdersUsecase,
-    required this.watchOrderStatusUsecase,
+    required this.watchOrderStatusUsecase, required this.getAvailableOrdersUseCase, required this.acceptOrderUseCase, required this.markOutForDeliveryUseCase, required this.completeOrderUseCase,
   }) : super(OrderInitial()) {
     on<PlaceOrderEvent>(_placeOrder);
     on<GetCustomerOrdersEvent>(_getCustomerOrders);
     on<WatchOrderStatusEvent>(_watchOrderStatus);
+    on<GetAvailableOrdersEvent>(_getAvailableOrders);
+  on<AcceptOrderEvent>(_acceptOrder);
+  on<MarkOutForDeliveryEvent>(_markOutForDelivery);
+  on<CompleteOrderEvent>(_completeOrder);
 
     on<_OrderRealtimeUpdatedEvent>(_updateOrderInState);
     on<_OrderRealtimeErrorEvent>(_handleRealtimeError);
@@ -250,6 +262,102 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         return false;
     }
   }
+  // ============================================================
+// DRIVER - AVAILABLE ORDERS
+// ============================================================
+
+Future<void> _getAvailableOrders(
+  GetAvailableOrdersEvent event,
+  Emitter<OrderState> emit,
+) async {
+  emit(OrderLoading());
+
+  try {
+    final orders = await getAvailableOrdersUseCase();
+
+    emit(
+      AvailableOrdersLoaded(
+        orders: orders,
+      ),
+    );
+  } catch (e) {
+    emit(
+      OrderFailure(
+        error: e.toString(),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// DRIVER - ACCEPT ORDER
+// ============================================================
+
+Future<void> _acceptOrder(
+  AcceptOrderEvent event,
+  Emitter<OrderState> emit,
+) async {
+  try {
+    await acceptOrderUseCase(
+      orderId: event.orderId,
+      driverId: event.driverId,
+    );
+
+    add(
+      WatchOrderStatusEvent(
+        orderId: event.orderId,
+      ),
+    );
+  } catch (e) {
+    emit(
+      OrderFailure(
+        error: e.toString(),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// DRIVER - OUT FOR DELIVERY
+// ============================================================
+
+Future<void> _markOutForDelivery(
+  MarkOutForDeliveryEvent event,
+  Emitter<OrderState> emit,
+) async {
+  try {
+    await markOutForDeliveryUseCase(
+      orderId: event.orderId,
+    );
+  } catch (e) {
+    emit(
+      OrderFailure(
+        error: e.toString(),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// DRIVER - COMPLETE ORDER
+// ============================================================
+
+Future<void> _completeOrder(
+  CompleteOrderEvent event,
+  Emitter<OrderState> emit,
+) async {
+  try {
+    await completeOrderUseCase(
+      orderId: event.orderId,
+    );
+  } catch (e) {
+    emit(
+      OrderFailure(
+        error: e.toString(),
+      ),
+    );
+  }
+}
 
   // ============================================================
   // CLOSE
@@ -281,3 +389,5 @@ class _OrderRealtimeUpdatedEvent extends OrderEvent {
 class _OrderRealtimeErrorEvent extends OrderEvent {
   const _OrderRealtimeErrorEvent();
 }
+
+

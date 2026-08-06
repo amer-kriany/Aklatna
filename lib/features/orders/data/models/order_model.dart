@@ -22,6 +22,8 @@ class OrderModel {
   final DateTime? scheduledFor;
   final int? estimatedPreparationTime;
   final String? driverId;
+final DateTime? pickedUpAt;
+final DateTime? deliveredAt;
 
   OrderModel({
     this.id,
@@ -42,7 +44,7 @@ class OrderModel {
     this.businessLogo,
     this.businessName,
     this.estimatedPreparationTime,
-    this.driverId,
+    this.driverId, this.pickedUpAt, this.deliveredAt,
   });
 
   Map<String, dynamic> toJson() {
@@ -138,28 +140,46 @@ class OrderModel {
       }
     }
 
-    return OrderModel(
-      id: asStringOrEmpty(orders['id']),
-      businessId: asStringOrEmpty(orders['business_id']),
-      customerId: asStringOrEmpty(orders['customer_id']),
-      customername: asStringOrEmpty(orders['customer_name']),
-      customerPhone: asStringOrEmpty(orders['customer_phone']),
-      items: asCartItems(orders['items']),
-      businessName: asStringOrEmpty(orders['business_name']),
-      businessLogo: asNullableString(orders['business_logo']),
-      totalPrice: asDoubleOrZero(orders['total_price']),
-      deliveryFee: asDoubleOrZero(orders['delivery_fee']),
-      orderType: asOrderType(orders['order_type']),
-      deliveryAddress: asNullableString(orders['delivery_address']),
-      orderNumber: asStringOrEmpty(orders['order_number']),
-      createdAt: asDateOrEpoch(orders['created_at']),
-      orderStatus: asOrderStatus(orders['order_status']),
-      description: asNullableString(orders['description']),
-      scheduledFor: asNullableDate(orders['scheduled_for']),
-      estimatedPreparationTime: asNullableInt(
-        orders['estimated_preparation_time'],
-      ),
-      driverId: asNullableString(orders['driver_id']),
-    );
+    return  OrderModel(
+  id: asStringOrEmpty(orders['id']),
+  businessId: asStringOrEmpty(orders['business_id']),
+  customerId: asStringOrEmpty(orders['customer_id']),
+  customername: asStringOrEmpty(orders['customer_name']),
+  customerPhone: asStringOrEmpty(orders['customer_phone']),
+  items: asCartItems(orders['items']),
+
+  businessName: asNullableString(orders['business_name']),
+  businessLogo: asNullableString(orders['business_logo']),
+
+  totalPrice: asDoubleOrZero(orders['total_price']),
+  deliveryFee: asDoubleOrZero(orders['delivery_fee']),
+
+  orderType: asOrderType(orders['order_type']),
+  deliveryAddress: asNullableString(orders['delivery_address']),
+
+  orderNumber: asStringOrEmpty(orders['order_number']),
+  createdAt: asDateOrEpoch(orders['created_at']),
+
+  orderStatus: asOrderStatus(orders['order_status']),
+
+  description: asNullableString(orders['description']),
+  scheduledFor: asNullableDate(orders['scheduled_for']),
+
+  estimatedPreparationTime: asNullableInt(
+    orders['estimated_preparation_time'],
+  ),
+
+  driverId: asNullableString(
+    orders['driver_id'],
+  ),
+
+  pickedUpAt: asNullableDate(
+    orders['picked_up_at'],
+  ),
+
+  deliveredAt: asNullableDate(
+    orders['delivered_at'],
+  ),
+);
   }
 }
