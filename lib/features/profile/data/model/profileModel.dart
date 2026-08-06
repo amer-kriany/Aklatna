@@ -7,6 +7,9 @@ class Profilemodel {
   final String? photo;
   final String address;
   final String? bio;
+
+  final String role;
+
   Profilemodel({
     required this.id,
     required this.userName,
@@ -14,8 +17,11 @@ class Profilemodel {
     required this.isPhoneVerified,
     required this.email,
     this.photo,
-    required this.address, this.bio,
+    required this.address,
+    this.bio,
+    required this.role,
   });
+
   factory Profilemodel.fromSupabase(Map<String, dynamic> profile) {
     String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
     String? asNullableString(dynamic value) => value?.toString();
@@ -23,9 +29,12 @@ class Profilemodel {
     bool asBoolOrFalse(dynamic value) {
       if (value is bool) return value;
       if (value is num) return value != 0;
+
       final normalized = value?.toString().toLowerCase();
+
       if (normalized == 'true' || normalized == '1') return true;
       if (normalized == 'false' || normalized == '0') return false;
+
       return false;
     }
 
@@ -38,6 +47,7 @@ class Profilemodel {
       photo: asNullableString(profile['photo']),
       address: asStringOrEmpty(profile['address']),
       bio: asNullableString(profile['bio']),
+      role: asStringOrEmpty(profile['role']),
     );
   }
 }

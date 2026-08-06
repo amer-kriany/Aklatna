@@ -7,6 +7,7 @@ class Profileentity {
   final String? photo;
   final String? bio;
   final String address;
+  final String role;
 
   Profileentity({
     required this.id,
@@ -16,6 +17,6 @@ class Profileentity {
     required this.email,
     this.photo,
     required this.address,
-    this.bio,
+    this.bio, required this.role,
   });
 }
