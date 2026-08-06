@@ -202,27 +202,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     final totalPrice = cartState.totalPrice + deliveryPrice;
 
-    final order = OrderEntity(
-      businessId: cartState.businessId!,
-      customerId: profile.id,
-      customername: profile.userName,
-      customerPhone: profile.phoneNumber,
-      items: cartState.items,
-      deliveryAddress: selectedDeliveryOption == 'توصيل'
-          ? profile.address
-          : null,
-      totalPrice: totalPrice,
-      orderType: selectedDeliveryOption == 'توصيل'
-          ? OrderType.delivery
-          : OrderType.pickup,
-      orderStatus: OrderStatus.pending,
-      scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,
-      description: _notesController.text.trim().isEmpty
-          ? null
-          : _notesController.text.trim(),
-      businessName: cartState.businessName,
-      businessLogo: cartState.businessLogo,
-    );
+   final order = OrderEntity(
+  businessId: cartState.businessId!,
+  customerId: profile.id,
+  customername: profile.userName,
+  customerPhone: profile.phoneNumber,
+  items: cartState.items,
+  deliveryAddress: selectedDeliveryOption == 'توصيل' ? profile.address : null,
+  totalPrice: totalPrice,
+  deliveryFee: deliveryPrice, // <-- ADD THIS
+  orderType: selectedDeliveryOption == 'توصيل' ? OrderType.delivery : OrderType.pickup,
+  orderStatus: OrderStatus.pending,
+  scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,
+  description: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+  businessName: cartState.businessName,
+  businessLogo: cartState.businessLogo,
+);
 
     // ================================================================
     // COUNTDOWN CONFIRMATION

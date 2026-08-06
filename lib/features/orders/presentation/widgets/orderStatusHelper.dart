@@ -6,9 +6,12 @@ import '../../../../core/theme/app_colors.dart';
 class OrderStatusHelper {
   static bool isScheduled(OrderStatus status, DateTime? scheduledFor) {
     return scheduledFor != null && !isHistory(status);
-  }static bool isRegularOngoing(OrderStatus status, DateTime? scheduledFor) {
+  }
+
+  static bool isRegularOngoing(OrderStatus status, DateTime? scheduledFor) {
     return scheduledFor == null && isOngoing(status);
   }
+
   static Color colorFor(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:
@@ -21,6 +24,9 @@ class OrderStatusHelper {
         return AppColors.statusCompleted;
       case OrderStatus.cancelled:
         return AppColors.statusCancelled;
+        ///// fix it
+      case OrderStatus.outForDelivery:
+        return AppColors.textPrimary;
     }
   }
 
@@ -32,6 +38,8 @@ class OrderStatusHelper {
         return 'قيد التحضير';
       case OrderStatus.ready:
         return 'جاهز';
+      case OrderStatus.outForDelivery:
+        return 'في طريقه إليك';
       case OrderStatus.completed:
         return 'مكتمل';
       case OrderStatus.cancelled:

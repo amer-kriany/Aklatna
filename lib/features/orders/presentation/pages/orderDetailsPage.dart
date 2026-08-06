@@ -16,10 +16,7 @@ import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:aklatna/features/orders/order_type.dart';
 
 class OrderDetailsPage extends StatelessWidget {
-  const OrderDetailsPage({
-    super.key,
-    required this.order,
-  });
+  const OrderDetailsPage({super.key, required this.order});
 
   final OrderEntity order;
 
@@ -33,10 +30,7 @@ class OrderDetailsPage extends StatelessWidget {
           backgroundColor: AppColors.background,
           elevation: 0,
           centerTitle: true,
-          title: Text(
-            'تفاصيل الطلب',
-            style: AppTextStyles.h4,
-          ),
+          title: Text('تفاصيل الطلب', style: AppTextStyles.h4),
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -59,10 +53,7 @@ class OrderDetailsPage extends StatelessWidget {
 
                 const SizedBox(height: AppSpacing.xl),
 
-                Text(
-                  'تفاصيل المنتجات',
-                  style: AppTextStyles.h4,
-                ),
+                Text('تفاصيل المنتجات', style: AppTextStyles.h4),
 
                 const SizedBox(height: AppSpacing.md),
 
@@ -100,9 +91,7 @@ class OrderDetailsPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
@@ -115,8 +104,7 @@ class OrderDetailsPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             clipBehavior: Clip.antiAlias,
-            child: order.businessLogo != null &&
-                    order.businessLogo!.isNotEmpty
+            child: order.businessLogo != null && order.businessLogo!.isNotEmpty
                 ? Image.network(
                     order.businessLogo!,
                     fit: BoxFit.cover,
@@ -138,9 +126,7 @@ class OrderDetailsPage extends StatelessWidget {
                   order.businessName ?? 'المطعم',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.h4.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 4),
@@ -171,11 +157,7 @@ class OrderDetailsPage extends StatelessWidget {
 
   Widget _restaurantPlaceholder() {
     return Center(
-      child: Icon(
-        Icons.restaurant_rounded,
-        color: AppColors.primary,
-        size: 30,
-      ),
+      child: Icon(Icons.restaurant_rounded, color: AppColors.primary, size: 30),
     );
   }
 
@@ -316,9 +298,7 @@ class OrderDetailsPage extends StatelessWidget {
                     child: Container(
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 3),
-                      color: completed
-                          ? AppColors.primary
-                          : AppColors.border,
+                      color: completed ? AppColors.primary : AppColors.border,
                     ),
                   ),
               ],
@@ -329,10 +309,7 @@ class OrderDetailsPage extends StatelessWidget {
 
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(
-                top: 3,
-                bottom: AppSpacing.lg,
-              ),
+              padding: const EdgeInsets.only(top: 3, bottom: AppSpacing.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -415,10 +392,7 @@ class OrderDetailsPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'معلومات التوصيل',
-          style: AppTextStyles.h4,
-        ),
+        Text('معلومات التوصيل', style: AppTextStyles.h4),
 
         const SizedBox(height: AppSpacing.md),
 
@@ -427,9 +401,7 @@ class OrderDetailsPage extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(
-              color: AppColors.border,
-            ),
+            border: Border.all(color: AppColors.border),
           ),
           child: Column(
             children: [
@@ -486,17 +458,11 @@ class OrderDetailsPage extends StatelessWidget {
     required String value,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.xs,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            color: AppColors.primary,
-            size: 22,
-          ),
+          Icon(icon, color: AppColors.primary, size: 22),
 
           const SizedBox(width: AppSpacing.md),
 
@@ -539,9 +505,7 @@ class OrderDetailsPage extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: AppColors.border,
-          ),
+          border: Border.all(color: AppColors.border),
         ),
         child: Center(
           child: Text(
@@ -558,9 +522,7 @@ class OrderDetailsPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: ListView.separated(
         shrinkWrap: true,
@@ -630,9 +592,7 @@ class OrderDetailsPage extends StatelessWidget {
 
         Text(
           '${item.price.toStringAsFixed(0)} ل.س',
-          style: AppTextStyles.bodyMedium.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -640,11 +600,7 @@ class OrderDetailsPage extends StatelessWidget {
 
   Widget _foodPlaceholder() {
     return Center(
-      child: Icon(
-        Icons.fastfood_rounded,
-        color: AppColors.primary,
-        size: 26,
-      ),
+      child: Icon(Icons.fastfood_rounded, color: AppColors.primary, size: 26),
     );
   }
 
@@ -669,17 +625,17 @@ class OrderDetailsPage extends StatelessWidget {
     // Clamp to 0 as a safety net against float rounding producing a
     // tiny negative value, or against pre-fix legacy orders where
     // totalPrice might be less than itemsSubtotal for other reasons.
-    final deliveryFee =
-        (order.totalPrice - itemsSubtotal).clamp(0, double.infinity);
+    final deliveryFee = (order.totalPrice - itemsSubtotal).clamp(
+      0,
+      double.infinity,
+    );
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
@@ -704,10 +660,7 @@ class OrderDetailsPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'الإجمالي',
-                style: AppTextStyles.h4,
-              ),
+              Text('الإجمالي', style: AppTextStyles.h4),
 
               Text(
                 '${order.totalPrice.toStringAsFixed(0)} ل.س',
@@ -733,10 +686,7 @@ class OrderDetailsPage extends StatelessWidget {
             color: AppColors.textSecondary,
           ),
         ),
-        Text(
-          value,
-          style: AppTextStyles.bodyMedium,
-        ),
+        Text(value, style: AppTextStyles.bodyMedium),
       ],
     );
   }
@@ -752,17 +702,12 @@ class OrderDetailsPage extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(
-          color: AppColors.border,
-        ),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'ملاحظات الطلب',
-            style: AppTextStyles.h4,
-          ),
+          Text('ملاحظات الطلب', style: AppTextStyles.h4),
 
           const SizedBox(height: AppSpacing.sm),
 
@@ -789,8 +734,10 @@ class OrderDetailsPage extends StatelessWidget {
         return 1;
       case OrderStatus.ready:
         return 2;
-      case OrderStatus.completed:
+      case OrderStatus.outForDelivery:
         return 3;
+      case OrderStatus.completed:
+        return 4;
       case OrderStatus.cancelled:
         return -1; // handled separately, see _buildOrderStatus
     }

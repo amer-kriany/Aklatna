@@ -242,6 +242,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
       case OrderStatus.pending:
       case OrderStatus.preparing:
       case OrderStatus.ready:
+      case OrderStatus.outForDelivery:
         return true;
 
       case OrderStatus.completed:

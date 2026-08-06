@@ -16,14 +16,12 @@ class OrderModel {
   final String? businessLogo;
   final String? businessName;
   final double totalPrice;
+  final double deliveryFee;
   final OrderType orderType;
   final OrderStatus orderStatus;
   final DateTime? scheduledFor;
-
-  // Set by the restaurant (via the dashboard) once they start preparing
-  // this specific order — a per-order estimate, not a fixed business
-  // default. Column: order.estimated_preparation_time (int, minutes).
   final int? estimatedPreparationTime;
+  final String? driverId;
 
   OrderModel({
     this.id,
@@ -36,6 +34,7 @@ class OrderModel {
     required this.items,
     this.deliveryAddress,
     required this.totalPrice,
+    required this.deliveryFee,
     required this.orderType,
     required this.orderStatus,
     this.scheduledFor,
@@ -43,6 +42,7 @@ class OrderModel {
     this.businessLogo,
     this.businessName,
     this.estimatedPreparationTime,
+    this.driverId,
   });
 
   Map<String, dynamic> toJson() {
@@ -54,6 +54,7 @@ class OrderModel {
       'items': items.map((e) => e.toJson()).toList(),
       'delivery_address': deliveryAddress,
       'total_price': totalPrice,
+      'delivery_fee': deliveryFee,
       'order_type': orderType.name,
       'description': description,
       'business_logo': businessLogo,
@@ -61,8 +62,8 @@ class OrderModel {
       'order_status': 'pending',
       'scheduled_for': scheduledFor?.toIso8601String(),
       // id, created_at, order_number — DB-generated, not sent from client
-      // estimated_preparation_time — set later by the restaurant
-      // dashboard once they start preparing, not sent at placement time
+      // estimated_preparation_time — set later by the restaurant dashboard
+      // driver_id — set later when a driver claims the order
     };
   }
 
@@ -101,13 +102,28 @@ class OrderModel {
       );
     }
 
+    // BUGFIX: explicit switch instead of relying on enum .name, since
+    // 'out_for_delivery' (snake_case DB value) would never match
+    // OrderStatus.outForDelivery.name (camelCase) via firstWhere,
+    // silently falling back to `pending` for every such order.
     OrderStatus asOrderStatus(dynamic value) {
       final normalized = value?.toString();
-      if (normalized == null) return OrderStatus.pending;
-      return OrderStatus.values.firstWhere(
-        (status) => status.name == normalized,
-        orElse: () => OrderStatus.pending,
-      );
+      switch (normalized) {
+        case 'pending':
+          return OrderStatus.pending;
+        case 'preparing':
+          return OrderStatus.preparing;
+        case 'ready':
+          return OrderStatus.ready;
+        case 'out_for_delivery':
+          return OrderStatus.outForDelivery;
+        case 'completed':
+          return OrderStatus.completed;
+        case 'cancelled':
+          return OrderStatus.cancelled;
+        default:
+          return OrderStatus.pending;
+      }
     }
 
     List<CartItem> asCartItems(dynamic value) {
@@ -132,6 +148,7 @@ class OrderModel {
       businessName: asStringOrEmpty(orders['business_name']),
       businessLogo: asNullableString(orders['business_logo']),
       totalPrice: asDoubleOrZero(orders['total_price']),
+      deliveryFee: asDoubleOrZero(orders['delivery_fee']),
       orderType: asOrderType(orders['order_type']),
       deliveryAddress: asNullableString(orders['delivery_address']),
       orderNumber: asStringOrEmpty(orders['order_number']),
@@ -142,6 +159,7 @@ class OrderModel {
       estimatedPreparationTime: asNullableInt(
         orders['estimated_preparation_time'],
       ),
+      driverId: asNullableString(orders['driver_id']),
     );
   }
 }

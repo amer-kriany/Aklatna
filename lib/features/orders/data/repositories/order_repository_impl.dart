@@ -6,6 +6,7 @@ import 'package:aklatna/features/orders/domain/repositories/order_repository.dar
 class OrderRepositoryImpl implements OrderRepository {
   final OrderRemoteDatasource orderRemoteDatasource;
   OrderRepositoryImpl({required this.orderRemoteDatasource});
+
   @override
   Future<void> placeOrder(OrderEntity order) async {
     await orderRemoteDatasource.placeOrder(entityToModel(order));
@@ -33,6 +34,7 @@ OrderEntity mapToEntity(OrderModel order) {
     customerPhone: order.customerPhone,
     items: order.items,
     totalPrice: order.totalPrice,
+    deliveryFee: order.deliveryFee,
     orderType: order.orderType,
     id: order.id,
     orderNumber: order.orderNumber,
@@ -43,9 +45,8 @@ OrderEntity mapToEntity(OrderModel order) {
     businessLogo: order.businessLogo,
     businessName: order.businessName,
     deliveryAddress: order.deliveryAddress,
-    // Comes directly from the DB row now (order.estimated_preparation_time,
-    // set by the restaurant per-order), not looked up from BusinessEntity.
     estimatedPreparationTime: order.estimatedPreparationTime,
+    driverId: order.driverId,
   );
 }
 
@@ -57,6 +58,7 @@ OrderModel entityToModel(OrderEntity entity) {
     customerPhone: entity.customerPhone,
     items: entity.items,
     totalPrice: entity.totalPrice,
+    deliveryFee: entity.deliveryFee,
     orderType: entity.orderType,
     id: entity.id,
     orderNumber: entity.orderNumber,
@@ -68,5 +70,6 @@ OrderModel entityToModel(OrderEntity entity) {
     businessName: entity.businessName,
     deliveryAddress: entity.deliveryAddress,
     estimatedPreparationTime: entity.estimatedPreparationTime,
+    driverId: entity.driverId,
   );
 }
