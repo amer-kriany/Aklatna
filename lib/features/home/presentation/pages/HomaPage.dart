@@ -49,7 +49,6 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
     super.initState();
 
     context.read<BusinessBloc>().add(GetBusinesses());
-    context.read<ProfileBloc>().add(GetProfilesEvent());
     context.read<PromotionsBloc>().add(LoadPromotionsEvent());
 
     startPeriodicRebuild();

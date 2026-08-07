@@ -18,7 +18,12 @@ import 'package:aklatna/features/auth/domain/usecases/verifyRecoveryOtpUsecase.d
 import 'package:aklatna/features/auth/domain/usecases/verifySignUpOtpUsecase.dart';
 
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
-
+import 'package:aklatna/features/profile/data/datasource/profile_datasource.dart';
+import 'package:aklatna/features/profile/data/repository/profileRepoImp.dart';
+import 'package:aklatna/features/profile/domain/usecases/getProfilesUsecase.dart';
+import 'package:aklatna/features/profile/domain/usecases/updateProfilePhotoUseCase.dart';
+import 'package:aklatna/features/profile/domain/usecases/updateProfileUsecase.dart';
+import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 final sl = GetIt.instance;
 
 void setupInjection() {
@@ -125,4 +130,28 @@ void setupInjection() {
           sl<ResendSignUpOtpUsecase>(), 
     ),
   );
+
+  sl.registerLazySingleton<ProfileDatasource>(() => ProfileDatasource());
+
+sl.registerLazySingleton<Profilerepoimp>(
+  () => Profilerepoimp(profileDatasource: sl<ProfileDatasource>()),
+);
+
+sl.registerLazySingleton<Getprofilesusecase>(
+  () => Getprofilesusecase(repo: sl<Profilerepoimp>()),
+);
+sl.registerLazySingleton<Updateprofileusecase>(
+  () => Updateprofileusecase(repo: sl<Profilerepoimp>()),
+);
+sl.registerLazySingleton<Updateprofilephotousecase>(
+  () => Updateprofilephotousecase(repo: sl<Profilerepoimp>()),
+);
+
+sl.registerLazySingleton<ProfileBloc>(
+  () => ProfileBloc(
+    getProfilesUsecase: sl<Getprofilesusecase>(),
+    updateProfileUsecase: sl<Updateprofileusecase>(),
+    updateprofilephotousecase: sl<Updateprofilephotousecase>(),
+  ),
+);
 }

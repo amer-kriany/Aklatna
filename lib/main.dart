@@ -37,11 +37,6 @@ import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart'
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
-import 'package:aklatna/features/profile/data/datasource/profile_datasource.dart';
-import 'package:aklatna/features/profile/data/repository/profileRepoImp.dart';
-import 'package:aklatna/features/profile/domain/usecases/getProfilesUsecase.dart';
-import 'package:aklatna/features/profile/domain/usecases/updateProfilePhotoUseCase.dart';
-import 'package:aklatna/features/profile/domain/usecases/updateProfileUsecase.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:aklatna/features/promotions/data/dataSource/promotionDataSource.dart';
 import 'package:aklatna/features/promotions/data/repository/promotionsRepoImp.dart';
@@ -54,7 +49,7 @@ import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 
 import 'package:aklatna/core/theme/app_theme.dart';
 
@@ -74,7 +69,6 @@ void main() async {
   // Data sources
   final getBusinessDatasource = BusinessDatasrouce();
   final getMenuDataSource = Menudatasource();
-  final profileDatasource = ProfileDatasource();
   final favoriteDatasource = FavoriteDatasource();
   final orderRemoteDatasource = OrderRemoteDatasource();
   final jobDatasource = JobDatasource();
@@ -95,7 +89,6 @@ void main() async {
     businessDatasrouce: getBusinessDatasource,
   );
   final menuRepo = Menurepoimp(menudatasource: getMenuDataSource);
-  final profileRepo = Profilerepoimp(profileDatasource: profileDatasource);
 
   // Use cases
   final getpromotions = GetPromotionsUseCase(promotionrepo);
@@ -122,11 +115,7 @@ void main() async {
   );
   final getcategoriesusecase = Getcategoriesusecase(repo: menuRepo);
   final getitemsusecase = Getitemsusecase(repo: menuRepo);
-  final getprofilesusecase = Getprofilesusecase(repo: profileRepo);
-  final updateprofileusecase = Updateprofileusecase(repo: profileRepo);
-  final updateProfilePhotoUseCase = Updateprofilephotousecase(
-    repo: profileRepo,
-  );
+
   final addFavoriteUseCase = AddFavoriteUsecase(repo: favoriteRepo);
   final removeFavoriteUseCase = RemoveFavoriteUsecase(repo: favoriteRepo);
   final getFavoriteIdUseCase = GetFavoriteIdsUsecase(repo: favoriteRepo);
@@ -170,28 +159,20 @@ void main() async {
             menuItemsusecase: getitemsusecase,
           ),
         ),
+        BlocProvider.value(value: sl<ProfileBloc>()),
+        BlocProvider(create: (context) => CartBloc()),
         BlocProvider(
-          create: (context) => ProfileBloc(
-            getProfilesUsecase: getprofilesusecase,
-            updateProfileUsecase: updateprofileusecase,
-            updateprofilephotousecase: updateProfilePhotoUseCase,
+          create: (context) => OrderBloc(
+            watchOrderStatusUsecase: orderstatususecase,
+            placeOrderUsecase: placeOrderUsecase,
+            customerOrdersUsecase: getCostomerOrdersUseCase,
+            getAvailableOrdersUseCase: getAvailableOrdersUseCase,
+            acceptOrderUseCase: acceptOrderUseCase,
+            markOutForDeliveryUseCase: markOutForDeliveryUseCase,
+            completeOrderUseCase: completeOrderUseCase,
+            getDriverOrdersUseCase: getDriverOrdersUseCase,
           ),
         ),
-        BlocProvider(create: (context) => CartBloc()),
-       BlocProvider(
-  create: (context) => OrderBloc(
-    watchOrderStatusUsecase: orderstatususecase,
-    placeOrderUsecase: placeOrderUsecase,
-    customerOrdersUsecase: getCostomerOrdersUseCase,
-
-    getAvailableOrdersUseCase: getAvailableOrdersUseCase,
-    acceptOrderUseCase: acceptOrderUseCase,
-    markOutForDeliveryUseCase: markOutForDeliveryUseCase,
-    completeOrderUseCase: completeOrderUseCase,
-        getDriverOrdersUseCase: getDriverOrdersUseCase, // <-- new
-
-  ),
-),
       ],
       child: MyApp(hasCompletedOnboarding: hasCompletedOnboarding),
     ),
@@ -200,7 +181,7 @@ void main() async {
 
 class MyApp extends StatefulWidget {
   const MyApp({
-    super.key, 
+    super.key,
     this.hasCompletedOnboarding = false, // Default to false
   });
 
@@ -210,13 +191,28 @@ class MyApp extends StatefulWidget {
   State<MyApp> createState() => _MyAppState();
 }
 
-
 class _MyAppState extends State<MyApp> {
   final Set<String> _checkedOrderIds = {};
 
   final ReviewRepositoryImpl _reviewRepo = ReviewRepositoryImpl(
     reviewRemoteDatasource: ReviewRemoteDatasource(),
   );
+
+  @override
+  void initState() {
+    super.initState();
+
+    // BlocListener below only catches FUTURE AuthBloc emissions. If
+    // AuthBloc already emitted AuthAuthenticated before this widget
+    // mounted (e.g. GetCurrentUserEvent fired from SplashScreen before
+    // this tree built), the listener never sees it and ProfileBloc
+    // never gets triggered -- home screen spins on its skeleton forever.
+    // Cover the already-authenticated-on-mount case here.
+    final authState = sl<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      sl<ProfileBloc>().add( GetProfilesEvent());
+    }
+  }
 
   Future<void> _maybePromptForCompletedOrders(List<dynamic> orders) async {
     for (final order in orders) {
@@ -260,6 +256,13 @@ class _MyAppState extends State<MyApp> {
               context.read<OrderBloc>().add(
                 GetCustomerOrdersEvent(customerId: state.profile.id),
               );
+            }
+          },
+        ),
+        BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            if (state is AuthAuthenticated) {
+              context.read<ProfileBloc>().add( GetProfilesEvent());
             }
           },
         ),

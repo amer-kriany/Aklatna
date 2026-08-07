@@ -1,4 +1,5 @@
 import 'package:aklatna/core/router/MainShell.dart';
+import 'package:aklatna/core/router/driverShell.dart';
 import 'package:aklatna/core/router/go_router_refresh_stream.dart';
 import 'package:aklatna/features/addOnes/data/datasource/addOnesDataSource.dart';
 import 'package:aklatna/features/addOnes/data/repository/addOnesRepoImp.dart';
@@ -31,7 +32,10 @@ import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/menu/presentation/pages/FoodDetailsPage.dart';
 import 'package:aklatna/features/onboarding/presentation/pages/onboardingPage.dart';
+import 'package:aklatna/features/orders/presentation/pages/driverHomePage.dart';
+import 'package:aklatna/features/orders/presentation/pages/driverOrderPage.dart';
 import 'package:aklatna/features/orders/presentation/pages/myOrderPage.dart';
+import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:aklatna/features/profile/presentaion/pages/profilePage.dart';
 import 'package:aklatna/features/splash/pages/splashScreen.dart';
 import 'package:aklatna/injection_container.dart';
@@ -41,21 +45,46 @@ import 'package:go_router/go_router.dart';
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash', // <-- بداية التطبيق من الـ Splash
   navigatorKey: MainShell.rootNavigatorKey,
-  refreshListenable: GoRouterRefreshStream(sl<AuthBloc>().stream),
-  redirect: (context, state) {
+refreshListenable: GoRouterRefreshStream(
+  Stream.multi((controller) {
+    sl<AuthBloc>().stream.listen(controller.add);
+    sl<ProfileBloc>().stream.listen(controller.add);
+  }),
+),  redirect: (context, state) {
   final authState = sl<AuthBloc>().state;
+  final profileState = sl<ProfileBloc>().state;
+
   final isGoingToAuth = state.matchedLocation == '/signin' ||
       state.matchedLocation == '/signup' ||
-      state.matchedLocation == '/check-email' ||   // <-- must be this, not /verify-otp
+      state.matchedLocation == '/check-email' ||
       state.matchedLocation == '/forgot-password' ||
       state.matchedLocation == '/reset-password';
+
+  final isSplash = state.matchedLocation == '/splash';
 
   if (authState is AuthInitial || authState is AuthLoading) return null;
 
   final isAuthenticated = authState is AuthAuthenticated;
 
-  if (!isAuthenticated && !isGoingToAuth) return '/signin';
-  if (isAuthenticated && isGoingToAuth) return '/home';
+  if (!isAuthenticated) {
+    return isGoingToAuth ? null : '/signin';
+  }
+
+  // Authenticated from here on. Wait for role before routing anywhere.
+  if (profileState is! ProfileLoaded) {
+    return isSplash ? null : '/splash';
+  }
+
+  final isDriver = profileState.profile.role == 'driver';
+  final homeRoute = isDriver ? '/driver-home' : '/home';
+  final isOnDriverRoute = state.matchedLocation.startsWith('/driver-home');
+
+  // Leave splash/auth pages once role is known, and keep drivers and
+  // customers each confined to their own route space.
+  if (isSplash || isGoingToAuth) return homeRoute;
+  if (isDriver && !isOnDriverRoute) return homeRoute;
+  if (!isDriver && isOnDriverRoute) return homeRoute;
+
   return null;
 },
   routes: [
@@ -88,6 +117,11 @@ GoRoute(
       initialPhone: args['phone'] as String,
     );
   },
+),
+GoRoute(
+  path: '/driver-home',
+  parentNavigatorKey: MainShell.rootNavigatorKey,
+  builder: (context, state) => const DriverShell(),
 ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
