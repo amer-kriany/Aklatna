@@ -143,11 +143,13 @@ final class DriverOrdersFetched extends OrderState {
 
 class AvailableOrdersLoaded extends OrderState {
   final List<OrderEntity> orders;
+  final double totalEarnings;
 
   const AvailableOrdersLoaded({
     required this.orders,
+    this.totalEarnings = 0,
   });
 
   @override
-  List<Object?> get props => [orders];
+  List<Object?> get props => [orders, totalEarnings];
 }

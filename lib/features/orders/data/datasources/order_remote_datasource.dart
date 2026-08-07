@@ -63,10 +63,9 @@ class OrderRemoteDatasource {
     final orders = await supabase
         .from('order')
         .select()
-        .eq('order_status', 'ready')
+        .eq('order_status', 'pending')
         .isFilter('driver_id', null)
         .order('created_at');
-        print(orders);
 
     return orders
         .map<OrderModel>((e) => OrderModel.fromSupabase(e))

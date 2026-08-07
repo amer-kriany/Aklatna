@@ -266,17 +266,21 @@ Future<void> _getAvailableOrders(
   try {
     final orders = await getAvailableOrdersUseCase();
 
-    print("AVAILABLE ORDERS: ${orders.length}");
+    // Earnings shown on the driver home page -- fetched alongside the
+    // available list rather than a separate query round trip. Only
+    // completed deliveries count; cancelled never paid out.
+    final driverOrders = await getDriverOrdersUseCase(event.driverId);
+    final totalEarnings = driverOrders
+        .where((o) => o.orderStatus == OrderStatus.completed)
+        .fold<double>(0, (sum, o) => sum + o.deliveryFee);
 
     emit(
       AvailableOrdersLoaded(
         orders: orders,
+        totalEarnings: totalEarnings,
       ),
     );
-  } catch (e, s) {
-    print(e);
-    print(s);
-
+  } catch (e) {
     emit(
       OrderFailure(
         error: e.toString(),
@@ -310,6 +314,7 @@ Future<void> _acceptOrder(
           orders: currentState.orders
               .where((o) => o.id != event.orderId)
               .toList(),
+          totalEarnings: currentState.totalEarnings,
         ),
       );
     }
@@ -325,6 +330,7 @@ Future<void> _acceptOrder(
           orders: currentState.orders
               .where((o) => o.id != event.orderId)
               .toList(),
+          totalEarnings: currentState.totalEarnings,
         ),
       );
     }

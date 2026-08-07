@@ -29,10 +29,12 @@ class WatchOrderStatusEvent extends OrderEvent {
   List<Object?> get props => [orderId];
 }
 class GetAvailableOrdersEvent extends OrderEvent {
-  const GetAvailableOrdersEvent();
+  final String driverId;
+
+  const GetAvailableOrdersEvent({required this.driverId});
 
   @override
-  List<Object?> get props => [];
+  List<Object?> get props => [driverId];
 }
 class AcceptOrderEvent extends OrderEvent {
   final String orderId;
