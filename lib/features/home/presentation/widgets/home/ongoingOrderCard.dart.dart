@@ -116,7 +116,7 @@ class OngoingOrderCard extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(
-                      _formatReadyTime(estimatedTime!),
+                      _formatReadyTime(estimatedTime),
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w800,

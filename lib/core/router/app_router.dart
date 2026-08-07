@@ -32,8 +32,6 @@ import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/menu/presentation/pages/FoodDetailsPage.dart';
 import 'package:aklatna/features/onboarding/presentation/pages/onboardingPage.dart';
-import 'package:aklatna/features/orders/presentation/pages/driverHomePage.dart';
-import 'package:aklatna/features/orders/presentation/pages/driverOrderPage.dart';
 import 'package:aklatna/features/orders/presentation/pages/myOrderPage.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:aklatna/features/profile/presentaion/pages/profilePage.dart';

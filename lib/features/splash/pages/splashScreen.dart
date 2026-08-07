@@ -8,7 +8,6 @@ import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
 import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
