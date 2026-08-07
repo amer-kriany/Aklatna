@@ -266,12 +266,17 @@ Future<void> _getAvailableOrders(
   try {
     final orders = await getAvailableOrdersUseCase();
 
+    print("AVAILABLE ORDERS: ${orders.length}");
+
     emit(
       AvailableOrdersLoaded(
         orders: orders,
       ),
     );
-  } catch (e) {
+  } catch (e, s) {
+    print(e);
+    print(s);
+
     emit(
       OrderFailure(
         error: e.toString(),

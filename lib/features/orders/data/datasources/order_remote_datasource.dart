@@ -66,6 +66,7 @@ class OrderRemoteDatasource {
         .eq('order_status', 'ready')
         .isFilter('driver_id', null)
         .order('created_at');
+        print(orders);
 
     return orders
         .map<OrderModel>((e) => OrderModel.fromSupabase(e))

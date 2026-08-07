@@ -61,11 +61,24 @@ class _DriverOrdersPageState extends State<DriverOrdersPage>
             final history =
                 state.orders.where((o) => o.orderStatus.isHistory).toList();
 
-            return TabBarView(
-              controller: _tabController,
+            // Cancelled orders don't count -- only completed deliveries
+            // actually earned the fee.
+            final totalEarnings = state.orders
+                .where((o) => o.orderStatus == OrderStatus.completed)
+                .fold<double>(0, (sum, o) => sum + o.deliveryFee);
+
+            return Column(
               children: [
-                _list(ongoing, 'لا توجد توصيلات جارية'),
-                _list(history, 'لا يوجد سجل توصيلات'),
+                _EarningsHeader(total: totalEarnings),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _list(ongoing, 'لا توجد توصيلات جارية'),
+                      _list(history, 'لا يوجد سجل توصيلات'),
+                    ],
+                  ),
+                ),
               ],
             );
           },
@@ -155,5 +168,33 @@ class _DriverOrderCard extends StatelessWidget {
     }
 
     return const SizedBox.shrink();
+  }
+}
+
+class _EarningsHeader extends StatelessWidget {
+  const _EarningsHeader({required this.total});
+
+  final double total;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      color: Theme.of(context).colorScheme.primaryContainer,
+      child: Column(
+        children: [
+          const Text('إجمالي الأرباح'),
+          const SizedBox(height: 4),
+          Text(
+            '${total.toStringAsFixed(0)} ل.س',
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
