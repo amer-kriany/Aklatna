@@ -46,11 +46,7 @@ class OrderStatusHelper {
     }
   }
 
-  static bool isHistory(OrderStatus status) =>
-      status == OrderStatus.completed || status == OrderStatus.cancelled;
+  static bool isHistory(OrderStatus status) => status.isHistory;
 
-  static bool isOngoing(OrderStatus status) =>
-      status == OrderStatus.pending ||
-      status == OrderStatus.preparing ||
-      status == OrderStatus.ready;
+  static bool isOngoing(OrderStatus status) => status.isOngoing;
 }

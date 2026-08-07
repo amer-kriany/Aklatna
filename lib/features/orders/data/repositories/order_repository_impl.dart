@@ -33,6 +33,13 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Future<List<OrderEntity>> getDriverOrders(String driverId) async {
+    final orders = await orderRemoteDatasource.getDriverOrders(driverId);
+
+    return orders.map(mapToEntity).toList();
+  }
+
+  @override
   Future<void> acceptOrder({
     required String orderId,
     required String driverId,

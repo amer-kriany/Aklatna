@@ -51,21 +51,33 @@ class AcceptOrderEvent extends OrderEvent {
 }
 class MarkOutForDeliveryEvent extends OrderEvent {
   final String orderId;
+  final String driverId;
 
   const MarkOutForDeliveryEvent({
     required this.orderId,
+    required this.driverId,
   });
 
   @override
-  List<Object?> get props => [orderId];
+  List<Object?> get props => [orderId, driverId];
 }
 class CompleteOrderEvent extends OrderEvent {
   final String orderId;
+  final String driverId;
 
   const CompleteOrderEvent({
     required this.orderId,
+    required this.driverId,
   });
 
   @override
-  List<Object?> get props => [orderId];
+  List<Object?> get props => [orderId, driverId];
+}
+class GetDriverOrdersEvent extends OrderEvent {
+  final String driverId;
+
+  const GetDriverOrdersEvent({required this.driverId});
+
+  @override
+  List<Object?> get props => [driverId];
 }

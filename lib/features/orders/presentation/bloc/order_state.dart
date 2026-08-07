@@ -70,10 +70,7 @@ final class CustomerOrdersFetched extends OrderState {
   // place instead of being copy-pasted into every widget.
   // ----------------------------------------------------------
 
-  bool get hasActiveOrder => orders.any((order) =>
-      order.orderStatus == OrderStatus.pending ||
-      order.orderStatus == OrderStatus.preparing ||
-      order.orderStatus == OrderStatus.ready);
+  bool get hasActiveOrder => orders.any((order) => order.orderStatus.isOngoing);
 }
 
 
@@ -133,6 +130,15 @@ final class OrderError extends OrderState {
 
   @override
   List<Object?> get props => [message];
+}
+
+final class DriverOrdersFetched extends OrderState {
+  final List<OrderEntity> orders;
+
+  const DriverOrdersFetched({required this.orders});
+
+  @override
+  List<Object?> get props => [orders];
 }
 
 class AvailableOrdersLoaded extends OrderState {

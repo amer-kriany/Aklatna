@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
 import 'package:aklatna/features/orders/domain/usecases/accept_order_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/complete_order_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/getDriverOrdersUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_available_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_usecase.dart';
@@ -23,6 +24,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
 final AcceptOrderUseCase acceptOrderUseCase;
 final MarkOutForDeliveryUseCase markOutForDeliveryUseCase;
 final CompleteOrderUseCase completeOrderUseCase;
+final GetDriverOrdersUseCase getDriverOrdersUseCase;
   final GetCustomerOrdersUseCase customerOrdersUsecase;
 
   StreamSubscription<OrderEntity>? _orderStatusSubscription;
@@ -38,7 +40,7 @@ final CompleteOrderUseCase completeOrderUseCase;
   OrderBloc({
     required this.placeOrderUsecase,
     required this.customerOrdersUsecase,
-    required this.watchOrderStatusUsecase, required this.getAvailableOrdersUseCase, required this.acceptOrderUseCase, required this.markOutForDeliveryUseCase, required this.completeOrderUseCase,
+    required this.watchOrderStatusUsecase, required this.getAvailableOrdersUseCase, required this.acceptOrderUseCase, required this.markOutForDeliveryUseCase, required this.completeOrderUseCase, required this.getDriverOrdersUseCase,
   }) : super(OrderInitial()) {
     on<PlaceOrderEvent>(_placeOrder);
     on<GetCustomerOrdersEvent>(_getCustomerOrders);
@@ -47,6 +49,7 @@ final CompleteOrderUseCase completeOrderUseCase;
   on<AcceptOrderEvent>(_acceptOrder);
   on<MarkOutForDeliveryEvent>(_markOutForDelivery);
   on<CompleteOrderEvent>(_completeOrder);
+  on<GetDriverOrdersEvent>(_getDriverOrders);
 
     on<_OrderRealtimeUpdatedEvent>(_updateOrderInState);
     on<_OrderRealtimeErrorEvent>(_handleRealtimeError);
@@ -249,19 +252,7 @@ final CompleteOrderUseCase completeOrderUseCase;
   // Per the locked rule: only pending/preparing/ready are ongoing.
   // ============================================================
 
-  bool _isOngoing(OrderEntity order) {
-    switch (order.orderStatus) {
-      case OrderStatus.pending:
-      case OrderStatus.preparing:
-      case OrderStatus.ready:
-      case OrderStatus.outForDelivery:
-        return true;
-
-      case OrderStatus.completed:
-      case OrderStatus.cancelled:
-        return false;
-    }
-  }
+  bool _isOngoing(OrderEntity order) => order.orderStatus.isOngoing;
   // ============================================================
 // DRIVER - AVAILABLE ORDERS
 // ============================================================
@@ -297,23 +288,41 @@ Future<void> _acceptOrder(
   AcceptOrderEvent event,
   Emitter<OrderState> emit,
 ) async {
+  final currentState = state;
+
   try {
     await acceptOrderUseCase(
       orderId: event.orderId,
       driverId: event.driverId,
     );
 
-    add(
-      WatchOrderStatusEvent(
-        orderId: event.orderId,
-      ),
-    );
+    // Remove the claimed order from the visible "available" list
+    // instead of relying on a refetch. Keeps other still-available
+    // orders on screen instead of wiping the whole list.
+    if (currentState is AvailableOrdersLoaded) {
+      emit(
+        AvailableOrdersLoaded(
+          orders: currentState.orders
+              .where((o) => o.id != event.orderId)
+              .toList(),
+        ),
+      );
+    }
+
+    add(WatchOrderStatusEvent(orderId: event.orderId));
   } catch (e) {
-    emit(
-      OrderFailure(
-        error: e.toString(),
-      ),
-    );
+    // Someone else claimed it first (RLS blocked us) or a network
+    // error — either way, drop just this order from the list rather
+    // than replacing the whole screen with an error state.
+    if (currentState is AvailableOrdersLoaded) {
+      emit(
+        AvailableOrdersLoaded(
+          orders: currentState.orders
+              .where((o) => o.id != event.orderId)
+              .toList(),
+        ),
+      );
+    }
   }
 }
 
@@ -329,12 +338,33 @@ Future<void> _markOutForDelivery(
     await markOutForDeliveryUseCase(
       orderId: event.orderId,
     );
+
+    add(GetDriverOrdersEvent(driverId: event.driverId));
   } catch (e) {
     emit(
       OrderFailure(
         error: e.toString(),
       ),
     );
+  }
+}
+
+// ============================================================
+// DRIVER - MY DELIVERIES
+// ============================================================
+
+Future<void> _getDriverOrders(
+  GetDriverOrdersEvent event,
+  Emitter<OrderState> emit,
+) async {
+  emit(OrderLoading());
+
+  try {
+    final orders = await getDriverOrdersUseCase(event.driverId);
+
+    emit(DriverOrdersFetched(orders: orders));
+  } catch (e) {
+    emit(OrderFailure(error: e.toString()));
   }
 }
 
@@ -350,6 +380,8 @@ Future<void> _completeOrder(
     await completeOrderUseCase(
       orderId: event.orderId,
     );
+
+    add(GetDriverOrdersEvent(driverId: event.driverId));
   } catch (e) {
     emit(
       OrderFailure(
@@ -389,5 +421,3 @@ class _OrderRealtimeUpdatedEvent extends OrderEvent {
 class _OrderRealtimeErrorEvent extends OrderEvent {
   const _OrderRealtimeErrorEvent();
 }
-
-

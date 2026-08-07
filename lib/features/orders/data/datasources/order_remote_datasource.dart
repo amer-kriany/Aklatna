@@ -72,6 +72,18 @@ class OrderRemoteDatasource {
         .toList();
   }
 
+  Future<List<OrderModel>> getDriverOrders(String driverId) async {
+    final orders = await supabase
+        .from('order')
+        .select()
+        .eq('driver_id', driverId)
+        .order('created_at', ascending: false);
+
+    return orders
+        .map<OrderModel>((e) => OrderModel.fromSupabase(e))
+        .toList();
+  }
+
   Future<void> acceptOrder({
     required String orderId,
     required String driverId,

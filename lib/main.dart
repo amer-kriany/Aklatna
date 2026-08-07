@@ -29,6 +29,7 @@ import 'package:aklatna/features/orders/data/datasources/order_remote_datasource
 import 'package:aklatna/features/orders/data/repositories/order_repository_impl.dart';
 import 'package:aklatna/features/orders/domain/usecases/accept_order_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/complete_order_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/getDriverOrdersUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_available_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_usecase.dart';
@@ -101,6 +102,8 @@ void main() async {
   final getCostomerOrdersUseCase = GetCustomerOrdersUseCase(
     orderRepositoryImpl: orderRepo,
   );
+  final getDriverOrdersUseCase = GetDriverOrdersUseCase(repository: orderRepo);
+
   final getAddressUsecase = GetAddressesUsecase(repo: addressrepo);
   final addAddressUsecase = AddAddressUsecase(repo: addressrepo);
   final deleteAddressUsecase = DeleteAddressUsecase(repo: addressrepo);
@@ -185,6 +188,8 @@ void main() async {
     acceptOrderUseCase: acceptOrderUseCase,
     markOutForDeliveryUseCase: markOutForDeliveryUseCase,
     completeOrderUseCase: completeOrderUseCase,
+        getDriverOrdersUseCase: getDriverOrdersUseCase, // <-- new
+
   ),
 ),
       ],
