@@ -12,6 +12,8 @@ class OrderEntity {
   final String customerPhone;
   final List<CartItem> items;
   final String? deliveryAddress;
+  final double? deliveryLatitude;
+  final double? deliveryLongitude;
   final String? description;
   final String? businessLogo;
   final String? businessName;
@@ -37,6 +39,8 @@ final DateTime? deliveredAt;
     required this.customerPhone,
     required this.items,
     this.deliveryAddress,
+    this.deliveryLatitude,
+    this.deliveryLongitude,
     required this.totalPrice,
     required this.deliveryFee,
     required this.orderType,
@@ -59,6 +63,8 @@ final DateTime? deliveredAt;
     String? customerPhone,
     List<CartItem>? items,
     String? deliveryAddress,
+    double? deliveryLatitude,
+    double? deliveryLongitude,
     String? description,
     String? businessLogo,
     String? businessName,
@@ -83,6 +89,8 @@ final DateTime? deliveredAt;
       customerPhone: customerPhone ?? this.customerPhone,
       items: items ?? this.items,
       deliveryAddress: deliveryAddress ?? this.deliveryAddress,
+      deliveryLatitude: deliveryLatitude ?? this.deliveryLatitude,
+      deliveryLongitude: deliveryLongitude ?? this.deliveryLongitude,
       description: description ?? this.description,
       businessLogo: businessLogo ?? this.businessLogo,
       businessName: businessName ?? this.businessName,

@@ -1,5 +1,7 @@
+import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
+import 'package:aklatna/features/orders/presentation/pages/driverOrderDetailsPage.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,6 +24,11 @@ class _DriverOrdersPageState extends State<DriverOrdersPage>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _fetch();
+
+    final businessBloc = context.read<BusinessBloc>();
+    if (businessBloc.state is! BusinessFetched) {
+      businessBloc.add(GetBusinesses());
+    }
   }
 
   void _fetch() {
@@ -96,7 +103,18 @@ class _DriverOrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: const EdgeInsets.all(12),
-      child: Padding(
+      child: InkWell(
+        onTap: order.orderStatus.isHistory
+            ? null
+            : () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DriverOrderDetailsPage(order: order),
+                  ),
+                );
+              },
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,6 +130,7 @@ class _DriverOrderCard extends StatelessWidget {
             const SizedBox(height: 16),
             _actionButton(context),
           ],
+        ),
         ),
       ),
     );

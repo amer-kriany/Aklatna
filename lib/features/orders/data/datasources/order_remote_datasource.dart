@@ -59,6 +59,19 @@ class OrderRemoteDatasource {
   // DRIVER
   // ============================================================
 
+  // Realtime only supports a single .eq filter per subscription, so
+  // this watches all delivery-type orders and just signals "something
+  // changed" -- the actual pending/unclaimed filtering is already
+  // enforced by RLS on the real fetch (getAvailableOrders), so we just
+  // refetch through that whenever this fires.
+  Stream<void> watchAvailableOrdersChanges() {
+    return supabase
+        .from('order')
+        .stream(primaryKey: ['id'])
+        .eq('order_type', 'delivery')
+        .map((_) {});
+  }
+
   Future<List<OrderModel>> getAvailableOrders() async {
     final orders = await supabase
         .from('order')

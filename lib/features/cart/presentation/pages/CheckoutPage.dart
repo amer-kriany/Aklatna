@@ -165,6 +165,27 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return 0;
   }
 
+  // ============================================================
+  // DEFAULT DELIVERY ADDRESS (source of truth)
+  // ============================================================
+  //
+  // BUGFIX: previously the order's stored deliveryAddress text used
+  // profile.address, while _calculateDeliveryPrice above used
+  // AddressBloc's *default* address for the fee -- two different
+  // addresses could silently disagree. Both the text and the new
+  // lat/lng columns now come from this single source.
+  // ============================================================
+
+  AddressEntity? _defaultAddress(BuildContext context) {
+    final addressState = context.read<AddressBloc>().state;
+    if (addressState is! AddressLoaded) return null;
+
+    for (final address in addressState.addresses) {
+      if (address.isDefault) return address;
+    }
+    return null;
+  }
+
   Future<void> _onConfirm() async {
     final orderState = context.read<OrderBloc>().state;
     if (orderState is OrderPlacing) return;
@@ -202,16 +223,25 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     final totalPrice = cartState.totalPrice + deliveryPrice;
 
+    final isDelivery = selectedDeliveryOption == 'توصيل';
+    final defaultAddress = _defaultAddress(context);
+
    final order = OrderEntity(
   businessId: cartState.businessId!,
   customerId: profile.id,
   customername: profile.userName,
   customerPhone: profile.phoneNumber,
   items: cartState.items,
-  deliveryAddress: selectedDeliveryOption == 'توصيل' ? profile.address : null,
+  deliveryAddress: isDelivery
+    ? (defaultAddress != null
+        ? '${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.apartment}'
+        : profile.address)
+    : null,
+  deliveryLatitude: isDelivery ? defaultAddress?.latitude : null,
+  deliveryLongitude: isDelivery ? defaultAddress?.longitude : null,
   totalPrice: totalPrice,
   deliveryFee: deliveryPrice, // <-- ADD THIS
-  orderType: selectedDeliveryOption == 'توصيل' ? OrderType.delivery : OrderType.pickup,
+  orderType: isDelivery ? OrderType.delivery : OrderType.pickup,
   orderStatus: OrderStatus.pending,
   scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,
   description: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),

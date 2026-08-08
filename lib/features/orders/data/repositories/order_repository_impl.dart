@@ -26,6 +26,11 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Stream<void> watchAvailableOrdersChanges() {
+    return orderRemoteDatasource.watchAvailableOrdersChanges();
+  }
+
+  @override
   Future<List<OrderEntity>> getAvailableOrders() async {
     final orders = await orderRemoteDatasource.getAvailableOrders();
 
@@ -74,6 +79,8 @@ class OrderRepositoryImpl implements OrderRepository {
       items: order.items,
 
       deliveryAddress: order.deliveryAddress,
+      deliveryLatitude: order.deliveryLatitude,
+      deliveryLongitude: order.deliveryLongitude,
       description: order.description,
 
       businessLogo: order.businessLogo,
@@ -109,6 +116,8 @@ class OrderRepositoryImpl implements OrderRepository {
       items: entity.items,
 
       deliveryAddress: entity.deliveryAddress,
+      deliveryLatitude: entity.deliveryLatitude,
+      deliveryLongitude: entity.deliveryLongitude,
       description: entity.description,
 
       businessLogo: entity.businessLogo,

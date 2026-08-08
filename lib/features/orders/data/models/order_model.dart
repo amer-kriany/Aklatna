@@ -12,6 +12,8 @@ class OrderModel {
   final String customerPhone;
   final List<CartItem> items;
   final String? deliveryAddress;
+  final double? deliveryLatitude;
+  final double? deliveryLongitude;
   final String? description;
   final String? businessLogo;
   final String? businessName;
@@ -35,6 +37,8 @@ final DateTime? deliveredAt;
     required this.customerPhone,
     required this.items,
     this.deliveryAddress,
+    this.deliveryLatitude,
+    this.deliveryLongitude,
     required this.totalPrice,
     required this.deliveryFee,
     required this.orderType,
@@ -55,6 +59,8 @@ final DateTime? deliveredAt;
       'customer_phone': customerPhone,
       'items': items.map((e) => e.toJson()).toList(),
       'delivery_address': deliveryAddress,
+      'delivery_latitude': deliveryLatitude,
+      'delivery_longitude': deliveryLongitude,
       'total_price': totalPrice,
       'delivery_fee': deliveryFee,
       'order_type': orderType.name,
@@ -156,6 +162,12 @@ final DateTime? deliveredAt;
 
   orderType: asOrderType(orders['order_type']),
   deliveryAddress: asNullableString(orders['delivery_address']),
+  deliveryLatitude: orders['delivery_latitude'] == null
+      ? null
+      : asDoubleOrZero(orders['delivery_latitude']),
+  deliveryLongitude: orders['delivery_longitude'] == null
+      ? null
+      : asDoubleOrZero(orders['delivery_longitude']),
 
   orderNumber: asStringOrEmpty(orders['order_number']),
   createdAt: asDateOrEpoch(orders['created_at']),

@@ -9,6 +9,7 @@ import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usec
 import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/watchAvailableOrderUsecase.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
 
 import 'package:bloc/bloc.dart';
@@ -25,9 +26,11 @@ final AcceptOrderUseCase acceptOrderUseCase;
 final MarkOutForDeliveryUseCase markOutForDeliveryUseCase;
 final CompleteOrderUseCase completeOrderUseCase;
 final GetDriverOrdersUseCase getDriverOrdersUseCase;
+  final WatchAvailableOrdersUseCase watchAvailableOrdersUseCase;
   final GetCustomerOrdersUseCase customerOrdersUsecase;
 
   StreamSubscription<OrderEntity>? _orderStatusSubscription;
+  StreamSubscription<void>? _availableOrdersRealtimeSubscription;
 
   // --------------------------------------------------------------
   // Keeps the last known orders list around even while state is
@@ -40,7 +43,7 @@ final GetDriverOrdersUseCase getDriverOrdersUseCase;
   OrderBloc({
     required this.placeOrderUsecase,
     required this.customerOrdersUsecase,
-    required this.watchOrderStatusUsecase, required this.getAvailableOrdersUseCase, required this.acceptOrderUseCase, required this.markOutForDeliveryUseCase, required this.completeOrderUseCase, required this.getDriverOrdersUseCase,
+    required this.watchOrderStatusUsecase, required this.getAvailableOrdersUseCase, required this.acceptOrderUseCase, required this.markOutForDeliveryUseCase, required this.completeOrderUseCase, required this.getDriverOrdersUseCase, required this.watchAvailableOrdersUseCase,
   }) : super(OrderInitial()) {
     on<PlaceOrderEvent>(_placeOrder);
     on<GetCustomerOrdersEvent>(_getCustomerOrders);
@@ -280,6 +283,14 @@ Future<void> _getAvailableOrders(
         totalEarnings: totalEarnings,
       ),
     );
+
+    // Start once, keep listening across refetches of this same
+    // handler -- any change to a delivery order (new pending order,
+    // another driver claiming one, etc.) re-triggers a fresh fetch.
+    _availableOrdersRealtimeSubscription ??=
+        watchAvailableOrdersUseCase().listen((_) {
+      add(GetAvailableOrdersEvent(driverId: event.driverId));
+    });
   } catch (e) {
     emit(
       OrderFailure(
@@ -409,6 +420,7 @@ Future<void> _completeOrder(
   @override
   Future<void> close() async {
     await _orderStatusSubscription?.cancel();
+    await _availableOrdersRealtimeSubscription?.cancel();
 
     return super.close();
   }
