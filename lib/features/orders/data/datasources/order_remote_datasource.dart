@@ -85,6 +85,14 @@ class OrderRemoteDatasource {
         .toList();
   }
 
+  Stream<void> watchDriverOrdersChanges(String driverId) {
+    return supabase
+        .from('order')
+        .stream(primaryKey: ['id'])
+        .eq('driver_id', driverId)
+        .map((_) {});
+  }
+
   Future<List<OrderModel>> getDriverOrders(String driverId) async {
     final orders = await supabase
         .from('order')

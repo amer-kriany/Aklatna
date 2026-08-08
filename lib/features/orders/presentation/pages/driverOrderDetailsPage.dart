@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:aklatna/core/constants/app_spacing.dart';
+import 'package:aklatna/core/constants/app_text_style.dart';
+import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/orders/data/datasources/order_remote_datasource.dart';
 import 'package:aklatna/features/orders/data/repositories/order_repository_impl.dart';
@@ -7,6 +10,7 @@ import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:aklatna/features/orders/presentation/widgets/orderStatusUi.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DriverOrderDetailsPage extends StatefulWidget {
@@ -40,8 +44,44 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
     );
 
     _subscription = repo.watchOrderStatus(_order.id!).listen((updated) {
-      if (mounted) setState(() => _order = updated);
+      if (!mounted) return;
+
+      final justCancelled = _order.orderStatus != OrderStatus.cancelled &&
+          updated.orderStatus == OrderStatus.cancelled;
+
+      setState(() => _order = updated);
+
+      if (justCancelled) {
+        _showCancelledDialog();
+      }
     });
+  }
+
+  void _showCancelledDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            title: const Text('تم إلغاء الطلب'),
+            content: const Text('تم إلغاء هذا الطلب. لم يعد بإمكانك المتابعة به.'),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text('حسناً'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -121,23 +161,6 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
     }
   }
 
-  String _statusLabel(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return 'قيد الانتظار';
-      case OrderStatus.preparing:
-        return 'قيد التحضير';
-      case OrderStatus.ready:
-        return 'جاهز للاستلام';
-      case OrderStatus.outForDelivery:
-        return 'في الطريق';
-      case OrderStatus.completed:
-        return 'تم التسليم';
-      case OrderStatus.cancelled:
-        return 'ملغي';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final businessAddress = _businessAddress(context);
@@ -145,15 +168,15 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(title: Text('طلب #${_order.orderNumber ?? ''}')),
+        appBar: AppBar(title: Text('طلب #${_order.orderNumber ?? ''}', style: AppTextStyles.h4)),
         body: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.pageHorizontal),
           children: [
             _SectionCard(
               title: 'حالة الطلب',
-              children: [_InfoRow(label: 'الحالة', value: _statusLabel(_order.orderStatus))],
+              children: [_InfoRow(label: 'الحالة', value: orderStatusLabel(_order.orderStatus))],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.sm),
 
             _SectionCard(
               title: 'المطعم',
@@ -162,7 +185,7 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
                 _InfoRow(label: 'العنوان', value: businessAddress ?? 'غير متوفر'),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.sm),
 
             _SectionCard(
               title: 'الزبون',
@@ -175,7 +198,7 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.sm),
 
             Row(
               children: [
@@ -186,7 +209,7 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
                     label: const Text('اتصال بالزبون'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _order.orderType.name == 'pickup'
@@ -198,19 +221,19 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.sm),
 
             _SectionCard(
               title: 'الطلب',
               children: [
                 for (final item in _order.items)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('${item.quantity} × ${item.nameAr}'),
-                        Text('${item.price * item.quantity} ل.س'),
+                        Text('${item.quantity} × ${item.nameAr}', style: AppTextStyles.regularMedium),
+                        Text('${item.price * item.quantity} ل.س', style: AppTextStyles.regularMedium),
                       ],
                     ),
                   ),
@@ -228,7 +251,7 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
             ),
 
             if (_order.description != null && _order.description!.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.sm),
               _SectionCard(
                 title: 'ملاحظات',
                 children: [Text(_order.description!)],
@@ -251,12 +274,12 @@ class _SectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 8),
+            Text(title, style: AppTextStyles.h4),
+            const SizedBox(height: AppSpacing.xs),
             ...children,
           ],
         ),
@@ -275,14 +298,21 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(
+            label,
+            style: AppTextStyles.regularSmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
           Text(
             value,
-            style: TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal),
+            style: bold
+                ? AppTextStyles.bodyMedium
+                : AppTextStyles.regularMedium,
           ),
         ],
       ),

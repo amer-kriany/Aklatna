@@ -7,6 +7,7 @@ abstract class OrderRepository {
 Future<List<OrderEntity>> getAvailableOrders();
 Stream<void> watchAvailableOrdersChanges();
 Future<List<OrderEntity>> getDriverOrders(String driverId);
+Stream<void> watchDriverOrdersChanges(String driverId);
 
 Future<void> acceptOrder({
   required String orderId,

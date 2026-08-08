@@ -10,6 +10,7 @@ import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_us
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/watchAvailableOrderUsecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/watchDriverOrder.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
 
 import 'package:bloc/bloc.dart';
@@ -27,10 +28,12 @@ final MarkOutForDeliveryUseCase markOutForDeliveryUseCase;
 final CompleteOrderUseCase completeOrderUseCase;
 final GetDriverOrdersUseCase getDriverOrdersUseCase;
   final WatchAvailableOrdersUseCase watchAvailableOrdersUseCase;
+  final WatchDriverOrdersUseCase watchDriverOrdersUseCase;
   final GetCustomerOrdersUseCase customerOrdersUsecase;
 
   StreamSubscription<OrderEntity>? _orderStatusSubscription;
   StreamSubscription<void>? _availableOrdersRealtimeSubscription;
+  StreamSubscription<void>? _driverOrdersRealtimeSubscription;
 
   // --------------------------------------------------------------
   // Keeps the last known orders list around even while state is
@@ -43,7 +46,7 @@ final GetDriverOrdersUseCase getDriverOrdersUseCase;
   OrderBloc({
     required this.placeOrderUsecase,
     required this.customerOrdersUsecase,
-    required this.watchOrderStatusUsecase, required this.getAvailableOrdersUseCase, required this.acceptOrderUseCase, required this.markOutForDeliveryUseCase, required this.completeOrderUseCase, required this.getDriverOrdersUseCase, required this.watchAvailableOrdersUseCase,
+    required this.watchOrderStatusUsecase, required this.getAvailableOrdersUseCase, required this.acceptOrderUseCase, required this.markOutForDeliveryUseCase, required this.completeOrderUseCase, required this.getDriverOrdersUseCase, required this.watchAvailableOrdersUseCase, required this.watchDriverOrdersUseCase,
   }) : super(OrderInitial()) {
     on<PlaceOrderEvent>(_placeOrder);
     on<GetCustomerOrdersEvent>(_getCustomerOrders);
@@ -277,10 +280,13 @@ Future<void> _getAvailableOrders(
         .where((o) => o.orderStatus == OrderStatus.completed)
         .fold<double>(0, (sum, o) => sum + o.deliveryFee);
 
+    final hasActiveDelivery = driverOrders.any((o) => o.orderStatus.isOngoing);
+
     emit(
       AvailableOrdersLoaded(
         orders: orders,
         totalEarnings: totalEarnings,
+        hasActiveDelivery: hasActiveDelivery,
       ),
     );
 
@@ -289,7 +295,15 @@ Future<void> _getAvailableOrders(
     // another driver claiming one, etc.) re-triggers a fresh fetch.
     _availableOrdersRealtimeSubscription ??=
         watchAvailableOrdersUseCase().listen((_) {
-      add(GetAvailableOrdersEvent(driverId: event.driverId));
+      // Guard: this fires on ANY delivery-order change, including
+      // ones triggered from other screens (e.g. marking an order
+      // out-for-delivery from "توصيلاتي"). Without this check it
+      // would overwrite DriverOrdersFetched with a stale
+      // AvailableOrdersLoaded right after, making the other screen
+      // go blank until the user navigates away and back.
+      if (state is AvailableOrdersLoaded) {
+        add(GetAvailableOrdersEvent(driverId: event.driverId));
+      }
     });
   } catch (e) {
     emit(
@@ -308,24 +322,30 @@ Future<void> _acceptOrder(
   AcceptOrderEvent event,
   Emitter<OrderState> emit,
 ) async {
-  final currentState = state;
-
   try {
     await acceptOrderUseCase(
       orderId: event.orderId,
       driverId: event.driverId,
     );
 
-    // Remove the claimed order from the visible "available" list
-    // instead of relying on a refetch. Keeps other still-available
-    // orders on screen instead of wiping the whole list.
-    if (currentState is AvailableOrdersLoaded) {
+    // BUGFIX: `state` here is checked fresh, not against the
+    // `preAcceptState` snapshot taken before the await above. This
+    // handler can take a while (network call), and the UI often
+    // navigates away during that gap (e.g. straight to "توصيلاتي"
+    // after tapping accept) -- another event can legitimately change
+    // the bloc's live state in the meantime. Emitting based on a
+    // stale snapshot here previously stomped whatever screen the
+    // driver had already navigated to back to a leftover
+    // AvailableOrdersLoaded, making it go blank.
+    if (state is AvailableOrdersLoaded) {
+      final liveState = state as AvailableOrdersLoaded;
       emit(
         AvailableOrdersLoaded(
-          orders: currentState.orders
+          orders: liveState.orders
               .where((o) => o.id != event.orderId)
               .toList(),
-          totalEarnings: currentState.totalEarnings,
+          totalEarnings: liveState.totalEarnings,
+          hasActiveDelivery: true,
         ),
       );
     }
@@ -334,14 +354,17 @@ Future<void> _acceptOrder(
   } catch (e) {
     // Someone else claimed it first (RLS blocked us) or a network
     // error — either way, drop just this order from the list rather
-    // than replacing the whole screen with an error state.
-    if (currentState is AvailableOrdersLoaded) {
+    // than replacing the whole screen with an error state. Same
+    // live-state fix as above.
+    if (state is AvailableOrdersLoaded) {
+      final liveState = state as AvailableOrdersLoaded;
       emit(
         AvailableOrdersLoaded(
-          orders: currentState.orders
+          orders: liveState.orders
               .where((o) => o.id != event.orderId)
               .toList(),
-          totalEarnings: currentState.totalEarnings,
+          totalEarnings: liveState.totalEarnings,
+          hasActiveDelivery: liveState.hasActiveDelivery,
         ),
       );
     }
@@ -385,6 +408,20 @@ Future<void> _getDriverOrders(
     final orders = await getDriverOrdersUseCase(event.driverId);
 
     emit(DriverOrdersFetched(orders: orders));
+
+    // Picks up status changes made from outside this driver's own
+    // taps -- e.g. the restaurant moving preparing -> ready via their
+    // dashboard/Studio while the driver is sitting on "توصيلاتي".
+    // Guarded the same way as the available-orders subscription: only
+    // refetch while this screen's state is actually the current one,
+    // so it can't clobber AvailableOrdersLoaded if the driver has
+    // since switched tabs.
+    _driverOrdersRealtimeSubscription ??=
+        watchDriverOrdersUseCase(event.driverId).listen((_) {
+      if (state is DriverOrdersFetched) {
+        add(GetDriverOrdersEvent(driverId: event.driverId));
+      }
+    });
   } catch (e) {
     emit(OrderFailure(error: e.toString()));
   }
@@ -421,6 +458,7 @@ Future<void> _completeOrder(
   Future<void> close() async {
     await _orderStatusSubscription?.cancel();
     await _availableOrdersRealtimeSubscription?.cancel();
+    await _driverOrdersRealtimeSubscription?.cancel();
 
     return super.close();
   }

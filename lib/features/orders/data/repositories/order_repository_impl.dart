@@ -38,6 +38,11 @@ class OrderRepositoryImpl implements OrderRepository {
   }
 
   @override
+  Stream<void> watchDriverOrdersChanges(String driverId) {
+    return orderRemoteDatasource.watchDriverOrdersChanges(driverId);
+  }
+
+  @override
   Future<List<OrderEntity>> getDriverOrders(String driverId) async {
     final orders = await orderRemoteDatasource.getDriverOrders(driverId);
 

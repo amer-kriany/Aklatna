@@ -1,3 +1,6 @@
+import 'package:aklatna/core/constants/app_spacing.dart';
+import 'package:aklatna/core/constants/app_text_style.dart';
+import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
@@ -10,9 +13,13 @@ class AvailableOrderCard extends StatelessWidget {
   const AvailableOrderCard({
     super.key,
     required this.order,
+    this.onAccepted,
+    this.isDisabled = false,
   });
 
   final OrderEntity order;
+  final VoidCallback? onAccepted;
+  final bool isDisabled;
 
   String? _businessAddress(BuildContext context) {
     final businessState = context.read<BusinessBloc>().state;
@@ -45,78 +52,109 @@ class AvailableOrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final businessAddress = _businessAddress(context);
 
-    return Card(
-      margin: const EdgeInsets.all(12),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DriverOrderDetailsPage(order: order),
-            ),
-          );
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-
-              Text(
-                order.businessName ?? "",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.pageHorizontal,
+        vertical: AppSpacing.xs,
+      ),
+      child: Card(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => DriverOrderDetailsPage(order: order),
               ),
-
-              if (businessAddress != null) ...[
-                const SizedBox(height: 4),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  businessAddress,
-                  style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  order.businessName ?? '',
+                  style: AppTextStyles.h4,
+                ),
+
+                if (businessAddress != null) ...[
+                  const SizedBox(height: AppSpacing.xxs),
+                  Text(
+                    businessAddress,
+                    style: AppTextStyles.regularSmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+
+                const SizedBox(height: AppSpacing.sm),
+
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: AppSizes.iconSm,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: AppSpacing.xxs),
+                    Expanded(
+                      child: Text(
+                        order.deliveryAddress ?? '',
+                        style: AppTextStyles.regularSmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: AppSpacing.sm),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${order.totalPrice} ل.س',
+                      style: AppTextStyles.priceMedium,
+                    ),
+                    Text(
+                      'التوصيل: ${order.deliveryFee} ل.س',
+                      style: AppTextStyles.regularSmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: AppSpacing.md),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isDisabled
+                        ? null
+                        : () {
+                            context.read<OrderBloc>().add(
+                              AcceptOrderEvent(
+                                orderId: order.id!,
+                                driverId: Supabase
+                                    .instance.client.auth.currentUser!.id,
+                              ),
+                            );
+                            onAccepted?.call();
+                          },
+                    child: Text(
+                      isDisabled ? 'لديك توصيلة قيد التنفيذ' : 'قبول الطلب',
+                    ),
+                  ),
                 ),
               ],
-
-              const SizedBox(height: 10),
-
-              Text(
-                "عنوان الزبون: ${order.deliveryAddress ?? ''}",
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                "${order.totalPrice} SYP",
-              ),
-
-              const SizedBox(height: 8),
-
-              Text(
-                "Delivery Fee : ${order.deliveryFee}",
-              ),
-
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-
-                    context.read<OrderBloc>().add(
-                      AcceptOrderEvent(
-                        orderId: order.id!,
-                        driverId: Supabase.instance.client.auth.currentUser!.id,
-                      ),
-                    );
-
-                  },
-                  child: const Text("قبول الطلب"),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

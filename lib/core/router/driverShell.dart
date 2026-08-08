@@ -16,7 +16,9 @@ class _DriverShellState extends State<DriverShell> {
   Widget _currentPage() {
     switch (_index) {
       case 0:
-        return const DriverHomePage();
+        return DriverHomePage(
+          onOrderAccepted: () => setState(() => _index = 1),
+        );
       case 1:
         return const DriverOrdersPage();
       default:
