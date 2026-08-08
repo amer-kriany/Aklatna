@@ -36,6 +36,7 @@ import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_us
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/watchAvailableOrderUsecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/watchDriverOrder.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
@@ -111,6 +112,7 @@ void main() async {
   final acceptOrderUseCase = AcceptOrderUseCase(repository: orderRepo);
   final markOutForDeliveryUseCase = MarkOutForDeliveryUseCase(repository: orderRepo);
   final completeOrderUseCase = CompleteOrderUseCase(repository: orderRepo);
+final watchDriverOrdersUseCase = WatchDriverOrdersUseCase(repository: orderRepo);
 
   final getBusinessUsecase = GetbusinessUsecase(repository: businessRepository);
   final searchBusinessesusecase = Searchbusinessesusecase(
@@ -173,7 +175,7 @@ void main() async {
             acceptOrderUseCase: acceptOrderUseCase,
             markOutForDeliveryUseCase: markOutForDeliveryUseCase,
             completeOrderUseCase: completeOrderUseCase,
-            getDriverOrdersUseCase: getDriverOrdersUseCase, watchAvailableOrdersUseCase: watchAvailableOrdersUseCase,
+            getDriverOrdersUseCase: getDriverOrdersUseCase, watchAvailableOrdersUseCase: watchAvailableOrdersUseCase, watchDriverOrdersUseCase: watchDriverOrdersUseCase,
           ),
         ),
       ],
