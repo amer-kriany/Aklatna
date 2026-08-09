@@ -7,30 +7,34 @@ part 'promotions_event.dart';
 part 'promotions_state.dart';
 
 class PromotionsBloc extends Bloc<PromotionsEvent, PromotionsState> {
-  final GetPromotionsUseCase promotionsusecase;
-  PromotionsBloc({required this.promotionsusecase})
-    : super(PromotionsInitial()) {
-    on<PromotionsEvent>(_getPromotions);
+  final GetPromotionsUseCase promotionsUseCase;
+
+  PromotionsBloc({
+    required this.promotionsUseCase,
+  }) : super(PromotionsInitial()) {
+    on<LoadPromotionsEvent>(_getPromotions);
   }
-  // get all promotions
+
   Future<void> _getPromotions(
-  PromotionsEvent event,
-  Emitter<PromotionsState> emit,
-) async {
-  print("Loading promotions...");
+    LoadPromotionsEvent event,
+    Emitter<PromotionsState> emit,
+  ) async {
+    emit(PromotionsLoading());
 
-  emit(PromotionsLoading());
+    try {
+      final promotions = await promotionsUseCase();
 
-  try {
-    final promotions = await promotionsusecase();
-
-    print(promotions.length);
-
-    emit(PromotionsLoaded(promotions: promotions));
-  } catch (e) {
-    print(e);
-
-    emit(PromotionsError(message: e.toString()));
+      emit(
+        PromotionsLoaded(
+          promotions: promotions,
+        ),
+      );
+    } catch (e) {
+      emit(
+        PromotionsError(
+          message: e.toString(),
+        ),
+      );
+    }
   }
-}
 }

@@ -39,7 +39,6 @@ import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart
 import 'package:aklatna/features/orders/domain/usecases/watchAvailableOrderUsecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/watchDriverOrder.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
-import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:aklatna/features/promotions/data/dataSource/promotionDataSource.dart';
 import 'package:aklatna/features/promotions/data/repository/promotionsRepoImp.dart';
@@ -138,7 +137,7 @@ final watchDriverOrdersUseCase = WatchDriverOrdersUseCase(repository: orderRepo)
           ),
         ),
         BlocProvider(
-          create: (context) => PromotionsBloc(promotionsusecase: getpromotions),
+          create: (context) => PromotionsBloc( promotionsUseCase: getpromotions),
         ),
         BlocProvider(
           create: (context) => AddressBloc(
@@ -198,7 +197,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  final Set<String> _checkedOrderIds = {};
 
   final ReviewRepositoryImpl _reviewRepo = ReviewRepositoryImpl(
     reviewRemoteDatasource: ReviewRemoteDatasource(),
