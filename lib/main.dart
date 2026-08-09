@@ -27,6 +27,7 @@ import 'package:aklatna/features/menu/domain/usecases/getItemsUsecase.dart';
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/orders/data/datasources/order_remote_datasource.dart';
 import 'package:aklatna/features/orders/data/repositories/order_repository_impl.dart';
+import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
 import 'package:aklatna/features/orders/domain/usecases/accept_order_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/complete_order_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/getDriverOrdersUseCase.dart';
@@ -219,34 +220,30 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future<void> _maybePromptForCompletedOrders(List<dynamic> orders) async {
-    for (final order in orders) {
-      final orderId = order.id;
-      final status = order.orderStatus;
+  Future<void> _maybePromptForCompletedOrder(
+  OrderEntity order,
+) async {
+  final orderId = order.id;
 
-      if (orderId == null) continue;
-      if (status != OrderStatus.completed) continue;
-      if (_checkedOrderIds.contains(orderId)) continue;
+  if (orderId == null) return;
 
-      _checkedOrderIds.add(orderId);
+  final alreadyReviewed =
+      await _reviewRepo.hasReviewForOrder(orderId);
 
-      final alreadyReviewed = await _reviewRepo.hasReviewForOrder(orderId);
+  if (alreadyReviewed) return;
 
-      if (alreadyReviewed) continue;
+  final navState =
+      MainShell.rootNavigatorKey.currentState;
 
-      final navState = MainShell.rootNavigatorKey.currentState;
-
-      if (navState != null) {
-        navState.push(
-          MaterialPageRoute(
-            builder: (_) => RatingPage(order: order),
-            fullscreenDialog: true,
-          ),
-        );
-      }
-      break;
-    }
+  if (navState != null) {
+    navState.push(
+      MaterialPageRoute(
+        builder: (_) => RatingPage(order: order),
+        fullscreenDialog: true,
+      ),
+    );
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -272,12 +269,12 @@ class _MyAppState extends State<MyApp> {
           },
         ),
         BlocListener<OrderBloc, OrderState>(
-          listener: (context, state) {
-            if (state is CustomerOrdersFetched) {
-              _maybePromptForCompletedOrders(state.orders);
-            }
-          },
-        ),
+  listener: (context, state) {
+    if (state is OrderJustCompleted) {
+      _maybePromptForCompletedOrder(state.order);
+    }
+  },
+),
       ],
       child: MaterialApp.router(
         routerConfig: appRouter,

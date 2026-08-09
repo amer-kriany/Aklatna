@@ -26,6 +26,7 @@ class OngoingOrderCard extends StatelessWidget {
     // parens fix it.
     final showPredictedTime =
         (order.orderStatus == OrderStatus.preparing ||
+        order.orderStatus == OrderStatus.outForDelivery||
             order.orderStatus == OrderStatus.ready) &&
         estimatedTime != null &&
         estimatedTime > 0;

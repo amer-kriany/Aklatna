@@ -11,6 +11,8 @@ import 'package:aklatna/features/orders/orderStatus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:aklatna/features/orders/presentation/widgets/orderStatusUi.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart' as latlong;
 import 'package:url_launcher/url_launcher.dart';
 
 class DriverOrderDetailsPage extends StatefulWidget {
@@ -117,38 +119,44 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
     return parts.isEmpty ? null : parts.join('، ');
   }
 
-  Future<void> _openCustomerLocationInMaps(BuildContext context) async {
-    final Uri mapsUri;
+ Future<void> _openCustomerLocationInMaps(BuildContext context) async {
+  final businessPoint = _businessLocation(context);
+  final Uri mapsUri;
 
-    if (_order.deliveryLatitude != null && _order.deliveryLongitude != null) {
-      mapsUri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=${_order.deliveryLatitude},${_order.deliveryLongitude}',
-      );
-    } else if (_order.deliveryAddress != null &&
-        _order.deliveryAddress!.isNotEmpty) {
-      // Fallback for orders placed before lat/lng was added to the
-      // schema -- search by the address text instead.
-      mapsUri = Uri.parse(
-        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(_order.deliveryAddress!)}',
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لا يوجد موقع محدد لهذا الطلب')),
-      );
-      return;
-    }
-
-    final launched = await launchUrl(
-      mapsUri,
-      mode: LaunchMode.externalApplication,
+  if (businessPoint != null &&
+      _order.deliveryLatitude != null &&
+      _order.deliveryLongitude != null) {
+    // Directions from restaurant -> customer, shows route + distance
+    // natively in the maps app instead of just a single pin.
+    mapsUri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1'
+      '&origin=${businessPoint.latitude},${businessPoint.longitude}'
+      '&destination=${_order.deliveryLatitude},${_order.deliveryLongitude}'
+      '&travelmode=driving',
     );
-
-    if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لا يوجد تطبيق خرائط مثبت')),
-      );
-    }
+  } else if (_order.deliveryLatitude != null && _order.deliveryLongitude != null) {
+    mapsUri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${_order.deliveryLatitude},${_order.deliveryLongitude}',
+    );
+  } else if (_order.deliveryAddress != null && _order.deliveryAddress!.isNotEmpty) {
+    mapsUri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(_order.deliveryAddress!)}',
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('لا يوجد موقع محدد لهذا الطلب')),
+    );
+    return;
   }
+
+  final launched = await launchUrl(mapsUri, mode: LaunchMode.externalApplication);
+
+  if (!launched && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('لا يوجد تطبيق خرائط مثبت')),
+    );
+  }
+}
 
   Future<void> _callCustomer(BuildContext context) async {
     final uri = Uri(scheme: 'tel', path: _order.customerPhone);
@@ -159,6 +167,133 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
         const SnackBar(content: Text('تعذر فتح تطبيق الاتصال')),
       );
     }
+  }
+
+  // Returns the restaurant's lat/lng from BusinessBloc's already-fetched
+  // list -- same lookup pattern as _businessAddress, no schema change
+  // needed since business coordinates are already there and don't move.
+  latlong.LatLng? _businessLocation(BuildContext context) {
+    final businessState = context.read<BusinessBloc>().state;
+    if (businessState is! BusinessFetched) return null;
+
+    for (final business in businessState.businesses) {
+      if (business.id == _order.businessId) {
+        return latlong.LatLng(business.latitude!, business.longitude!);
+      }
+    }
+    return null;
+  }
+
+  Widget _buildMap(BuildContext context) {
+    latlong.LatLng? customerPoint;
+    if (_order.deliveryLatitude != null && _order.deliveryLongitude != null) {
+      customerPoint =
+          latlong.LatLng(_order.deliveryLatitude!, _order.deliveryLongitude!);
+    }
+
+    final businessPoint = _businessLocation(context);
+
+    final points = [
+      if (customerPoint != null) customerPoint,
+      if (businessPoint != null) businessPoint,
+    ];
+
+    // No coordinates for either side -- nothing to draw. Orders placed
+    // before delivery_latitude/longitude existed will hit this.
+    if (points.isEmpty) return const SizedBox.shrink();
+
+    final markers = <Marker>[
+      if (customerPoint != null)
+        Marker(
+          point: customerPoint,
+          width: 42,
+          height: 42,
+          child: const Icon(
+            Icons.location_on,
+            color: AppColors.error,
+            size: 42,
+          ),
+        ),
+      if (businessPoint != null)
+        Marker(
+          point: businessPoint,
+          width: 28,
+          height: 28,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.primary,
+              border: Border.all(color: Colors.white, width: 3),
+            ),
+          ),
+        ),
+    ];
+
+    final center = points.length == 2
+        ? latlong.LatLng(
+            (points[0].latitude + points[1].latitude) / 2,
+            (points[0].longitude + points[1].longitude) / 2,
+          )
+        : points.first;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: SizedBox(
+            height: 220,
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: center,
+                initialZoom: points.length == 2 ? 13 : 15,
+                minZoom: 3,
+                maxZoom: 18,
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.aklatna.app',
+                ),
+                MarkerLayer(markers: markers),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Row(
+          children: [
+            if (customerPoint != null) ...[
+              const Icon(Icons.location_on, color: AppColors.error, size: 18),
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                'منزل الزبون',
+                style: AppTextStyles.regularSmall
+                    .copyWith(color: AppColors.textSecondary),
+              ),
+            ],
+            if (customerPoint != null && businessPoint != null)
+              const SizedBox(width: AppSpacing.md),
+            if (businessPoint != null) ...[
+              Container(
+                width: 12,
+                height: 12,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xxs),
+              Text(
+                'المطعم',
+                style: AppTextStyles.regularSmall
+                    .copyWith(color: AppColors.textSecondary),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
   }
 
   @override
@@ -198,6 +333,9 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
                 ),
               ],
             ),
+            const SizedBox(height: AppSpacing.sm),
+
+            _buildMap(context),
             const SizedBox(height: AppSpacing.sm),
 
             Row(

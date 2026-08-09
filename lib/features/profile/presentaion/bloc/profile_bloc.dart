@@ -22,11 +22,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     on<UpdateProfilePhotoEvent>(_updateProfilePhoto);
   }
   // get profile data
-  Future<void> _getProfiles(
+  Future _getProfiles(
     GetProfilesEvent event,
-    Emitter<ProfileState> emit,
+    Emitter emit,
   ) async {
-    emit(ProfileLoading());
     try {
       final profiles = await getProfilesUsecase();
       if (profiles.isNotEmpty) {

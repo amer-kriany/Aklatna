@@ -6,6 +6,8 @@ import 'package:aklatna/features/addresses/domain/entity/addressEntity.dart';
 import 'package:aklatna/features/addresses/presentation/bloc/address_bloc.dart';
 import 'package:aklatna/features/home/presentation/bloc/business_bloc.dart';
 import 'package:aklatna/core/utils/distance_utils.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/constants/app_text_style.dart';
@@ -19,6 +21,100 @@ class OrderDetailsPage extends StatelessWidget {
   const OrderDetailsPage({super.key, required this.order});
 
   final OrderEntity order;
+
+  Future<Map<String, dynamic>?> _fetchDriverInfo(String driverId) async {
+  // Requires the "authenticated users can view driver profiles" RLS
+  // policy on profiles (role = 'driver') -- a customer's own row-only
+  // policy won't let this through otherwise.
+  final result = await Supabase.instance.client
+      .from('profiles')
+      .select('username, phone_number, photo')
+      .eq('id', driverId)
+      .maybeSingle();
+  return result;
+}
+
+Future<void> _callDriver(BuildContext context, String phone) async {
+  final uri = Uri(scheme: 'tel', path: phone);
+  final launched = await launchUrl(uri);
+
+  if (!launched && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('تعذر فتح تطبيق الاتصال')),
+    );
+  }
+}
+
+Widget _buildDriverInfo(BuildContext context) {
+  // Only reveal driver identity once the restaurant has actually
+  // confirmed the order (preparing or later) -- driver may already be
+  // assigned at 'pending' per the claim-early flow, but showing that
+  // to the customer before the restaurant even accepted is confusing.
+  final showDriver = _statusIndex(order.orderStatus) >= 1 &&
+      order.orderStatus != OrderStatus.cancelled;
+
+  if (!showDriver || order.driverId == null) return const SizedBox.shrink();
+
+  return FutureBuilder<Map<String, dynamic>?>(
+    future: _fetchDriverInfo(order.driverId!),
+    builder: (context, snapshot) {
+      if (!snapshot.hasData || snapshot.data == null) {
+        return const SizedBox.shrink();
+      }
+
+      final driver = snapshot.data!;
+      final name = driver['username'] as String? ?? 'السائق';
+      final phone = driver['phone_number'] as String?;
+      final photo = driver['photo'] as String?;
+
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.lg),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: AppColors.primaryLight,
+                backgroundImage: photo != null && photo.isNotEmpty
+                    ? NetworkImage(photo)
+                    : null,
+                child: photo == null || photo.isEmpty
+                    ? const Icon(Icons.person, color: AppColors.primary)
+                    : null,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'السائق',
+                      style: AppTextStyles.regularSmall
+                          .copyWith(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(name, style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+              if (phone != null && phone.isNotEmpty)
+                IconButton(
+                  onPressed: () => _callDriver(context, phone),
+                  icon: const Icon(Icons.call, color: AppColors.primary),
+                ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +141,7 @@ class OrderDetailsPage extends StatelessWidget {
 
                 // Current order status
                 _buildOrderStatus(),
+                _buildDriverInfo(context),
 
                 const SizedBox(height: AppSpacing.lg),
 
@@ -206,49 +303,55 @@ class OrderDetailsPage extends StatelessWidget {
   }
 
   Widget _buildStatusTimeline() {
-    final currentIndex = _statusIndex(order.orderStatus);
+  final currentIndex = _statusIndex(order.orderStatus);
+  final isDelivery = order.orderType == OrderType.delivery;
 
-    return Column(
-      children: [
+  return Column(
+    children: [
+      _statusStep(
+        title: 'تم استلام الطلب',
+        subtitle: 'تم إرسال طلبك إلى المطعم',
+        stepIndex: 0,
+        currentIndex: currentIndex,
+        icon: Icons.receipt_long_rounded,
+        isLast: false,
+      ),
+      _statusStep(
+        title: 'جاري تحضير الطلب',
+        subtitle: 'المطعم يقوم بتحضير طلبك',
+        stepIndex: 1,
+        currentIndex: currentIndex,
+        icon: Icons.restaurant_rounded,
+        isLast: false,
+      ),
+      _statusStep(
+        title: 'الطلب جاهز',
+        subtitle: isDelivery ? 'طلبك جاهز للتوصيل' : 'طلبك جاهز للاستلام',
+        stepIndex: 2,
+        currentIndex: currentIndex,
+        icon: Icons.inventory_2_rounded,
+        isLast: !isDelivery,
+      ),
+      if (isDelivery)
         _statusStep(
-          title: 'تم استلام الطلب',
-          subtitle: 'تم إرسال طلبك إلى المطعم',
-          stepIndex: 0,
-          currentIndex: currentIndex,
-          icon: Icons.receipt_long_rounded,
-          isLast: false,
-        ),
-        _statusStep(
-          title: 'جاري تحضير الطلب',
-          subtitle: 'المطعم يقوم بتحضير طلبك',
-          stepIndex: 1,
-          currentIndex: currentIndex,
-          icon: Icons.restaurant_rounded,
-          isLast: false,
-        ),
-        _statusStep(
-          title: 'الطلب جاهز',
-          subtitle: order.orderType == OrderType.delivery
-              ? 'طلبك جاهز للتوصيل'
-              : 'طلبك جاهز للاستلام',
-          stepIndex: 2,
-          currentIndex: currentIndex,
-          icon: Icons.inventory_2_rounded,
-          isLast: false,
-        ),
-        _statusStep(
-          title: 'تم الإكمال',
-          subtitle: order.orderType == OrderType.delivery
-              ? 'تم توصيل طلبك'
-              : 'تم استلام طلبك',
+          title: 'في الطريق',
+          subtitle: 'السائق في طريقه إليك',
           stepIndex: 3,
           currentIndex: currentIndex,
-          icon: Icons.check_circle_rounded,
-          isLast: true,
+          icon: Icons.delivery_dining_rounded,
+          isLast: false,
         ),
-      ],
-    );
-  }
+      _statusStep(
+        title: 'تم الإكمال',
+        subtitle: isDelivery ? 'تم توصيل طلبك' : 'تم استلام طلبك',
+        stepIndex: 4,
+        currentIndex: currentIndex,
+        icon: Icons.check_circle_rounded,
+        isLast: true,
+      ),
+    ],
+  );
+}
 
   Widget _statusStep({
     required String title,

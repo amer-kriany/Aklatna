@@ -155,3 +155,13 @@ class AvailableOrdersLoaded extends OrderState {
   @override
   List<Object?> get props => [orders, totalEarnings, hasActiveDelivery];
 }
+class OrderJustCompleted extends OrderState {
+  final OrderEntity order;
+
+  const OrderJustCompleted({
+    required this.order,
+  });
+
+  @override
+  List<Object?> get props => [order];
+}
