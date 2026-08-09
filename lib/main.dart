@@ -42,6 +42,7 @@ import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:aklatna/features/promotions/data/dataSource/promotionDataSource.dart';
 import 'package:aklatna/features/promotions/data/repository/promotionsRepoImp.dart';
+import 'package:aklatna/features/promotions/domain/usecases/GetPromotionsMapUseCase.dart';
 import 'package:aklatna/features/promotions/domain/usecases/promotionsUseCase.dart';
 import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
 import 'package:aklatna/features/review/data/datasource/reviewRemoteDatasource.dart';
@@ -98,8 +99,9 @@ void main() async {
     orderRepositoryImpl: orderRepo,
   );
   final getDriverOrdersUseCase = GetDriverOrdersUseCase(repository: orderRepo);
-  final watchAvailableOrdersUseCase = WatchAvailableOrdersUseCase(repository: orderRepo);
-
+  final watchAvailableOrdersUseCase = WatchAvailableOrdersUseCase(
+    repository: orderRepo,
+  );
 
   final getAddressUsecase = GetAddressesUsecase(repo: addressrepo);
   final addAddressUsecase = AddAddressUsecase(repo: addressrepo);
@@ -108,12 +110,18 @@ void main() async {
   final getJobsUsecase = GetJobsUsecase(jobRepoimp: jobRepo);
   final orderstatususecase = Orderstatususecase(orderRepositoryImpl: orderRepo);
   final placeOrderUsecase = PlaceOrderUsecase(orderRepositoryImpl: orderRepo);
-  final getAvailableOrdersUseCase = GetAvailableOrdersUseCase(repository: orderRepo);
+  final getAvailableOrdersUseCase = GetAvailableOrdersUseCase(
+    repository: orderRepo,
+  );
   final acceptOrderUseCase = AcceptOrderUseCase(repository: orderRepo);
-  final markOutForDeliveryUseCase = MarkOutForDeliveryUseCase(repository: orderRepo);
+  final markOutForDeliveryUseCase = MarkOutForDeliveryUseCase(
+    repository: orderRepo,
+  );
   final completeOrderUseCase = CompleteOrderUseCase(repository: orderRepo);
-final watchDriverOrdersUseCase = WatchDriverOrdersUseCase(repository: orderRepo);
-
+  final watchDriverOrdersUseCase = WatchDriverOrdersUseCase(
+    repository: orderRepo,
+  );
+  final getPromotionsMapUseCase = GetPromotionsMapUseCase(repo: promotionrepo);
   final getBusinessUsecase = GetbusinessUsecase(repository: businessRepository);
   final searchBusinessesusecase = Searchbusinessesusecase(
     businessrepoimp: businessRepository,
@@ -137,7 +145,7 @@ final watchDriverOrdersUseCase = WatchDriverOrdersUseCase(repository: orderRepo)
           ),
         ),
         BlocProvider(
-          create: (context) => PromotionsBloc( promotionsUseCase: getpromotions),
+          create: (context) => PromotionsBloc(promotionsUseCase: getpromotions, getPromotionsMapUseCase: getPromotionsMapUseCase),
         ),
         BlocProvider(
           create: (context) => AddressBloc(
@@ -175,7 +183,9 @@ final watchDriverOrdersUseCase = WatchDriverOrdersUseCase(repository: orderRepo)
             acceptOrderUseCase: acceptOrderUseCase,
             markOutForDeliveryUseCase: markOutForDeliveryUseCase,
             completeOrderUseCase: completeOrderUseCase,
-            getDriverOrdersUseCase: getDriverOrdersUseCase, watchAvailableOrdersUseCase: watchAvailableOrdersUseCase, watchDriverOrdersUseCase: watchDriverOrdersUseCase,
+            getDriverOrdersUseCase: getDriverOrdersUseCase,
+            watchAvailableOrdersUseCase: watchAvailableOrdersUseCase,
+            watchDriverOrdersUseCase: watchDriverOrdersUseCase,
           ),
         ),
       ],
@@ -197,7 +207,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-
   final ReviewRepositoryImpl _reviewRepo = ReviewRepositoryImpl(
     reviewRemoteDatasource: ReviewRemoteDatasource(),
   );
@@ -214,34 +223,30 @@ class _MyAppState extends State<MyApp> {
     // Cover the already-authenticated-on-mount case here.
     final authState = sl<AuthBloc>().state;
     if (authState is AuthAuthenticated) {
-      sl<ProfileBloc>().add( GetProfilesEvent());
+      sl<ProfileBloc>().add(GetProfilesEvent());
     }
   }
 
-  Future<void> _maybePromptForCompletedOrder(
-  OrderEntity order,
-) async {
-  final orderId = order.id;
+  Future<void> _maybePromptForCompletedOrder(OrderEntity order) async {
+    final orderId = order.id;
 
-  if (orderId == null) return;
+    if (orderId == null) return;
 
-  final alreadyReviewed =
-      await _reviewRepo.hasReviewForOrder(orderId);
+    final alreadyReviewed = await _reviewRepo.hasReviewForOrder(orderId);
 
-  if (alreadyReviewed) return;
+    if (alreadyReviewed) return;
 
-  final navState =
-      MainShell.rootNavigatorKey.currentState;
+    final navState = MainShell.rootNavigatorKey.currentState;
 
-  if (navState != null) {
-    navState.push(
-      MaterialPageRoute(
-        builder: (_) => RatingPage(order: order),
-        fullscreenDialog: true,
-      ),
-    );
+    if (navState != null) {
+      navState.push(
+        MaterialPageRoute(
+          builder: (_) => RatingPage(order: order),
+          fullscreenDialog: true,
+        ),
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -262,17 +267,17 @@ class _MyAppState extends State<MyApp> {
         BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthAuthenticated) {
-              context.read<ProfileBloc>().add( GetProfilesEvent());
+              context.read<ProfileBloc>().add(GetProfilesEvent());
             }
           },
         ),
         BlocListener<OrderBloc, OrderState>(
-  listener: (context, state) {
-    if (state is OrderJustCompleted) {
-      _maybePromptForCompletedOrder(state.order);
-    }
-  },
-),
+          listener: (context, state) {
+            if (state is OrderJustCompleted) {
+              _maybePromptForCompletedOrder(state.order);
+            }
+          },
+        ),
       ],
       child: MaterialApp.router(
         routerConfig: appRouter,

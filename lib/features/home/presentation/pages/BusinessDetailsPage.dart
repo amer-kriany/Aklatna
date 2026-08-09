@@ -19,9 +19,9 @@ import 'package:aklatna/features/home/presentation/widgets/businesses/MenuItemGr
 import 'package:aklatna/features/home/presentation/widgets/businesses/businessDetailsInfo.dart';
 
 import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
+import 'package:aklatna/features/promotions/domain/entities/promotionEntity.dart';
 import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
 import 'package:aklatna/features/promotions/presentaion/widgets/promotionCard.dart';
-
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,16 +31,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/widgets/page_skeletons.dart';
 
 class BusinessDetailsPage extends StatefulWidget {
-  const BusinessDetailsPage({
-    super.key,
-    required this.businessId,
-  });
+  const BusinessDetailsPage({super.key, required this.businessId});
 
   final String businessId;
 
   @override
-  State<BusinessDetailsPage> createState() =>
-      _BusinessDetailsPageState();
+  State<BusinessDetailsPage> createState() => _BusinessDetailsPageState();
 }
 
 class _BusinessDetailsPageState extends State<BusinessDetailsPage>
@@ -83,9 +79,7 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
       restaurantLongitude: business.longitude,
     );
 
-    final price = DeliveryPriceUtils.calculateDeliveryPrice(
-      distanceKm,
-    );
+    final price = DeliveryPriceUtils.calculateDeliveryPrice(distanceKm);
 
     return DeliveryPriceUtils.formatDeliveryPrice(price);
   }
@@ -98,56 +92,21 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
   void initState() {
     super.initState();
 
-    // ============================================================
-    // BUSINESS
-    // ============================================================
-
-    context.read<BusinessBloc>().add(
-      GetBusinessById(
-        id: widget.businessId,
-      ),
-    );
-
-    // ============================================================
-    // MENU
-    // ============================================================
+    context.read<BusinessBloc>().add(GetBusinessById(id: widget.businessId));
 
     context.read<MenuBloc>().add(
-      GetMenuForBusiness(
-        businessId: widget.businessId,
-      ),
+      GetMenuForBusiness(businessId: widget.businessId),
     );
 
-    // ============================================================
-    // PROMOTIONS
-    // ============================================================
+    context.read<PromotionsBloc>().add(LoadPromotionsEvent());
 
-    context.read<PromotionsBloc>().add(
-      LoadPromotionsEvent(),
-    );
-
-    // ============================================================
-    // USER DATA
-    // ============================================================
-
-    final userId =
-        Supabase.instance.client.auth.currentUser?.id;
+    final userId = Supabase.instance.client.auth.currentUser?.id;
 
     if (userId != null) {
-      // FAVORITES
-      context.read<FavoriteBloc>().add(
-        LoadFavoritesEvent(
-          userId: userId,
-        ),
-      );
+      context.read<FavoriteBloc>().add(LoadFavoritesEvent(userId: userId));
 
-      // ADDRESSES
       if (context.read<AddressBloc>().state is AddressInitial) {
-        context.read<AddressBloc>().add(
-          LoadAddressesEvent(
-            userId: userId,
-          ),
-        );
+        context.read<AddressBloc>().add(LoadAddressesEvent(userId: userId));
       }
     }
 
@@ -159,26 +118,17 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
   // ============================================================
 
   void _onToggleFavorite() {
-    final userId =
-        Supabase.instance.client.auth.currentUser?.id;
+    final userId = Supabase.instance.client.auth.currentUser?.id;
 
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'الرجاء تسجيل الدخول لإضافة المفضلة',
-          ),
-        ),
+        const SnackBar(content: Text('الرجاء تسجيل الدخول لإضافة المفضلة')),
       );
-
       return;
     }
 
     context.read<FavoriteBloc>().add(
-      ToggleFavoriteEvent(
-        userId: userId,
-        businessId: widget.businessId,
-      ),
+      ToggleFavoriteEvent(userId: userId, businessId: widget.businessId),
     );
   }
 
@@ -193,30 +143,14 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
         bottom: false,
         child: BlocBuilder<BusinessBloc, BusinessState>(
           builder: (context, businessState) {
-            // ========================================================
-            // LOADING
-            // ========================================================
-
             if (businessState is BusinessLoading ||
                 businessState is BusinessInitial) {
               return const DashboardSkeleton();
             }
 
-            // ========================================================
-            // ERROR
-            // ========================================================
-
             if (businessState is BusinessError) {
-              return Center(
-                child: Text(
-                  businessState.message,
-                ),
-              );
+              return Center(child: Text(businessState.message));
             }
-
-            // ========================================================
-            // INVALID STATE
-            // ========================================================
 
             if (businessState is! BusinessDetailLoaded) {
               return const SizedBox.shrink();
@@ -229,16 +163,11 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                 // ======================================================
                 // HEADER IMAGE
                 // ======================================================
-
                 SizedBox(
                   height: 220,
                   width: double.infinity,
                   child: Stack(
                     children: [
-                      // ==================================================
-                      // COVER
-                      // ==================================================
-
                       Positioned.fill(
                         child:
                             business.coverUrl != null &&
@@ -246,113 +175,66 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                             ? Image.network(
                                 business.coverUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder:
-                                    (
-                                      context,
-                                      error,
-                                      stackTrace,
-                                    ) {
-                                      return Container(
-                                        color: const Color(
-                                          0xFFEDEDEF,
-                                        ),
-                                      );
-                                    },
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: const Color(0xFFEDEDEF),
+                                  );
+                                },
                               )
-                            : Container(
-                                color: const Color(
-                                  0xFFEDEDEF,
-                                ),
-                              ),
+                            : Container(color: const Color(0xFFEDEDEF)),
                       ),
-
-                      // ==================================================
-                      // HEADER BUTTONS
-                      // ==================================================
-
                       SafeArea(
                         child: Padding(
-                          padding: const EdgeInsets.all(
-                            AppSpacing.lg,
-                          ),
+                          padding: const EdgeInsets.all(AppSpacing.lg),
                           child: Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // ==================================================
-                              // BACK BUTTON
-                              // ==================================================
-
                               Material(
                                 color: Colors.white,
                                 shape: const CircleBorder(),
                                 child: InkWell(
-                                  customBorder:
-                                      const CircleBorder(),
-                                  onTap: () =>
-                                      Navigator.pop(context),
+                                  customBorder: const CircleBorder(),
+                                  onTap: () => Navigator.pop(context),
                                   child: const SizedBox(
                                     width: 42,
                                     height: 42,
                                     child: Icon(
-                                      Icons
-                                          .arrow_back_ios_new_rounded,
+                                      Icons.arrow_back_ios_new_rounded,
                                       size: 20,
                                     ),
                                   ),
                                 ),
                               ),
-
-                              // ==================================================
-                              // FAVORITE BUTTON
-                              // ==================================================
-
-                              BlocBuilder<
-                                FavoriteBloc,
-                                FavoriteState
-                              >(
-                                builder:
-                                    (
-                                      context,
-                                      favoriteState,
-                                    ) {
-                                      final isFavorite =
-                                          favoriteState
-                                              is FavoriteLoaded &&
-                                          favoriteState.favoriteIds
-                                              .contains(
-                                                widget.businessId,
-                                              );
-
-                                      return Material(
-                                        color: Colors.white,
-                                        shape:
-                                            const CircleBorder(),
-                                        child: InkWell(
-                                          customBorder:
-                                              const CircleBorder(),
-                                          onTap:
-                                              _onToggleFavorite,
-                                          child: SizedBox(
-                                            width: 42,
-                                            height: 42,
-                                            child: Icon(
-                                              isFavorite
-                                                  ? Icons
-                                                        .favorite_rounded
-                                                  : Icons
-                                                        .favorite_border_rounded,
-                                              color: isFavorite
-                                                  ? AppColors
-                                                        .primary
-                                                  : Colors
-                                                        .black87,
-                                              size: 22,
-                                            ),
-                                          ),
-                                        ),
+                              BlocBuilder<FavoriteBloc, FavoriteState>(
+                                builder: (context, favoriteState) {
+                                  final isFavorite =
+                                      favoriteState is FavoriteLoaded &&
+                                      favoriteState.favoriteIds.contains(
+                                        widget.businessId,
                                       );
-                                    },
+
+                                  return Material(
+                                    color: Colors.white,
+                                    shape: const CircleBorder(),
+                                    child: InkWell(
+                                      customBorder: const CircleBorder(),
+                                      onTap: _onToggleFavorite,
+                                      child: SizedBox(
+                                        width: 42,
+                                        height: 42,
+                                        child: Icon(
+                                          isFavorite
+                                              ? Icons.favorite_rounded
+                                              : Icons.favorite_border_rounded,
+                                          color: isFavorite
+                                              ? AppColors.primary
+                                              : Colors.black87,
+                                          size: 22,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),
@@ -362,42 +244,27 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                   ),
                 ),
 
-                const SizedBox(
-                  height: AppSpacing.md,
-                ),
+                const SizedBox(height: AppSpacing.md),
 
                 // ========================================================
                 // BUSINESS INFO
                 // ========================================================
-
                 BusinessDetailsInfo(
                   nameAr: business.nameAr,
                   rating: business.rating,
-                  description:
-                      business.description ?? '',
+                  description: business.description ?? '',
                   isOpen: business.isOpen,
-                  deliveryFeeText:
-                      _deliveryFeeText(
-                    context,
-                    businessState,
-                  ),
+                  deliveryFeeText: _deliveryFeeText(context, businessState),
                 ),
 
-                const SizedBox(
-                  height: AppSpacing.lg,
-                ),
+                const SizedBox(height: AppSpacing.lg),
 
                 // ========================================================
                 // MENU + PROMOTIONS
                 // ========================================================
-
                 Expanded(
                   child: BlocBuilder<MenuBloc, MenuState>(
                     builder: (context, menuState) {
-                      // ==================================================
-                      // MENU LOADING
-                      // ==================================================
-
                       if (menuState is MenuLoading) {
                         return const ListSkeleton(
                           itemCount: 6,
@@ -405,558 +272,261 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                         );
                       }
 
-                      // ==================================================
-                      // MENU ERROR
-                      // ==================================================
-
                       if (menuState is MenuError) {
-                        return Center(
-                          child: Text(
-                            menuState.message,
-                          ),
-                        );
+                        return Center(child: Text(menuState.message));
                       }
 
-                      // ==================================================
-                      // MENU NOT LOADED
-                      // ==================================================
-
-                      if (menuState
-                          is! MenuByBusinessLoaded) {
+                      if (menuState is! MenuByBusinessLoaded) {
                         return const SizedBox.shrink();
                       }
 
-                      // ==================================================
-                      // EMPTY MENU
-                      // ==================================================
-
                       if (menuState.categories.isEmpty) {
                         return const Center(
-                          child: Text(
-                            'لا يوجد قائمة طعام حالياً',
-                          ),
+                          child: Text('لا يوجد قائمة طعام حالياً'),
                         );
                       }
 
-                      // ==================================================
-                      // CATEGORY SAFETY
-                      // ==================================================
-
-                      if (_selectedIndex >=
-                          menuState.categories.length) {
+                      if (_selectedIndex >= menuState.categories.length) {
                         _selectedIndex = 0;
                       }
 
-                      final categoryNames =
-                          menuState.categories
-                              .map(
-                                (category) =>
-                                    category.nameAr,
-                              )
-                              .toList();
+                      final categoryNames = menuState.categories
+                          .map((category) => category.nameAr)
+                          .toList();
 
                       final selectedCategory =
-                          menuState.categories[
-                              _selectedIndex];
+                          menuState.categories[_selectedIndex];
 
-                      final itemsInCategory =
-                          menuState.items
-                              .where(
-                                (item) =>
-                                    item.categoryId ==
-                                    selectedCategory.id,
-                              )
-                              .toList();
+                      final itemsInCategory = menuState.items
+                          .where((item) => item.categoryId == selectedCategory.id)
+                          .toList();
+
+                      // ==================================================
+                      // PROMO MAP (item id -> promotion), مطعم هيدا بس
+                      // ==================================================
+
+                      final promoState = context.watch<PromotionsBloc>().state;
+
+                      final Map<String, PromotionEntity> promoByItemId = {
+                        if (promoState is PromotionsLoaded)
+                          for (final p in promoState.promotions)
+                            if (p.businessId == widget.businessId &&
+                                p.menuItemId != null)
+                              p.menuItemId!: p,
+                      };
+
+                      final businessPromotions = promoState is PromotionsLoaded
+                          ? promoState.promotions
+                                .where((p) => p.businessId == widget.businessId)
+                                .toList()
+                          : <PromotionEntity>[];
 
                       // ==================================================
                       // MAIN SCROLL
                       // ==================================================
 
                       return SingleChildScrollView(
-                        physics:
-                            const BouncingScrollPhysics(),
+                        physics: const BouncingScrollPhysics(),
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // ==================================================
-                            // PROMOTIONS
-                            // ==================================================
+                            // ==============================================
+                            // PROMOTIONS SECTION
+                            // ==============================================
+                            if (promoState is PromotionsLoading)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.lg,
+                                  vertical: AppSpacing.sm,
+                                ),
+                                child: SizedBox(
+                                  height: 100,
+                                  child: ListSkeleton(
+                                    itemCount: 2,
+                                    showLeadingCircle: false,
+                                  ),
+                                ),
+                              )
+                            else if (businessPromotions.isNotEmpty)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.lg,
+                                    ),
+                                    child: Text(
+                                      'عروض وخصومات',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.sm),
+                                  SizedBox(
+                                    height: 250,
+                                    child: ListView.separated(
+                                      padding: const EdgeInsets.only(
+                                        left: AppSpacing.lg,
+                                        right: AppSpacing.sm,
+                                      ),
+                                      scrollDirection: Axis.horizontal,
+                                      physics: const BouncingScrollPhysics(),
+                                      itemCount: businessPromotions.length,
+                                      separatorBuilder: (context, index) =>
+                                          const SizedBox(width: AppSpacing.sm),
+                                      itemBuilder: (context, index) {
+                                        final promotion =
+                                            businessPromotions[index];
 
-                            BlocBuilder<
-                              PromotionsBloc,
-                              PromotionsState
-                            >(
-                              builder:
-                                  (
-                                    context,
-                                    promoState,
-                                  ) {
-                                    // ==============================================
-                                    // PROMOTIONS LOADING
-                                    // ==============================================
+                                        return PromotionCard(
+                                          width: 180,
+                                          businessName: promotion.businessName,
+                                          coverUrl: promotion.photoUrl,
+                                          itemName: promotion.itemName,
+                                          discountPercentage:
+                                              promotion.discountPercentage,
+                                          oldPrice: promotion.oldPrice
+                                              ?.toDouble(),
+                                          newPrice: promotion.newPrice
+                                              ?.toDouble(),
+                                          onTap: () {
+                                            if (promotion.menuItemId != null) {
+                                              context.push(
+                                                '/food/${promotion.menuItemId}',
+                                              );
+                                            } else {
+                                                  context.push('/promotion-details', extra: promotion);
 
-                                    if (promoState
-                                        is PromotionsLoading) {
-                                      return const Padding(
-                                        padding:
-                                            EdgeInsets.symmetric(
-                                          horizontal:
-                                              AppSpacing.lg,
-                                          vertical:
-                                              AppSpacing.sm,
-                                        ),
-                                        child: SizedBox(
-                                          height: 100,
-                                          child:
-                                              ListSkeleton(
-                                            itemCount: 2,
-                                            showLeadingCircle:
-                                                false,
-                                          ),
-                                        ),
-                                      );
-                                    }
+                                            }
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpacing.lg),
+                                ],
+                              ),
 
-                                    // ==============================================
-                                    // PROMOTIONS ERROR
-                                    // ==============================================
-
-                                    if (promoState
-                                        is PromotionsError) {
-                                      return const SizedBox
-                                          .shrink();
-                                    }
-
-                                    // ==============================================
-                                    // PROMOTIONS NOT LOADED
-                                    // ==============================================
-
-                                    if (promoState
-                                        is! PromotionsLoaded) {
-                                      return const SizedBox
-                                          .shrink();
-                                    }
-
-                                    // ==============================================
-                                    // FILTER PROMOTIONS
-                                    // ONLY THIS BUSINESS
-                                    // ==============================================
-
-                                    final businessPromotions =
-                                        promoState.promotions
-                                            .where(
-                                              (promotion) =>
-                                                  promotion
-                                                      .businessId ==
-                                                  widget
-                                                      .businessId,
-                                            )
-                                            .toList();
-
-                                    // ==============================================
-                                    // NO PROMOTIONS
-                                    // ==============================================
-
-                                    if (businessPromotions
-                                        .isEmpty) {
-                                      return const SizedBox
-                                          .shrink();
-                                    }
-
-                                    // ==============================================
-                                    // PROMOTIONS SECTION
-                                    // ==============================================
-
-                                    return Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment
-                                              .start,
-                                      children: [
-                                        // ==========================================
-                                        // SECTION TITLE
-                                        // ==========================================
-
-                                        const Padding(
-                                          padding:
-                                              EdgeInsets
-                                                  .symmetric(
-                                            horizontal:
-                                                AppSpacing.lg,
-                                          ),
-                                          child: Text(
-                                            'عروض وخصومات',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight:
-                                                  FontWeight
-                                                      .bold,
-                                            ),
-                                          ),
-                                        ),
-
-                                        const SizedBox(
-                                          height:
-                                              AppSpacing.sm,
-                                        ),
-
-                                        // ==========================================
-                                        // PROMOTION LIST
-                                        // ==========================================
-
-                                        SizedBox(
-                                          height: 250,
-                                          child:
-                                              ListView
-                                                  .separated(
-                                            padding:
-                                                const EdgeInsets
-                                                    .only(
-                                              left:
-                                                  AppSpacing.lg,
-                                              right:
-                                                  AppSpacing.sm,
-                                            ),
-                                            scrollDirection:
-                                                Axis.horizontal,
-                                            physics:
-                                                const BouncingScrollPhysics(),
-                                            itemCount:
-                                                businessPromotions
-                                                    .length,
-                                            separatorBuilder:
-                                                (
-                                                  context,
-                                                  index,
-                                                ) =>
-                                                    const SizedBox(
-                                              width:
-                                                  AppSpacing.sm,
-                                            ),
-                                            itemBuilder:
-                                                (
-                                                  context,
-                                                  index,
-                                                ) {
-                                                  final promotion =
-                                                      businessPromotions[
-                                                          index];
-
-                                                  return PromotionCard(
-                                                    // ==========================================
-                                                    // CARD WIDTH
-                                                    // ==========================================
-
-                                                    width: 180,
-
-                                                    // ==========================================
-                                                    // BUSINESS
-                                                    // ==========================================
-
-                                                    businessName:
-                                                        promotion
-                                                            .businessName,
-
-                                                    // ==========================================
-                                                    // IMAGE
-                                                    // ==========================================
-
-                                                    coverUrl:
-                                                        promotion
-                                                            .photoUrl,
-
-                                                    // ==========================================
-                                                    // FOOD NAME
-                                                    // ==========================================
-
-                                                    itemName:
-                                                        promotion
-                                                            .itemName,
-
-                                                    // ==========================================
-                                                    // 🔥 DISCOUNT %
-                                                    // ==========================================
-
-                                                    discountPercentage:
-                                                        promotion
-                                                            .discountPercentage,
-
-                                                    // ==========================================
-                                                    // OLD PRICE
-                                                    // ==========================================
-
-                                                    oldPrice:
-                                                        promotion
-                                                            .oldPrice
-                                                            ?.toDouble(),
-
-                                                    // ==========================================
-                                                    // NEW PRICE
-                                                    // ==========================================
-
-                                                    newPrice:
-                                                        promotion
-                                                            .newPrice
-                                                            ?.toDouble(),
-
-                                                    // ==========================================
-                                                    // OPEN FOOD DETAILS
-                                                    // ==========================================
-
-                                                    onTap: () {
-                                                      context.push(
-                                                        '/food/${promotion.menuItemId}',
-                                                      );
-                                                    },
-                                                  );
-                                                },
-                                          ),
-                                        ),
-
-                                        const SizedBox(
-                                          height:
-                                              AppSpacing.lg,
-                                        ),
-                                      ],
-                                    );
-                                  },
-                            ),
-
-                            // ==================================================
+                            // ==============================================
                             // CATEGORY CHIPS
-                            // ==================================================
-
+                            // ==============================================
                             BusinessCategoryChips(
-                              categoryNames:
-                                  categoryNames,
-                              selectedIndex:
-                                  _selectedIndex,
+                              categoryNames: categoryNames,
+                              selectedIndex: _selectedIndex,
                               onSelected: (index) {
                                 setState(() {
-                                  _selectedIndex =
-                                      index;
+                                  _selectedIndex = index;
                                 });
                               },
                             ),
 
-                            const SizedBox(
-                              height: AppSpacing.md,
-                            ),
+                            const SizedBox(height: AppSpacing.md),
 
-                            // ==================================================
+                            // ==============================================
                             // CATEGORY TITLE
-                            // ==================================================
-
+                            // ==============================================
                             Padding(
-                              padding:
-                                  const EdgeInsets
-                                      .symmetric(
-                                horizontal:
-                                    AppSpacing.lg,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.lg,
                               ),
                               child: Text(
                                 '${selectedCategory.nameAr} (${itemsInCategory.length})',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge,
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
                             ),
 
-                            const SizedBox(
-                              height: AppSpacing.sm,
-                            ),
+                            const SizedBox(height: AppSpacing.sm),
 
-                            // ==================================================
+                            // ==============================================
                             // FOOD GRID
-                            // ==================================================
-
+                            // ==============================================
                             itemsInCategory.isEmpty
                                 ? const Padding(
-                                    padding:
-                                        EdgeInsets.symmetric(
-                                      vertical: 60,
-                                    ),
+                                    padding: EdgeInsets.symmetric(vertical: 60),
                                     child: Center(
-                                      child: Text(
-                                        'لا توجد أطباق في هذا القسم',
-                                      ),
+                                      child: Text('لا توجد أطباق في هذا القسم'),
                                     ),
                                   )
-                                : BlocBuilder<
-                                    CartBloc,
-                                    CartState
-                                  >(
-                                    builder:
-                                        (
-                                          context,
-                                          cartState,
-                                        ) {
-                                          return GridView
-                                              .builder(
-                                            // ========================================
-                                            // IMPORTANT
-                                            // ========================================
-
-                                            shrinkWrap:
-                                                true,
-
-                                            physics:
-                                                const NeverScrollableScrollPhysics(),
-
-                                            padding:
-                                                const EdgeInsets
-                                                    .symmetric(
-                                              horizontal:
-                                                  AppSpacing.lg,
-                                              vertical:
-                                                  AppSpacing.sm,
+                                : BlocBuilder<CartBloc, CartState>(
+                                    builder: (context, cartState) {
+                                      return GridView.builder(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: AppSpacing.lg,
+                                          vertical: AppSpacing.sm,
+                                        ),
+                                        gridDelegate:
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 2,
+                                              mainAxisSpacing: AppSpacing.sm,
+                                              crossAxisSpacing: AppSpacing.sm,
+                                              childAspectRatio: 0.72,
                                             ),
+                                        itemCount: itemsInCategory.length,
+                                        itemBuilder: (context, index) {
+                                          final item = itemsInCategory[index];
 
-                                            gridDelegate:
-                                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount:
-                                                  2,
-                                              mainAxisSpacing:
-                                                  AppSpacing.sm,
-                                              crossAxisSpacing:
-                                                  AppSpacing.sm,
-                                              childAspectRatio:
-                                                  0.72,
-                                            ),
+                                          final promo = promoByItemId[item.id];
+                                          final effectivePrice =
+                                              promo?.newPrice ?? item.price;
 
-                                            itemCount:
-                                                itemsInCategory
-                                                    .length,
+                                          final matchingItemIndex = cartState
+                                              .items
+                                              .indexWhere(
+                                                (element) =>
+                                                    element.itemId == item.id,
+                                              );
 
-                                            itemBuilder:
-                                                (
-                                                  context,
-                                                  index,
-                                                ) {
-                                                  final item =
-                                                      itemsInCategory[
-                                                          index];
+                                          final itemQuantity =
+                                              matchingItemIndex != -1
+                                              ? cartState
+                                                    .items[matchingItemIndex]
+                                                    .quantity
+                                              : 0;
 
-                                                  // ========================================
-                                                  // CART QUANTITY
-                                                  // ========================================
-
-                                                  final matchingItemIndex =
-                                                      cartState
-                                                          .items
-                                                          .indexWhere(
-                                                    (
-                                                      element,
-                                                    ) =>
-                                                        element
-                                                            .itemId ==
-                                                        item.id,
-                                                  );
-
-                                                  final itemQuantity =
-                                                      matchingItemIndex !=
-                                                              -1
-                                                          ? cartState
-                                                                .items[
-                                                                    matchingItemIndex]
-                                                                .quantity
-                                                          : 0;
-
-                                                  // ========================================
-                                                  // FOOD CARD
-                                                  // ========================================
-
-                                                  return MenuItemGridCard(
-                                                    photoUrl:
-                                                        item
-                                                            .photoUrl,
-                                                    nameAr:
-                                                        item
-                                                            .nameAr,
-                                                    price:
-                                                        item
-                                                            .price,
-                                                    quantity:
-                                                        itemQuantity,
-
-                                                    // ======================================
-                                                    // OPEN FOOD
-                                                    // ======================================
-
-                                                    onTap:
-                                                        () =>
-                                                            context.push(
-                                                      '/food/${item.id}',
-                                                    ),
-
-                                                    // ======================================
-                                                    // ADD
-                                                    // ======================================
-
-                                                    onAdd:
-                                                        () {
-                                                      context
-                                                          .read<
-                                                            CartBloc
-                                                          >()
-                                                          .add(
-                                                        AddItemEvent(
-                                                          item:
-                                                              CartItem(
-                                                            itemId:
-                                                                item.id,
-                                                            nameAr:
-                                                                item.nameAr,
-                                                            description:
-                                                                item.description ??
-                                                                '',
-                                                            price:
-                                                                item.price,
-                                                            quantity:
-                                                                1,
-                                                            businessId:
-                                                                item.businessId,
-                                                          ),
-                                                          businessName:
-                                                              business
-                                                                  .nameAr,
-                                                          businessLogo:
-                                                              business
-                                                                  .logoUrl,
-                                                        ),
-                                                      );
-                                                    },
-
-                                                    // ======================================
-                                                    // REMOVE
-                                                    // ======================================
-
-                                                    onRemove:
-                                                        () {
-                                                      context
-                                                          .read<
-                                                            CartBloc
-                                                          >()
-                                                          .add(
-                                                        RemoveItemEvent(
-                                                          itemId:
-                                                              item.id,
-                                                        ),
-                                                      );
-                                                    },
-                                                  );
-                                                },
+                                          return MenuItemGridCard(
+                                            photoUrl: item.photoUrl,
+                                            nameAr: item.nameAr,
+                                            price: effectivePrice,
+                                            oldPrice: promo?.oldPrice,
+                                            discountPercentage:
+                                                promo?.discountPercentage,
+                                            quantity: itemQuantity,
+                                            onTap: () =>
+                                                context.push('/food/${item.id}'),
+                                            onAdd: () {
+                                              context.read<CartBloc>().add(
+                                                AddItemEvent(
+                                                  item: CartItem(
+                                                    itemId: item.id,
+                                                    nameAr: item.nameAr,
+                                                    description:
+                                                        item.description ?? '',
+                                                    price: effectivePrice,
+                                                    quantity: 1,
+                                                    businessId: item.businessId,
+                                                  ),
+                                                  businessName: business.nameAr,
+                                                  businessLogo: business.logoUrl,
+                                                ),
+                                              );
+                                            },
+                                            onRemove: () {
+                                              context.read<CartBloc>().add(
+                                                RemoveItemEvent(itemId: item.id),
+                                              );
+                                            },
                                           );
                                         },
+                                      );
+                                    },
                                   ),
 
-                            // ==================================================
-                            // BOTTOM SPACE
-                            // ==================================================
-
-                            const SizedBox(
-                              height: AppSpacing.xl,
-                            ),
+                            const SizedBox(height: AppSpacing.xl),
                           ],
                         ),
                       );
@@ -972,86 +542,51 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
       // ================================================================
       // CART BAR
       // ================================================================
-
-      bottomNavigationBar:
-          BlocBuilder<CartBloc, CartState>(
+      bottomNavigationBar: BlocBuilder<CartBloc, CartState>(
         builder: (context, cartState) {
-          final hasItems =
-              cartState.items.isNotEmpty;
+          final hasItems = cartState.items.isNotEmpty;
 
-          final totalQuantity =
-              cartState.items.fold<int>(
+          final totalQuantity = cartState.items.fold<int>(
             0,
             (sum, item) => sum + item.quantity,
           );
 
           return AnimatedSlide(
-            duration:
-                const Duration(milliseconds: 250),
+            duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
-            offset: hasItems
-                ? Offset.zero
-                : const Offset(0, 1),
+            offset: hasItems ? Offset.zero : const Offset(0, 1),
             child: AnimatedOpacity(
-              duration:
-                  const Duration(milliseconds: 200),
+              duration: const Duration(milliseconds: 200),
               opacity: hasItems ? 1.0 : 0.0,
               child: hasItems
                   ? SafeArea(
                       top: false,
                       child: Padding(
-                        padding:
-                            const EdgeInsets.all(
-                          AppSpacing.lg,
-                        ),
+                        padding: const EdgeInsets.all(AppSpacing.lg),
                         child: Material(
-                          color:
-                              AppColors.primary,
-                          borderRadius:
-                              BorderRadius.circular(
-                            AppRadius.md,
-                          ),
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           child: InkWell(
-                            onTap: () =>
-                                context.go(
-                              '/cart',
-                            ),
-                            borderRadius:
-                                BorderRadius.circular(
-                              AppRadius.md,
-                            ),
+                            onTap: () => context.go('/cart'),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                             child: Padding(
-                              padding:
-                                  const EdgeInsets
-                                      .symmetric(
-                                vertical:
-                                    AppSpacing.md,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.md,
                               ),
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment
-                                        .center,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Icon(
-                                    Icons
-                                        .shopping_cart_rounded,
-                                    color:
-                                        Colors.white,
+                                    Icons.shopping_cart_rounded,
+                                    color: Colors.white,
                                     size: 20,
                                   ),
-
-                                  const SizedBox(
-                                    width: 8,
-                                  ),
-
+                                  const SizedBox(width: 8),
                                   Text(
                                     'اذهب إلى السلة ($totalQuantity)',
-                                    style:
-                                        const TextStyle(
-                                      color:
-                                          Colors.white,
-                                      fontWeight:
-                                          FontWeight.bold,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
                                       fontSize: 15,
                                     ),
                                   ),

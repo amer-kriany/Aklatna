@@ -35,6 +35,8 @@ import 'package:aklatna/features/onboarding/presentation/pages/onboardingPage.da
 import 'package:aklatna/features/orders/presentation/pages/myOrderPage.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:aklatna/features/profile/presentaion/pages/profilePage.dart';
+import 'package:aklatna/features/promotions/domain/entities/promotionEntity.dart';
+import 'package:aklatna/features/promotions/presentaion/pages/promotionDetailsPage.dart';
 import 'package:aklatna/features/splash/pages/splashScreen.dart';
 import 'package:aklatna/injection_container.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -259,6 +261,13 @@ GoRoute(
       parentNavigatorKey: MainShell.rootNavigatorKey,
       builder: (context, state) => const FavoritesPage(),
     ),
+    GoRoute(
+  path: '/promotion-details',
+  builder: (context, state) {
+    final promo = state.extra as PromotionEntity;
+    return PromotionDetailsPage(promotion: promo);
+  },
+),
     GoRoute(
   path: '/forgot-password',
   parentNavigatorKey: MainShell.rootNavigatorKey,

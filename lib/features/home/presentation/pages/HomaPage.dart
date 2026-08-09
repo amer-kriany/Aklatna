@@ -574,10 +574,13 @@ class _HomePageState extends State<HomePage>
                                             .newPrice
                                             ?.toDouble(),
                                         onTap: () {
-                                          context.push(
-                                            '/business/${promoState.promotions[i].businessId}',
-                                          );
-                                        },
+  final promo = promoState.promotions[i]; // أو businessPromotions[index]
+  if (promo.menuItemId != null) {
+    context.push('/food/${promo.menuItemId}');
+  } else {
+context.push('/promotion-details', extra: promo);    // أو اعمل صفحة تفاصيل عرض مستقلة لاحقا
+  }
+},
                                       ),
                                     ],
                                   ],
