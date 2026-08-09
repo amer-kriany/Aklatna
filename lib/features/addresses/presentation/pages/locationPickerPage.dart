@@ -22,19 +22,29 @@ class LocationPickerPage extends StatefulWidget {
 }
 
 class _LocationPickerPageState extends State<LocationPickerPage> {
-  // Default location used when the user doesn't already
-  // have coordinates.
+  // ============================================================
+  // DEFAULT LOCATION
+  // ============================================================
+
   static const LatLng _defaultLocation = LatLng(
     33.4585,
     36.2394,
   );
 
-  late LatLng _selectedLocation;
+  // ============================================================
+  // CONTROLLERS
+  // ============================================================
 
   final MapController _mapController = MapController();
 
   final NominatimService _nominatimService =
       NominatimService();
+
+  // ============================================================
+  // STATE
+  // ============================================================
+
+  late LatLng _selectedLocation;
 
   Timer? _debounce;
 
@@ -42,6 +52,10 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
   bool _isConfirming = false;
 
   String? _addressPreview;
+
+  // ============================================================
+  // INIT
+  // ============================================================
 
   @override
   void initState() {
@@ -53,6 +67,10 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
     _loadPreview(_selectedLocation);
   }
 
+  // ============================================================
+  // DISPOSE
+  // ============================================================
+
   @override
   void dispose() {
     _debounce?.cancel();
@@ -60,7 +78,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
   }
 
   // ============================================================
-  // MAP MOVEMENT
+  // MAP CENTER CHANGED
   // ============================================================
 
   void _onCenterChanged(LatLng center) {
@@ -99,6 +117,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
 
       final parts = <String>[];
 
+      // STREET
       if (address?.street != null &&
           address!.street!.trim().isNotEmpty) {
         parts.add(
@@ -106,6 +125,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
         );
       }
 
+      // CITY
       if (address?.city != null &&
           address!.city!.trim().isNotEmpty) {
         parts.add(
@@ -143,9 +163,8 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
     });
 
     try {
-      // Do one final reverse-geocoding request so that
-      // the returned address definitely belongs to the
-      // final selected coordinates.
+      // Do a final reverse-geocode request using the
+      // exact coordinates currently under the pin.
       final address =
           await _nominatimService.reverseGeocode(
         _selectedLocation,
@@ -163,8 +182,8 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
     } catch (_) {
       if (!mounted) return;
 
-      // Coordinates are still useful even if Nominatim
-      // fails to return an address.
+      // Even if reverse geocoding fails,
+      // return the coordinates.
       Navigator.pop(
         context,
         LocationPickerResult(
@@ -173,17 +192,6 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
         ),
       );
     }
-  }
-
-  // ============================================================
-  // CENTER MAP
-  // ============================================================
-
-  void _centerMap() {
-    _mapController.move(
-      _selectedLocation,
-      16,
-    );
   }
 
   // ============================================================
@@ -203,17 +211,28 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
           Positioned.fill(
             child: FlutterMap(
               mapController: _mapController,
+
               options: MapOptions(
                 initialCenter: _selectedLocation,
                 initialZoom: 16,
+
+                // ------------------------------------------------
+                // MAP INTERACTION
+                // ------------------------------------------------
 
                 interactionOptions:
                     const InteractionOptions(
                   flags:
                       InteractiveFlag.drag |
                       InteractiveFlag.pinchZoom |
-                      InteractiveFlag.doubleTapZoom,
+                      InteractiveFlag.doubleTapZoom |
+                      InteractiveFlag.scrollWheelZoom |
+                      InteractiveFlag.doubleTapDragZoom,
                 ),
+
+                // ------------------------------------------------
+                // CENTER CHANGED
+                // ------------------------------------------------
 
                 onPositionChanged:
                     (camera, hasGesture) {
@@ -224,43 +243,44 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                   }
                 },
               ),
+
               children: [
 
                 // ==================================================
-                // CLEAN CARTO BASEMAP
+                // CARTO VOYAGER MAP
                 // ==================================================
                 //
-                // light_nolabels = clean light map without
-                // the normal label/POI layer.
+                // Colored map
+                // Street names
+                // Roads
+                // Buildings
                 //
-                // This replaces the default OSM tiles that
-                // were showing churches, mosques, etc.
+                // Cleaner than the default OSM map.
                 //
 
                 TileLayer(
                   urlTemplate:
-                      'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+                      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+
                   subdomains: const [
                     'a',
                     'b',
                     'c',
                     'd',
                   ],
+
                   userAgentPackageName:
                       'com.aklatna.app',
                 ),
 
                 // ==================================================
-                // MAP ATTRIBUTION
+                // ATTRIBUTION
                 // ==================================================
 
                 RichAttributionWidget(
-                  attributions: [
+                  attributions: const [
                     TextSourceAttribution(
                       '© OpenStreetMap contributors',
-                      onTap: () {
-                        // Attribution only.
-                      },
                     ),
                     TextSourceAttribution(
                       '© CARTO',
@@ -272,7 +292,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
           ),
 
           // ======================================================
-          // TOP DARK GRADIENT
+          // TOP GRADIENT
           // ======================================================
 
           Positioned(
@@ -297,11 +317,14 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
           ),
 
           // ======================================================
-          // FIXED RED PIN
+          // FIXED RED CUSTOMER PIN
           // ======================================================
           //
-          // The pin stays in the center.
-          // The map moves underneath it.
+          // IMPORTANT:
+          //
+          // This pin does NOT move.
+          //
+          // The user moves the map underneath it.
           //
 
           const IgnorePointer(
@@ -327,10 +350,12 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
               child: Row(
                 children: [
 
+                  // ------------------------------------------------
                   // BACK BUTTON
+                  // ------------------------------------------------
+
                   _MapButton(
-                    icon:
-                        Icons.arrow_back_rounded,
+                    icon: Icons.arrow_back_rounded,
                     onPressed: () {
                       Navigator.pop(context);
                     },
@@ -340,7 +365,10 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                     width: AppSpacing.sm,
                   ),
 
+                  // ------------------------------------------------
                   // TITLE
+                  // ------------------------------------------------
+
                   Expanded(
                     child: Container(
                       height: 48,
@@ -349,7 +377,8 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                         horizontal: AppSpacing.md,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.background,
+                        color:
+                            AppColors.background,
                         borderRadius:
                             BorderRadius.circular(
                           AppRadius.full,
@@ -439,18 +468,21 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
           ),
 
           // ======================================================
-          // CENTER MAP BUTTON
+          // NO MY-LOCATION BUTTON HERE
           // ======================================================
-
-          Positioned(
-            right: AppSpacing.md,
-            bottom: 250,
-            child: _MapButton(
-              icon:
-                  Icons.my_location_rounded,
-              onPressed: _centerMap,
-            ),
-          ),
+          //
+          // I intentionally removed it completely.
+          //
+          // There is NO:
+          //
+          // Icons.my_location
+          //
+          // and NO:
+          //
+          // _centerMap()
+          //
+          // button.
+          //
 
           // ======================================================
           // BOTTOM PANEL
@@ -548,7 +580,10 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                                 .start,
                         children: [
 
+                          // ------------------------------------------------
                           // LOCATION ICON
+                          // ------------------------------------------------
+
                           Container(
                             width: 44,
                             height: 44,
@@ -575,7 +610,10 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                             width: 12,
                           ),
 
-                          // ADDRESS TEXT
+                          // ------------------------------------------------
+                          // ADDRESS
+                          // ------------------------------------------------
+
                           Expanded(
                             child: Column(
                               crossAxisAlignment:
@@ -599,6 +637,8 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                                 ),
 
                                 if (_isPreviewLoading)
+
+                                  // LOADING
                                   Row(
                                     children: [
 
@@ -628,7 +668,10 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                                       ),
                                     ],
                                   )
+
                                 else
+
+                                  // ADDRESS
                                   Text(
                                     _addressPreview
                                             ?.isNotEmpty ==
@@ -670,17 +713,21 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                             _isConfirming
                                 ? null
                                 : _confirmLocation,
+
                         style:
                             ElevatedButton
                                 .styleFrom(
                           elevation: 0,
+
                           backgroundColor:
                               AppColors.primary,
+
                           disabledBackgroundColor:
                               AppColors.primary
                                   .withOpacity(
                                 0.55,
                               ),
+
                           shape:
                               RoundedRectangleBorder(
                             borderRadius:
@@ -689,7 +736,13 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                             ),
                           ),
                         ),
+
                         child: _isConfirming
+
+                            // ------------------------------------------------
+                            // LOADING
+                            // ------------------------------------------------
+
                             ? const SizedBox(
                                 width: 22,
                                 height: 22,
@@ -701,6 +754,11 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
                                       .textOnPrimary,
                                 ),
                               )
+
+                            // ------------------------------------------------
+                            // NORMAL
+                            // ------------------------------------------------
+
                             : Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment
@@ -745,7 +803,7 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
 }
 
 // ================================================================
-// CUSTOMER PIN
+// CUSTOMER LOCATION PIN
 // ================================================================
 
 class _CustomerLocationPin
@@ -758,7 +816,10 @@ class _CustomerLocationPin
       alignment: Alignment.center,
       children: [
 
-        // PIN SHADOW
+        // ----------------------------------------------------------
+        // SHADOW
+        // ----------------------------------------------------------
+
         Positioned(
           bottom: 2,
           child: Container(
@@ -778,14 +839,20 @@ class _CustomerLocationPin
           ),
         ),
 
+        // ----------------------------------------------------------
         // RED PIN
+        // ----------------------------------------------------------
+
         const Icon(
           Icons.location_pin,
           size: 52,
           color: AppColors.error,
         ),
 
+        // ----------------------------------------------------------
         // WHITE CENTER
+        // ----------------------------------------------------------
+
         Container(
           width: 11,
           height: 11,
@@ -794,7 +861,8 @@ class _CustomerLocationPin
             color: Colors.white,
             shape: BoxShape.circle,
             border: Border.all(
-              color: AppColors.error,
+              color:
+                  AppColors.error,
               width: 2,
             ),
           ),
@@ -805,8 +873,12 @@ class _CustomerLocationPin
 }
 
 // ================================================================
-// MAP BUTTON
+// BACK BUTTON ONLY
 // ================================================================
+//
+// This widget is ONLY used for the back button.
+// There is NO my-location/dot button.
+//
 
 class _MapButton
     extends StatelessWidget {
@@ -832,11 +904,11 @@ class _MapButton
         customBorder:
             const CircleBorder(),
         onTap: onPressed,
-        child: SizedBox(
+        child: const SizedBox(
           width: 48,
           height: 48,
           child: Icon(
-            icon,
+            Icons.arrow_back_rounded,
             color:
                 AppColors.textPrimary,
             size: 22,
