@@ -311,8 +311,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     if (!mounted) return;
 
-    context.read<OrderBloc>().add(PlaceOrderEvent(order: order));
-  }
+context.read<OrderBloc>().add(
+  PlaceOrderEvent(
+    order: order,
+    customerId: profile.id,
+  ),
+);  }
 
   @override
   Widget build(BuildContext context) {

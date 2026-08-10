@@ -97,7 +97,7 @@ class PromotionCard extends StatelessWidget {
                                     BorderRadius.circular(AppRadius.full),
                               ),
                               child: Text(
-                                'خصم $discountPercentage%',
+                                'خصم %$discountPercentage',
                                 style: AppTextStyles.caption.copyWith(
                                   color: AppColors.textOnPrimary,
                                   fontWeight: FontWeight.w700,

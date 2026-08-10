@@ -73,75 +73,86 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   // ============================================================
 
   Future<void> _placeOrder(
-    PlaceOrderEvent event,
-    Emitter<OrderState> emit,
-  ) async {
-    // ----------------------------------------------------------
-    // Bloc-level safety net: block a second active order even if
-    // the UI guard (CartCheckoutButton) somehow got bypassed or
-    // was working off stale state.
-    // ----------------------------------------------------------
-    final hasActiveOrder = _lastKnownOrders.any(_isOngoing);
+  PlaceOrderEvent event,
+  Emitter<OrderState> emit,
+) async {
+  final hasActiveOrder = _lastKnownOrders.any(_isOngoing);
 
-    if (hasActiveOrder) {
-      emit(
-        const OrderError(
-          message:
-              'لديك طلب قيد التنفيذ حالياً، لا يمكنك إنشاء طلب جديد حتى يكتمل أو يُلغى',
-        ),
-      );
-      return;
-    }
-
-    emit(OrderLoading());
-
-    try {
-      await placeOrderUsecase(event.order);
-
-      emit(OrderPlaced());
-    } catch (e) {
-      emit(OrderError(message: e.toString()));
-    }
+  if (hasActiveOrder) {
+    emit(
+      const OrderError(
+        message:
+            'لديك طلب قيد التنفيذ حالياً، لا يمكنك إنشاء طلب جديد حتى يكتمل أو يُلغى',
+      ),
+    );
+    return;
   }
+
+  emit(OrderLoading());
+
+  try {
+    await placeOrderUsecase(event.order);
+
+    // Tell CheckoutPage that the order was successfully created.
+    emit(OrderPlaced());
+
+    // Immediately refresh customer's orders.
+    add(
+      GetCustomerOrdersEvent(
+        customerId: event.customerId,
+      ),
+    );
+  } catch (e) {
+    emit(
+      OrderError(
+        message: e.toString(),
+      ),
+    );
+  }
+}
 
   // ============================================================
   // GET CUSTOMER ORDERS
   // ============================================================
 
   Future<void> _getCustomerOrders(
-    GetCustomerOrdersEvent event,
-    Emitter<OrderState> emit,
-  ) async {
-    emit(OrderLoading());
+  GetCustomerOrdersEvent event,
+  Emitter<OrderState> emit,
+) async {
+  try {
+    final orders = await customerOrdersUsecase(event.customerId);
 
-    try {
-      final orders = await customerOrdersUsecase(event.customerId);
+    _lastKnownOrders = orders;
 
-      _lastKnownOrders = orders;
+    emit(
+      CustomerOrdersFetched(
+        orders: orders,
+      ),
+    );
 
-      emit(CustomerOrdersFetched(orders: orders));
+    final ongoingOrders = orders.where(_isOngoing).toList();
 
-      // --------------------------------------------------------
-      // Find the currently ongoing order
-      // --------------------------------------------------------
+    if (ongoingOrders.isNotEmpty) {
+      final ongoingOrder = ongoingOrders.first;
 
-      final ongoingOrders = orders.where(_isOngoing).toList();
-
-      // --------------------------------------------------------
-      // Watch the first ongoing order
-      // --------------------------------------------------------
-
-      if (ongoingOrders.isNotEmpty) {
-        final ongoingOrder = ongoingOrders.first;
-
-        if (ongoingOrder.id != null) {
-          add(WatchOrderStatusEvent(orderId: ongoingOrder.id!));
-        }
+      if (ongoingOrder.id != null) {
+        add(
+          WatchOrderStatusEvent(
+            orderId: ongoingOrder.id!,
+          ),
+        );
       }
-    } catch (e) {
-      emit(OrderFailure(error: e.toString()));
+    }
+  } catch (e) {
+    if (_lastKnownOrders.isEmpty) {
+      emit(
+        OrderFailure(
+          error: e.toString(),
+        ),
+      );
     }
   }
+}
 
   // ============================================================
   // REALTIME ORDER STATUS
@@ -169,72 +180,67 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   // ============================================================
 
   void _updateOrderInState(
-    _OrderRealtimeUpdatedEvent event,
-    Emitter<OrderState> emit,
-  ) {
-    final currentState = state;
+  _OrderRealtimeUpdatedEvent event,
+  Emitter<OrderState> emit,
+) {
+  final previousOrder =
+      _lastKnownOrders.cast<OrderEntity?>().firstWhere(
+        (order) => order?.id == event.order.id,
+        orElse: () => null,
+      );
 
-    // Find the previous version of this order.
-    final previousOrder = _lastKnownOrders.cast<OrderEntity?>().firstWhere(
-      (order) => order?.id == event.order.id,
-      orElse: () => null,
+  final wasOngoing =
+      previousOrder != null && _isOngoing(previousOrder);
+
+  final isNowCompleted =
+      event.order.orderStatus == OrderStatus.completed;
+
+  final justCompleted = wasOngoing && isNowCompleted;
+
+  // Update the cached list.
+  final updatedOrders = _lastKnownOrders.map((order) {
+    if (order.id == event.order.id) {
+      return event.order;
+    }
+
+    return order;
+  }).toList();
+
+  _lastKnownOrders = updatedOrders;
+
+  // Keep the normal customer order state updated.
+  if (state is CustomerOrdersFetched) {
+    emit(
+      CustomerOrdersFetched(
+        orders: updatedOrders,
+      ),
     );
-
-    final wasCompleted = previousOrder?.orderStatus == OrderStatus.completed;
-
-    final isNowCompleted = event.order.orderStatus == OrderStatus.completed;
-
-    // TRUE only when the order actually transitions into completed.
-    final justCompleted = !wasCompleted && isNowCompleted;
-
-    // ----------------------------------------------------------
-    // Update stored orders
-    // ----------------------------------------------------------
-
-    final updatedOrders = _lastKnownOrders.map((order) {
-      if (order.id == event.order.id) {
-        return event.order;
-      }
-
-      return order;
-    }).toList();
-
-    _lastKnownOrders = updatedOrders;
-
-    // ----------------------------------------------------------
-    // Keep CustomerOrdersFetched working normally
-    // ----------------------------------------------------------
-
-    if (currentState is CustomerOrdersFetched) {
-      final stateOrders = currentState.orders.map((order) {
-        if (order.id == event.order.id) {
-          return event.order;
-        }
-
-        return order;
-      }).toList();
-
-      emit(CustomerOrdersFetched(orders: stateOrders));
-    }
-
-    // ----------------------------------------------------------
-    // The order JUST became completed
-    // ----------------------------------------------------------
-
-    if (justCompleted) {
-      emit(OrderJustCompleted(order: event.order));
-    }
-
-    // ----------------------------------------------------------
-    // Stop watching finished order
-    // ----------------------------------------------------------
-
-    if (!_isOngoing(event.order)) {
-      _orderStatusSubscription?.cancel();
-      _orderStatusSubscription = null;
-    }
   }
 
+  // IMPORTANT:
+  // Emit the completion event AFTER CustomerOrdersFetched.
+  // The UI listener can react to it and open the rating page.
+  if (justCompleted) {
+    emit(
+      OrderJustCompleted(
+        order: event.order,
+      ),
+    );
+
+    // Immediately restore the normal order-list state.
+    emit(
+      CustomerOrdersFetched(
+        orders: updatedOrders,
+      ),
+    );
+  }
+
+  // Stop watching completed/cancelled orders.
+  if (!_isOngoing(event.order)) {
+    _orderStatusSubscription?.cancel();
+    _orderStatusSubscription = null;
+  }
+}
   // ============================================================
   // REALTIME ERROR
   // ============================================================
