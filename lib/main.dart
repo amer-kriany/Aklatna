@@ -1,4 +1,5 @@
 import 'package:aklatna/app.dart';
+import 'package:aklatna/core/services/notification_service.dart';
 import 'package:aklatna/core/services/onboarding_service.dart';
 import 'package:aklatna/features/addresses/presentation/bloc/address_bloc.dart';
 import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
@@ -10,7 +11,9 @@ import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
+import 'package:aklatna/firebase_options.dart';
 import 'package:aklatna/injection_container.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -19,16 +22,57 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // ============================================================
+  // ENVIRONMENT
+  // ============================================================
+
   await dotenv.load(fileName: ".env");
+
+  // ============================================================
+  // SUPABASE
+  // ============================================================
+
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
+  // ============================================================
+  // FIREBASE
+  // ============================================================
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // ============================================================
+  // NOTIFICATIONS
+  // ============================================================
+
+  await NotificationService.initialize();
+ await NotificationService.saveFcmToken();
+NotificationService.listenForTokenRefresh();
+ 
+
+  // ============================================================
+  // DEPENDENCY INJECTION
+  // ============================================================
+
   setupInjection();
+ 
 
-  final bool hasCompletedOnboarding = await OnboardingService.isCompleted();
+  
 
+  // ============================================================
+  // ONBOARDING
+  // ============================================================
+
+  final bool hasCompletedOnboarding =
+      await OnboardingService.isCompleted();
+
+  // ============================================================
+  // APP
+  // ============================================================
   runApp(
     MultiBlocProvider(
       providers: [
