@@ -68,7 +68,7 @@ final DateTime? deliveredAt;
       'business_logo': businessLogo,
       'business_name': businessName,
       'order_status': 'pending',
-      'scheduled_for': scheduledFor?.toIso8601String(),
+    'scheduled_for': scheduledFor?.toUtc().toIso8601String(),
       // id, created_at, order_number — DB-generated, not sent from client
       // estimated_preparation_time — set later by the restaurant dashboard
       // driver_id — set later when a driver claims the order

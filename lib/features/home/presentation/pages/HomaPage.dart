@@ -130,7 +130,7 @@ class _HomePageState extends State<HomePage>
     // Remove tooltip after 3 seconds
     _profileTooltipTimer?.cancel();
     _profileTooltipTimer = Timer(
-      const Duration(seconds: 5),
+      const Duration(seconds: 3),
       _hideProfileHint,
     );
   }
@@ -437,28 +437,42 @@ class _HomePageState extends State<HomePage>
                       // ==================================================
                       // ONGOING ORDER
                       // ==================================================
-                      BlocBuilder<OrderBloc, OrderState>(
-                        builder: (context, orderState) {
-                          if (orderState is! CustomerOrdersFetched) {
-                            return const SizedBox.shrink();
-                          }
+                     BlocBuilder<OrderBloc, OrderState>(
+  builder: (context, orderState) {
+    if (orderState is! CustomerOrdersFetched) {
+      return const SizedBox.shrink();
+    }
 
-                          final ongoingOrders = orderState.orders.where((
-                            order,
-                          ) {
-                            return order.orderStatus == OrderStatus.pending ||
-                                order.orderStatus == OrderStatus.preparing ||
-                                order.orderStatus ==
-                                    OrderStatus.outForDelivery ||
-                                order.orderStatus == OrderStatus.ready;
-                          }).toList();
+    final now = DateTime.now();
 
-                          if (ongoingOrders.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
+    final ongoingOrders = orderState.orders.where((order) {
+      // --------------------------------------------------------
+      // SCHEDULED ORDER
+      // --------------------------------------------------------
+      // A scheduled pending order is NOT active yet.
+      // It becomes active only when its scheduled time arrives.
+      // --------------------------------------------------------
+      if (order.orderStatus == OrderStatus.pending &&
+          order.scheduledFor != null) {
+        return !order.scheduledFor!.isAfter(now);
+      }
 
-                          final order = ongoingOrders.first;
+      // --------------------------------------------------------
+      // NORMAL / ACTIVE ORDERS
+      // --------------------------------------------------------
+      return order.orderStatus == OrderStatus.pending ||
+          order.orderStatus == OrderStatus.preparing ||
+          order.orderStatus == OrderStatus.outForDelivery ||
+          order.orderStatus == OrderStatus.ready;
+    }).toList();
 
+    if (ongoingOrders.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final order = ongoingOrders.first;
+
+    // Your existing card continues here...
                           return Padding(
                             padding: const EdgeInsets.fromLTRB(
                               AppSpacing.pageHorizontal,
