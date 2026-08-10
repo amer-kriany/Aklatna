@@ -13,6 +13,7 @@ Future<void> acceptOrder({
   required String orderId,
   required String driverId,
 });
+Future<OrderEntity?> getNextScheduledOrder();
 
 Future<void> markOutForDelivery({
   required String orderId,

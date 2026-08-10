@@ -6,6 +6,7 @@ import 'package:aklatna/features/orders/domain/usecases/complete_order_usecase.d
 import 'package:aklatna/features/orders/domain/usecases/getDriverOrdersUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_available_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
+import 'package:aklatna/features/orders/domain/usecases/get_next_scheduled_order_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
@@ -23,6 +24,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   final Orderstatususecase watchOrderStatusUsecase;
   final PlaceOrderUsecase placeOrderUsecase;
   final GetAvailableOrdersUseCase getAvailableOrdersUseCase;
+  final GetNextScheduledOrderUseCase getNextScheduledOrderUseCase;
   final AcceptOrderUseCase acceptOrderUseCase;
   final MarkOutForDeliveryUseCase markOutForDeliveryUseCase;
   final CompleteOrderUseCase completeOrderUseCase;
@@ -31,23 +33,24 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   final WatchDriverOrdersUseCase watchDriverOrdersUseCase;
   final GetCustomerOrdersUseCase customerOrdersUsecase;
 
-  StreamSubscription<OrderEntity>? _orderStatusSubscription;
-  StreamSubscription<void>? _availableOrdersRealtimeSubscription;
-  StreamSubscription<void>? _driverOrdersRealtimeSubscription;
+  StreamSubscription? _orderStatusSubscription;
+  StreamSubscription? _availableOrdersRealtimeSubscription;
+  StreamSubscription? _driverOrdersRealtimeSubscription;
+
+  Timer? _scheduledOrdersTimer;
 
   // --------------------------------------------------------------
   // Keeps the last known orders list around even while state is
-  // OrderLoading/OrderPlaced, so _placeOrder can still check for
-  // an active order without depending on `state` being
-  // CustomerOrdersFetched at that exact moment.
+  // OrderLoading/OrderPlaced.
   // --------------------------------------------------------------
-  List<OrderEntity> _lastKnownOrders = [];
 
+List<OrderEntity> _lastKnownOrders = [];
   OrderBloc({
     required this.placeOrderUsecase,
     required this.customerOrdersUsecase,
     required this.watchOrderStatusUsecase,
     required this.getAvailableOrdersUseCase,
+    required this.getNextScheduledOrderUseCase,
     required this.acceptOrderUseCase,
     required this.markOutForDeliveryUseCase,
     required this.completeOrderUseCase,
@@ -56,13 +59,13 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     required this.watchDriverOrdersUseCase,
   }) : super(OrderInitial()) {
     on<PlaceOrderEvent>(_placeOrder);
-    on<GetCustomerOrdersEvent>(_getCustomerOrders);
-    on<WatchOrderStatusEvent>(_watchOrderStatus);
-    on<GetAvailableOrdersEvent>(_getAvailableOrders);
-    on<AcceptOrderEvent>(_acceptOrder);
-    on<MarkOutForDeliveryEvent>(_markOutForDelivery);
-    on<CompleteOrderEvent>(_completeOrder);
-    on<GetDriverOrdersEvent>(_getDriverOrders);
+on<GetCustomerOrdersEvent>(_getCustomerOrders);
+on<WatchOrderStatusEvent>(_watchOrderStatus);
+on<GetAvailableOrdersEvent>(_getAvailableOrders);
+on<AcceptOrderEvent>(_acceptOrder);
+on<MarkOutForDeliveryEvent>(_markOutForDelivery);
+on<CompleteOrderEvent>(_completeOrder);
+on<GetDriverOrdersEvent>(_getDriverOrders);
 
     on<_OrderRealtimeUpdatedEvent>(_updateOrderInState);
     on<_OrderRealtimeErrorEvent>(_handleRealtimeError);
@@ -72,105 +75,109 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   // PLACE ORDER
   // ============================================================
 
-  Future<void> _placeOrder(
-  PlaceOrderEvent event,
-  Emitter<OrderState> emit,
-) async {
-  final hasActiveOrder = _lastKnownOrders.any(_isOngoing);
+  Future _placeOrder(
+    PlaceOrderEvent event,
+    Emitter<OrderState> emit,
+  ) async {
+    final hasActiveOrder = _lastKnownOrders.any(_isOngoing);
 
-  if (hasActiveOrder) {
-    emit(
-      const OrderError(
-        message:
-            'لديك طلب قيد التنفيذ حالياً، لا يمكنك إنشاء طلب جديد حتى يكتمل أو يُلغى',
-      ),
-    );
-    return;
+    if (hasActiveOrder) {
+      emit(
+        const OrderError(
+          message:
+              'لديك طلب قيد التنفيذ حالياً، لا يمكنك إنشاء طلب جديد حتى يكتمل أو يُلغى',
+        ),
+      );
+      return;
+    }
+
+    emit(OrderLoading());
+
+    try {
+      await placeOrderUsecase(event.order);
+
+      emit(OrderPlaced());
+
+      add(
+        GetCustomerOrdersEvent(
+          customerId: event.customerId,
+        ),
+      );
+    } catch (e) {
+      emit(
+        OrderError(
+          message: e.toString(),
+        ),
+      );
+    }
   }
-
-  emit(OrderLoading());
-
-  try {
-    await placeOrderUsecase(event.order);
-
-    // Tell CheckoutPage that the order was successfully created.
-    emit(OrderPlaced());
-
-    // Immediately refresh customer's orders.
-    add(
-      GetCustomerOrdersEvent(
-        customerId: event.customerId,
-      ),
-    );
-  } catch (e) {
-    emit(
-      OrderError(
-        message: e.toString(),
-      ),
-    );
-  }
-}
 
   // ============================================================
   // GET CUSTOMER ORDERS
   // ============================================================
 
-  Future<void> _getCustomerOrders(
-  GetCustomerOrdersEvent event,
-  Emitter<OrderState> emit,
-) async {
-  try {
-    final orders = await customerOrdersUsecase(event.customerId);
+  Future _getCustomerOrders(
+    GetCustomerOrdersEvent event,
+    Emitter<OrderState> emit,
+  ) async {
+    try {
+      final orders = await customerOrdersUsecase(event.customerId);
 
-    _lastKnownOrders = orders;
+      _lastKnownOrders = orders;
 
-    emit(
-      CustomerOrdersFetched(
-        orders: orders,
-      ),
-    );
+      emit(
+        CustomerOrdersFetched(
+          orders: orders,
+        ),
+      );
 
-    final ongoingOrders = orders.where(_isOngoing).toList();
+      final ongoingOrders = orders.where(_isOngoing).toList();
 
-    if (ongoingOrders.isNotEmpty) {
-      final ongoingOrder = ongoingOrders.first;
+      if (ongoingOrders.isNotEmpty) {
+        final ongoingOrder = ongoingOrders.first;
 
-      if (ongoingOrder.id != null) {
-        add(
-          WatchOrderStatusEvent(
-            orderId: ongoingOrder.id!,
+        if (ongoingOrder.id != null) {
+          add(
+            WatchOrderStatusEvent(
+              orderId: ongoingOrder.id!,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (_lastKnownOrders.isEmpty) {
+        emit(
+          OrderFailure(
+            error: e.toString(),
           ),
         );
       }
     }
-  } catch (e) {
-    if (_lastKnownOrders.isEmpty) {
-      emit(
-        OrderFailure(
-          error: e.toString(),
-        ),
-      );
-    }
   }
-}
 
   // ============================================================
   // REALTIME ORDER STATUS
   // ============================================================
 
-  Future<void> _watchOrderStatus(
+  Future _watchOrderStatus(
     WatchOrderStatusEvent event,
     Emitter<OrderState> emit,
   ) async {
-    // Cancel previous subscription
     await _orderStatusSubscription?.cancel();
 
-    _orderStatusSubscription = watchOrderStatusUsecase(event.orderId).listen(
+    _orderStatusSubscription =
+        watchOrderStatusUsecase(event.orderId).listen(
       (updatedOrder) {
-        add(_OrderRealtimeUpdatedEvent(order: updatedOrder));
+        add(
+          _OrderRealtimeUpdatedEvent(
+            order: updatedOrder,
+          ),
+        );
       },
       onError: (error) {
-        add(const _OrderRealtimeErrorEvent());
+        add(
+          const _OrderRealtimeErrorEvent(),
+        );
       },
     );
   }
@@ -180,67 +187,62 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   // ============================================================
 
   void _updateOrderInState(
-  _OrderRealtimeUpdatedEvent event,
-  Emitter<OrderState> emit,
-) {
-  final previousOrder =
-      _lastKnownOrders.cast<OrderEntity?>().firstWhere(
-        (order) => order?.id == event.order.id,
-        orElse: () => null,
+    _OrderRealtimeUpdatedEvent event,
+    Emitter<OrderState> emit,
+  ) {
+    final previousOrder =
+        _lastKnownOrders.cast<OrderEntity?>().firstWhere(
+              (order) => order?.id == event.order.id,
+              orElse: () => null,
+            );
+
+    final wasOngoing =
+        previousOrder != null && _isOngoing(previousOrder);
+
+    final isNowCompleted =
+        event.order.orderStatus == OrderStatus.completed;
+
+    final justCompleted =
+        wasOngoing && isNowCompleted;
+
+    final updatedOrders = _lastKnownOrders.map((order) {
+      if (order.id == event.order.id) {
+        return event.order;
+      }
+
+      return order;
+    }).toList();
+
+    _lastKnownOrders = updatedOrders;
+
+    if (state is CustomerOrdersFetched) {
+      emit(
+        CustomerOrdersFetched(
+          orders: updatedOrders,
+        ),
       );
-
-  final wasOngoing =
-      previousOrder != null && _isOngoing(previousOrder);
-
-  final isNowCompleted =
-      event.order.orderStatus == OrderStatus.completed;
-
-  final justCompleted = wasOngoing && isNowCompleted;
-
-  // Update the cached list.
-  final updatedOrders = _lastKnownOrders.map((order) {
-    if (order.id == event.order.id) {
-      return event.order;
     }
 
-    return order;
-  }).toList();
+    if (justCompleted) {
+      emit(
+        OrderJustCompleted(
+          order: event.order,
+        ),
+      );
 
-  _lastKnownOrders = updatedOrders;
+      emit(
+        CustomerOrdersFetched(
+          orders: updatedOrders,
+        ),
+      );
+    }
 
-  // Keep the normal customer order state updated.
-  if (state is CustomerOrdersFetched) {
-    emit(
-      CustomerOrdersFetched(
-        orders: updatedOrders,
-      ),
-    );
+    if (!_isOngoing(event.order)) {
+      _orderStatusSubscription?.cancel();
+      _orderStatusSubscription = null;
+    }
   }
 
-  // IMPORTANT:
-  // Emit the completion event AFTER CustomerOrdersFetched.
-  // The UI listener can react to it and open the rating page.
-  if (justCompleted) {
-    emit(
-      OrderJustCompleted(
-        order: event.order,
-      ),
-    );
-
-    // Immediately restore the normal order-list state.
-    emit(
-      CustomerOrdersFetched(
-        orders: updatedOrders,
-      ),
-    );
-  }
-
-  // Stop watching completed/cancelled orders.
-  if (!_isOngoing(event.order)) {
-    _orderStatusSubscription?.cancel();
-    _orderStatusSubscription = null;
-  }
-}
   // ============================================================
   // REALTIME ERROR
   // ============================================================
@@ -249,31 +251,21 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     _OrderRealtimeErrorEvent event,
     Emitter<OrderState> emit,
   ) {
-    // Don't destroy the existing orders state.
-    //
-    // The user can still see the last known status.
-    //
-    // We intentionally don't emit OrderStatusError here because
-    // that would replace CustomerOrdersFetched and hide the list.
+    // Keep the existing state.
   }
 
   // ============================================================
   // ONGOING CHECK
   // ============================================================
-  //
-  // FIXED: previously grouped `completed` with pending/preparing/
-  // ready under the same `return true`, which meant a completed
-  // order stayed on the homepage as "ongoing" forever and kept
-  // blocking the customer from placing their next order.
-  // Per the locked rule: only pending/preparing/ready are ongoing.
-  // ============================================================
 
-  bool _isOngoing(OrderEntity order) => order.orderStatus.isOngoing;
+  bool _isOngoing(OrderEntity order) =>
+      order.orderStatus.isOngoing;
+
   // ============================================================
   // DRIVER - AVAILABLE ORDERS
   // ============================================================
 
-  Future<void> _getAvailableOrders(
+  Future _getAvailableOrders(
     GetAvailableOrdersEvent event,
     Emitter<OrderState> emit,
   ) async {
@@ -282,13 +274,17 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     try {
       final orders = await getAvailableOrdersUseCase();
 
-      // Earnings shown on the driver home page -- fetched alongside the
-      // available list rather than a separate query round trip. Only
-      // completed deliveries count; cancelled never paid out.
-      final driverOrders = await getDriverOrdersUseCase(event.driverId);
+      final driverOrders =
+          await getDriverOrdersUseCase(event.driverId);
+
       final totalEarnings = driverOrders
-          .where((o) => o.orderStatus == OrderStatus.completed)
-          .fold<double>(0, (sum, o) => sum + o.deliveryFee);
+          .where(
+            (o) => o.orderStatus == OrderStatus.completed,
+          )
+          .fold<double>(
+            0,
+            (sum, o) => sum + o.deliveryFee,
+          );
 
       final hasActiveDelivery = driverOrders.any(
         (o) => o.orderStatus.isOngoing,
@@ -302,23 +298,87 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         ),
       );
 
-      // Start once, keep listening across refetches of this same
-      // handler -- any change to a delivery order (new pending order,
-      // another driver claiming one, etc.) re-triggers a fresh fetch.
-      _availableOrdersRealtimeSubscription ??= watchAvailableOrdersUseCase()
-          .listen((_) {
-            // Guard: this fires on ANY delivery-order change, including
-            // ones triggered from other screens (e.g. marking an order
-            // out-for-delivery from "توصيلاتي"). Without this check it
-            // would overwrite DriverOrdersFetched with a stale
-            // AvailableOrdersLoaded right after, making the other screen
-            // go blank until the user navigates away and back.
-            if (state is AvailableOrdersLoaded) {
-              add(GetAvailableOrdersEvent(driverId: event.driverId));
-            }
-          });
+      // Schedule the exact moment when the nearest future
+      // scheduled order should become visible.
+      await _scheduleNextScheduledOrderRefresh(
+        event.driverId,
+      );
+
+      // Start realtime listener once.
+      _availableOrdersRealtimeSubscription ??=
+          watchAvailableOrdersUseCase().listen(
+        (_) {
+          if (state is AvailableOrdersLoaded) {
+            add(
+              GetAvailableOrdersEvent(
+                driverId: event.driverId,
+              ),
+            );
+          }
+        },
+      );
     } catch (e) {
-      emit(OrderFailure(error: e.toString()));
+      emit(
+        OrderFailure(
+          error: e.toString(),
+        ),
+      );
+    }
+  }
+
+  // ============================================================
+  // SCHEDULE NEXT SCHEDULED ORDER REFRESH
+  // ============================================================
+
+  Future<void> _scheduleNextScheduledOrderRefresh(
+    String driverId,
+  ) async {
+    _scheduledOrdersTimer?.cancel();
+    _scheduledOrdersTimer = null;
+
+    try {
+      final nextOrder =
+          await getNextScheduledOrderUseCase();
+
+      if (nextOrder == null ||
+          nextOrder.scheduledFor == null) {
+        return;
+      }
+
+      final now = DateTime.now();
+
+      // Scheduled order becomes available 30 minutes before
+      // its scheduled time.
+      final refreshAt =
+          nextOrder.scheduledFor!.subtract(
+        const Duration(minutes: 30),
+      );
+
+      final delay = refreshAt.difference(now);
+
+      // If it already entered the 30-minute window,
+      // refresh immediately.
+      if (delay.isNegative) {
+        add(
+          GetAvailableOrdersEvent(
+            driverId: driverId,
+          ),
+        );
+        return;
+      }
+
+      _scheduledOrdersTimer = Timer(
+        delay,
+        () {
+          add(
+            GetAvailableOrdersEvent(
+              driverId: driverId,
+            ),
+          );
+        },
+      );
+    } catch (_) {
+      // If scheduling fails, realtime still continues working.
     }
   }
 
@@ -326,7 +386,7 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   // DRIVER - ACCEPT ORDER
   // ============================================================
 
-  Future<void> _acceptOrder(
+  Future _acceptOrder(
     AcceptOrderEvent event,
     Emitter<OrderState> emit,
   ) async {
@@ -336,21 +396,16 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         driverId: event.driverId,
       );
 
-      // BUGFIX: `state` here is checked fresh, not against the
-      // `preAcceptState` snapshot taken before the await above. This
-      // handler can take a while (network call), and the UI often
-      // navigates away during that gap (e.g. straight to "توصيلاتي"
-      // after tapping accept) -- another event can legitimately change
-      // the bloc's live state in the meantime. Emitting based on a
-      // stale snapshot here previously stomped whatever screen the
-      // driver had already navigated to back to a leftover
-      // AvailableOrdersLoaded, making it go blank.
       if (state is AvailableOrdersLoaded) {
-        final liveState = state as AvailableOrdersLoaded;
+        final liveState =
+            state as AvailableOrdersLoaded;
+
         emit(
           AvailableOrdersLoaded(
             orders: liveState.orders
-                .where((o) => o.id != event.orderId)
+                .where(
+                  (o) => o.id != event.orderId,
+                )
                 .toList(),
             totalEarnings: liveState.totalEarnings,
             hasActiveDelivery: true,
@@ -358,21 +413,26 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
         );
       }
 
-      add(WatchOrderStatusEvent(orderId: event.orderId));
+      add(
+        WatchOrderStatusEvent(
+          orderId: event.orderId,
+        ),
+      );
     } catch (e) {
-      // Someone else claimed it first (RLS blocked us) or a network
-      // error — either way, drop just this order from the list rather
-      // than replacing the whole screen with an error state. Same
-      // live-state fix as above.
       if (state is AvailableOrdersLoaded) {
-        final liveState = state as AvailableOrdersLoaded;
+        final liveState =
+            state as AvailableOrdersLoaded;
+
         emit(
           AvailableOrdersLoaded(
             orders: liveState.orders
-                .where((o) => o.id != event.orderId)
+                .where(
+                  (o) => o.id != event.orderId,
+                )
                 .toList(),
             totalEarnings: liveState.totalEarnings,
-            hasActiveDelivery: liveState.hasActiveDelivery,
+            hasActiveDelivery:
+                liveState.hasActiveDelivery,
           ),
         );
       }
@@ -383,16 +443,26 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   // DRIVER - OUT FOR DELIVERY
   // ============================================================
 
-  Future<void> _markOutForDelivery(
+  Future _markOutForDelivery(
     MarkOutForDeliveryEvent event,
     Emitter<OrderState> emit,
   ) async {
     try {
-      await markOutForDeliveryUseCase(orderId: event.orderId);
+      await markOutForDeliveryUseCase(
+        orderId: event.orderId,
+      );
 
-      add(GetDriverOrdersEvent(driverId: event.driverId));
+      add(
+        GetDriverOrdersEvent(
+          driverId: event.driverId,
+        ),
+      );
     } catch (e) {
-      emit(OrderFailure(error: e.toString()));
+      emit(
+        OrderFailure(
+          error: e.toString(),
+        ),
+      );
     }
   }
 
@@ -400,32 +470,44 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   // DRIVER - MY DELIVERIES
   // ============================================================
 
-  Future<void> _getDriverOrders(
+  Future _getDriverOrders(
     GetDriverOrdersEvent event,
     Emitter<OrderState> emit,
   ) async {
     emit(OrderLoading());
 
     try {
-      final orders = await getDriverOrdersUseCase(event.driverId);
+      final orders =
+          await getDriverOrdersUseCase(
+        event.driverId,
+      );
 
-      emit(DriverOrdersFetched(orders: orders));
+      emit(
+        DriverOrdersFetched(
+          orders: orders,
+        ),
+      );
 
-      // Picks up status changes made from outside this driver's own
-      // taps -- e.g. the restaurant moving preparing -> ready via their
-      // dashboard/Studio while the driver is sitting on "توصيلاتي".
-      // Guarded the same way as the available-orders subscription: only
-      // refetch while this screen's state is actually the current one,
-      // so it can't clobber AvailableOrdersLoaded if the driver has
-      // since switched tabs.
       _driverOrdersRealtimeSubscription ??=
-          watchDriverOrdersUseCase(event.driverId).listen((_) {
-            if (state is DriverOrdersFetched) {
-              add(GetDriverOrdersEvent(driverId: event.driverId));
-            }
-          });
+          watchDriverOrdersUseCase(
+        event.driverId,
+      ).listen(
+        (_) {
+          if (state is DriverOrdersFetched) {
+            add(
+              GetDriverOrdersEvent(
+                driverId: event.driverId,
+              ),
+            );
+          }
+        },
+      );
     } catch (e) {
-      emit(OrderFailure(error: e.toString()));
+      emit(
+        OrderFailure(
+          error: e.toString(),
+        ),
+      );
     }
   }
 
@@ -433,16 +515,26 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   // DRIVER - COMPLETE ORDER
   // ============================================================
 
-  Future<void> _completeOrder(
+  Future _completeOrder(
     CompleteOrderEvent event,
     Emitter<OrderState> emit,
   ) async {
     try {
-      await completeOrderUseCase(orderId: event.orderId);
+      await completeOrderUseCase(
+        orderId: event.orderId,
+      );
 
-      add(GetDriverOrdersEvent(driverId: event.driverId));
+      add(
+        GetDriverOrdersEvent(
+          driverId: event.driverId,
+        ),
+      );
     } catch (e) {
-      emit(OrderFailure(error: e.toString()));
+      emit(
+        OrderFailure(
+          error: e.toString(),
+        ),
+      );
     }
   }
 
@@ -452,6 +544,8 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
 
   @override
   Future<void> close() async {
+    _scheduledOrdersTimer?.cancel();
+
     await _orderStatusSubscription?.cancel();
     await _availableOrdersRealtimeSubscription?.cancel();
     await _driverOrdersRealtimeSubscription?.cancel();
@@ -467,7 +561,9 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
 class _OrderRealtimeUpdatedEvent extends OrderEvent {
   final OrderEntity order;
 
-  const _OrderRealtimeUpdatedEvent({required this.order});
+  const _OrderRealtimeUpdatedEvent({
+    required this.order,
+  });
 
   @override
   List<Object?> get props => [order];
