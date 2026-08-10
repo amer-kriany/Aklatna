@@ -298,7 +298,9 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                           menuState.categories[_selectedIndex];
 
                       final itemsInCategory = menuState.items
-                          .where((item) => item.categoryId == selectedCategory.id)
+                          .where(
+                            (item) => item.categoryId == selectedCategory.id,
+                          )
                           .toList();
 
                       // ==================================================
@@ -397,8 +399,10 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                                                 '/food/${promotion.menuItemId}',
                                               );
                                             } else {
-                                                  context.push('/promotion-details', extra: promotion);
-
+                                              context.push(
+                                                '/promotion-details',
+                                                extra: promotion,
+                                              );
                                             }
                                           },
                                         );
@@ -496,8 +500,9 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                                             discountPercentage:
                                                 promo?.discountPercentage,
                                             quantity: itemQuantity,
-                                            onTap: () =>
-                                                context.push('/food/${item.id}'),
+                                            onTap: () => context.push(
+                                              '/food/${item.id}',
+                                            ),
                                             onAdd: () {
                                               context.read<CartBloc>().add(
                                                 AddItemEvent(
@@ -511,13 +516,16 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                                                     businessId: item.businessId,
                                                   ),
                                                   businessName: business.nameAr,
-                                                  businessLogo: business.logoUrl,
+                                                  businessLogo:
+                                                      business.logoUrl,
                                                 ),
                                               );
                                             },
                                             onRemove: () {
                                               context.read<CartBloc>().add(
-                                                RemoveItemEvent(itemId: item.id),
+                                                RemoveItemEvent(
+                                                  itemId: item.id,
+                                                ),
                                               );
                                             },
                                           );

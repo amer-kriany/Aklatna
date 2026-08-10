@@ -3,6 +3,7 @@ import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
+import 'package:aklatna/features/orders/order_type.dart';
 import 'package:flutter/material.dart';
 
 class OngoingOrderCard extends StatelessWidget {
@@ -161,27 +162,28 @@ class OngoingOrderCard extends StatelessWidget {
   }
 
   String _statusText(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return 'بانتظار المطعم';
+  final isPickup = order.orderType == OrderType.pickup;
 
-      case OrderStatus.preparing:
-        return 'جاري تحضير طلبك';
+  switch (status) {
+    case OrderStatus.pending:
+      return 'بانتظار المطعم';
 
-      case OrderStatus.ready:
-        return 'طلبك جاهز';
+    case OrderStatus.preparing:
+      return 'جاري تحضير طلبك';
 
-      case OrderStatus.outForDelivery:
-        return 'الطلب مع السائق';
+    case OrderStatus.ready:
+      return isPickup ? 'طلبك جاهز للاستلام' : 'طلبك جاهز';
 
-      case OrderStatus.completed:
-        return 'تم إكمال الطلب';
+    case OrderStatus.outForDelivery:
+      return 'الطلب مع السائق';
 
-      case OrderStatus.cancelled:
-        return 'تم إلغاء الطلب';
-    }
+    case OrderStatus.completed:
+      return 'تم إكمال الطلب';
+
+    case OrderStatus.cancelled:
+      return 'تم إلغاء الطلب';
   }
-
+}
   IconData _statusIcon(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:

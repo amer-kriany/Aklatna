@@ -1,11 +1,11 @@
-import 'package:aklatna/features/home/data/repository/businessRepoImp.dart';
 import 'package:aklatna/features/home/domain/entity/businessEntity.dart';
+import 'package:aklatna/features/home/domain/repository/businessRepo.dart';
 
 class Searchbusinessesusecase {
-  final Businessrepoimp businessrepoimp;
-  Searchbusinessesusecase({required this.businessrepoimp});
+  final Businessrepo businessrepo;
+  Searchbusinessesusecase({required this.businessrepo});
 
   Future<List<BusinessEntity>> call({required String query}) async {
-    return await businessrepoimp.searchBusinesses(query: query);
+    return await businessrepo.searchBusinesses(query: query);
   }
 }

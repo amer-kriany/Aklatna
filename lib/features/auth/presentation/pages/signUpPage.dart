@@ -165,16 +165,15 @@ class _SignUpPageState extends State<SignUpPage> {
                               const SizedBox(height: AppSpacing.xxl),
 
                               // Sign Up Action Button
-                              BlocBuilder<AuthBloc, AuthState>(
-                                builder: (context, state) {
-                                  return AuthPrimaryButton(
-                                    label: 'إنشاء حساب',
-                                    onPressed: state is AuthLoading
-                                        ? null
-                                        : _onSignUp,
-                                  );
-                                },
-                              ),
+                             BlocBuilder<AuthBloc, AuthState>(
+  builder: (context, state) {
+    return AuthPrimaryButton(
+      label: 'إنشاء حساب', // أو 'تسجيل الدخول' بالـ sign in
+      isLoading: state is AuthLoading,
+      onPressed: state is AuthLoading ? null : _onSignUp,
+    );
+  },
+),
                             ],
                           ),
 

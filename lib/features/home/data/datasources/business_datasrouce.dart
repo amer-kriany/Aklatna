@@ -7,13 +7,16 @@ class BusinessDatasrouce {
 
   // get business table form supa
   Future<List<BusinessModel>> getBusinesses() async {
-    try {
-      final business = await supabase.from("businesses").select();
-      return business.map((e) => BusinessModel.fromSupabase(e)).toList();
-    } catch (e) {
-      rethrow;
-    }
+  try {
+    final business = await supabase
+        .from("businesses")
+        .select()
+        .eq('is_active', true);
+    return business.map((e) => BusinessModel.fromSupabase(e)).toList();
+  } catch (e) {
+    rethrow;
   }
+}
 
   // search by business
   Future<List<BusinessModel>> searchBusinesses({required String query}) async {

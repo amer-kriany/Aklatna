@@ -1,7 +1,7 @@
-import 'package:aklatna/features/review/data/repository/reviewRepoImp.dart';
+import 'package:aklatna/features/review/domain/repository/reviewRepository.dart';
 
 class HasReviewForOrderUsecase {
-  final ReviewRepositoryImpl reviewRepositoryImpl;
+  final ReviewRepository reviewRepositoryImpl;
 
   HasReviewForOrderUsecase({required this.reviewRepositoryImpl});
 

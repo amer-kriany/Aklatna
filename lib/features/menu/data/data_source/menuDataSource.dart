@@ -7,26 +7,33 @@ class Menudatasource {
 
   // get category_menu
   Future<List<Menucategorymodel>> getMenuCategories() async {
-    try {
-      final response = await supabase.from("menu_categories").select();
-      if (response.isEmpty) {
-        throw "empty result";
-      }
-      return response.map((e)=>Menucategorymodel.fromSupabase(e)).toList();
-    } catch (e) {
-      rethrow;
+  try {
+    final response = await supabase
+        .from("menu_categories")
+        .select('*, businesses!inner(is_active)')
+        .eq('businesses.is_active', true);
+    if (response.isEmpty) {
+      throw "empty result";
     }
+    return response.map((e) => Menucategorymodel.fromSupabase(e)).toList();
+  } catch (e) {
+    rethrow;
   }
-  // get menu_items
-  Future<List<Menuitemmodel>> getMenuItems() async {
-    try {
-      final response = await supabase.from("menu_items").select();
-      if (response.isEmpty) {
-        throw "empty result";
-      }
-      return response.map((e)=>Menuitemmodel.fromSupabase(e)).toList();
-    } catch (e) {
-      rethrow;
+}
+
+Future<List<Menuitemmodel>> getMenuItems() async {
+  try {
+    final response = await supabase
+        .from("menu_items")
+        .select('*, businesses!inner(is_active)')
+        .eq('is_available', true)
+        .eq('businesses.is_active', true);
+    if (response.isEmpty) {
+      throw "empty result";
     }
+    return response.map((e) => Menuitemmodel.fromSupabase(e)).toList();
+  } catch (e) {
+    rethrow;
   }
+}
 }

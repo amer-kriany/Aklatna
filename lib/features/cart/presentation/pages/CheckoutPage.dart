@@ -34,6 +34,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String selectedOrderType = 'طلب عادي';
   DateTime? _scheduledFor;
   final TextEditingController _notesController = TextEditingController();
+
   bool _blockIfRestaurantNowClosed(BuildContext context, String businessId) {
     final businessState = context.read<BusinessBloc>().state;
 
@@ -86,6 +87,71 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return false;
   }
 
+  // ============================================================
+  // ACTIVE ORDER CHECK
+  // ============================================================
+  //
+  // BUGFIX: CartPage checked this before pushing to /checkout, but
+  // that check only reflects OrderBloc's state at the moment the user
+  // tapped "Checkout" -- if they placed a pickup order, backed out to
+  // browse, added a new item to cart, and hit checkout again, a stale
+  // OrderBloc state or navigation path that skips CartPage entirely
+  // could let a second active order through regardless of type
+  // (delivery vs pickup). Checking again here, right before dispatch,
+  // closes that gap.
+  // ============================================================
+
+  bool _hasActiveOrder(BuildContext context) {
+    final orderState = context.read<OrderBloc>().state;
+    if (orderState is! CustomerOrdersFetched) return false;
+
+    return orderState.orders.any((order) {
+      return order.orderStatus == OrderStatus.pending ||
+          order.orderStatus == OrderStatus.preparing ||
+          order.orderStatus == OrderStatus.ready ||
+          order.orderStatus == OrderStatus.outForDelivery;
+    });
+  }
+
+  void _showActiveOrderDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
+        title: Text(
+          'لديك طلب قيد التنفيذ',
+          style: AppTextStyles.h4,
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          'لا يمكنك إنشاء طلب جديد حتى يكتمل أو يُلغى طلبك الحالي.',
+          style: AppTextStyles.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+            ),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'حسناً',
+              style: AppTextStyles.buttonMedium.copyWith(
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _notesController.dispose();
@@ -120,13 +186,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   // ============================================================
   // DELIVERY PRICE CALC
-  // ============================================================
-  //
-  // Same pattern used in CartPage: distance from customer's default
-  // address to the business, converted to a price via
-  // DeliveryPriceUtils. Returns 0 (not null) if pickup or if location
-  // data is unavailable, since this feeds directly into total_price
-  // which is stored in the DB — a null there would be a real bug.
   // ============================================================
 
   double _calculateDeliveryPrice(BuildContext context, String businessId) {
@@ -168,13 +227,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   // ============================================================
   // DEFAULT DELIVERY ADDRESS (source of truth)
   // ============================================================
-  //
-  // BUGFIX: previously the order's stored deliveryAddress text used
-  // profile.address, while _calculateDeliveryPrice above used
-  // AddressBloc's *default* address for the fee -- two different
-  // addresses could silently disagree. Both the text and the new
-  // lat/lng columns now come from this single source.
-  // ============================================================
 
   AddressEntity? _defaultAddress(BuildContext context) {
     final addressState = context.read<AddressBloc>().state;
@@ -189,6 +241,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
   Future<void> _onConfirm() async {
     final orderState = context.read<OrderBloc>().state;
     if (orderState is OrderPlacing) return;
+
+    // BUGFIX: block a second active order (delivery OR pickup) right
+    // before dispatch -- see _hasActiveOrder doc comment above.
+    if (_hasActiveOrder(context)) {
+      _showActiveOrderDialog(context);
+      return;
+    }
 
     final cartState = context.read<CartBloc>().state;
     final profileState = context.read<ProfileBloc>().state;
@@ -211,11 +270,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     final profile = profileState.profile;
 
-    // BUGFIX: total_price previously only included item subtotal —
-    // delivery fee was never added, meaning every stored order
-    // undercharged the actual amount the restaurant should collect
-    // (this app is cash-only, so this directly affects real money
-    // changing hands).
     final deliveryPrice = _calculateDeliveryPrice(
       context,
       cartState.businessId!,
@@ -226,37 +280,30 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final isDelivery = selectedDeliveryOption == 'توصيل';
     final defaultAddress = _defaultAddress(context);
 
-   final order = OrderEntity(
-  businessId: cartState.businessId!,
-  customerId: profile.id,
-  customername: profile.userName,
-  customerPhone: profile.phoneNumber,
-  items: cartState.items,
-  deliveryAddress: isDelivery
-    ? (defaultAddress != null
-        ? '${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.apartment}'
-        : profile.address)
-    : null,
-  deliveryLatitude: isDelivery ? defaultAddress?.latitude : null,
-  deliveryLongitude: isDelivery ? defaultAddress?.longitude : null,
-  totalPrice: totalPrice,
-  deliveryFee: deliveryPrice, // <-- ADD THIS
-  orderType: isDelivery ? OrderType.delivery : OrderType.pickup,
-  orderStatus: OrderStatus.pending,
-  scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,
-  description: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-  businessName: cartState.businessName,
-  businessLogo: cartState.businessLogo,
-);
-
-    // ================================================================
-    // COUNTDOWN CONFIRMATION
-    // ================================================================
-    //
-    // Order is NOT placed yet — this shows a 5s countdown with a cancel
-    // button. Only if it resolves to `true` (timer ran out naturally,
-    // customer didn't cancel) do we actually dispatch PlaceOrderEvent.
-    // ================================================================
+    final order = OrderEntity(
+      businessId: cartState.businessId!,
+      customerId: profile.id,
+      customername: profile.userName,
+      customerPhone: profile.phoneNumber,
+      items: cartState.items,
+      deliveryAddress: isDelivery
+          ? (defaultAddress != null
+              ? '${defaultAddress.street}, ${defaultAddress.city}, ${defaultAddress.apartment}'
+              : profile.address)
+          : null,
+      deliveryLatitude: isDelivery ? defaultAddress?.latitude : null,
+      deliveryLongitude: isDelivery ? defaultAddress?.longitude : null,
+      totalPrice: totalPrice,
+      deliveryFee: deliveryPrice,
+      orderType: isDelivery ? OrderType.delivery : OrderType.pickup,
+      orderStatus: OrderStatus.pending,
+      scheduledFor: selectedOrderType == 'طلب مسبق' ? _scheduledFor : null,
+      description: _notesController.text.trim().isEmpty
+          ? null
+          : _notesController.text.trim(),
+      businessName: cartState.businessName,
+      businessLogo: cartState.businessLogo,
+    );
 
     final shouldPlaceOrder = await OrderCountdownDialog.show(context);
 
@@ -341,7 +388,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ],
                   const SizedBox(height: AppSpacing.xl),
 
-                  // 📝 Notes Field Container
                   Text('ملاحظات إضافية', style: AppTextStyles.regularLarge),
                   const SizedBox(height: AppSpacing.xs),
                   Container(
