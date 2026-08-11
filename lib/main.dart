@@ -46,22 +46,10 @@ void main() async {
   );
 
   // ============================================================
-  // NOTIFICATIONS
-  // ============================================================
-
-  await NotificationService.initialize();
- await NotificationService.saveFcmToken();
-NotificationService.listenForTokenRefresh();
- 
-
-  // ============================================================
   // DEPENDENCY INJECTION
   // ============================================================
 
   setupInjection();
- 
-
-  
 
   // ============================================================
   // ONBOARDING
@@ -69,6 +57,22 @@ NotificationService.listenForTokenRefresh();
 
   final bool hasCompletedOnboarding =
       await OnboardingService.isCompleted();
+
+  // ============================================================
+  // NOTIFICATIONS
+  // Intentionally NOT awaited — permission prompts and FCM token
+  // fetch/save both involve network round-trips that used to block
+  // the first frame from rendering, causing a black screen before
+  // splash. Firing these after runApp() lets the UI show immediately
+  // while notifications set themselves up in the background. Nothing
+  // here touches GetIt/DI or BLoC providers, so it's safe to run
+  // independently of the widget tree below.
+  // ============================================================
+
+  NotificationService.initialize().then((_) async {
+    await NotificationService.saveFcmToken();
+    NotificationService.listenForTokenRefresh();
+  });
 
   // ============================================================
   // APP
