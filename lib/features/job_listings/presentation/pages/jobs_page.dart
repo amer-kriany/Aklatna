@@ -40,7 +40,7 @@ class _JobsPageState extends State<JobsPage> {
         }
       }
     } catch (e) {
-      debugPrint('Error launching dialer: $e');
+      throw "someThing went wronge";
     }
   }
 

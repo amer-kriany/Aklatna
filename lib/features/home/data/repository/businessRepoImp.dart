@@ -55,13 +55,9 @@ Future<List<RestaurantHourModel>> _fetchTodayHoursSafely() async {
   try {
     final todayIndex = DateTime.now().weekday - 1;
     final hours = await businessDatasrouce.getTodayHours(dayOfWeek: todayIndex);
-    print('DEBUG: todayIndex=$todayIndex, fetched ${hours.length} hours rows');
-    for (final h in hours) {
-      print('DEBUG: hour row -> businessId=${h.businessId}, open=${h.openTime}, close=${h.closeTime}');
-    }
+   
     return hours;
   } catch (e) {
-    print('DEBUG: getTodayHours failed: $e');
     return [];
   }
 }

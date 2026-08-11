@@ -47,22 +47,7 @@ class NominatimService {
       return null;
     }
 
-    debugPrint('================ NOMINATIM ================');
-    debugPrint('FULL RESPONSE: $data');
-    debugPrint('ADDRESS: $address');
-    debugPrint('ROAD: ${address['road']}');
-    debugPrint('PEDESTRIAN: ${address['pedestrian']}');
-    debugPrint('RESIDENTIAL: ${address['residential']}');
-    debugPrint('HOUSE NUMBER: ${address['house_number']}');
-    debugPrint('CITY: ${address['city']}');
-    debugPrint('TOWN: ${address['town']}');
-    debugPrint('VILLAGE: ${address['village']}');
-    debugPrint('MUNICIPALITY: ${address['municipality']}');
-    debugPrint('DISTRICT: ${address['district']}');
-    debugPrint('SUBURB: ${address['suburb']}');
-    debugPrint('QUARTER: ${address['quarter']}');
-    debugPrint('NEIGHBOURHOOD: ${address['neighbourhood']}');
-    debugPrint('============================================');
+   
 
     String? value(String key) {
       final result = address[key];
@@ -127,9 +112,7 @@ class NominatimService {
 
     final houseNumber = value('house_number');
 
-    debugPrint('FINAL STREET: $street');
-    debugPrint('FINAL CITY: $city');
-    debugPrint('FINAL HOUSE NUMBER: $houseNumber');
+   
 
     return ReverseAddress(
       street: street,

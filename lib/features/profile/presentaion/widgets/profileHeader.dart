@@ -66,7 +66,6 @@ class ProfileHeader extends StatelessWidget {
                             },
                             // Fallback if image fails to load from network
                             errorBuilder: (c, e, s) {
-                              debugPrint('Image load failed: $e');
                               return Container(
                                 color: AppColors.surface,
                                 alignment: Alignment.center,
