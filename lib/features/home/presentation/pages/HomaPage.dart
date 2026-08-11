@@ -127,7 +127,7 @@ class _HomePageState extends State<HomePage>
 
     _profileTooltipTimer?.cancel();
     _profileTooltipTimer = Timer(
-      const Duration(seconds: 3),
+      const Duration(seconds: 6),
       _hideProfileHint,
     );
   }
