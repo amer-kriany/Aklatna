@@ -52,7 +52,6 @@ import 'package:aklatna/features/orders/domain/usecases/complete_order_usecase.d
 import 'package:aklatna/features/orders/domain/usecases/getDriverOrdersUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_available_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/get_next_scheduled_order_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
@@ -209,9 +208,7 @@ void setupInjection() {
   sl.registerLazySingleton(() => CompleteOrderUseCase(repository: sl()));
   sl.registerLazySingleton(() => WatchDriverOrdersUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetbusinessUsecase(repository: sl()));
-  sl.registerLazySingleton(
-  () => GetNextScheduledOrderUseCase(sl()),
-);
+ 
   sl.registerLazySingleton(
     () => Searchbusinessesusecase(businessrepo: sl()),
   );
@@ -260,7 +257,6 @@ void setupInjection() {
       customerOrdersUsecase: sl(),
       getAvailableOrdersUseCase: sl(),
       acceptOrderUseCase: sl(),
-       getNextScheduledOrderUseCase: sl(),
       markOutForDeliveryUseCase: sl(),
       completeOrderUseCase: sl(),
       getDriverOrdersUseCase: sl(),
