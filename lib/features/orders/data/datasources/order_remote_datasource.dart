@@ -82,26 +82,21 @@ class OrderRemoteDatasource {
   // ============================================================
 
   Future<List<OrderModel>> getAvailableOrders() async {
-    final availableUntil = DateTime.now()
-        .add(const Duration(minutes: 30))
-        .toIso8601String();
+  final orders = await supabase
+      .from('order')
+      .select()
+      .eq('order_status', 'pending')
+      .eq('order_type', 'delivery')
+      .isFilter('driver_id', null)
+      .isFilter('scheduled_for', null)
+      .order('created_at');
 
-    final orders = await supabase
-        .from('order')
-        .select()
-        .eq('order_status', 'pending')
-        .isFilter('driver_id', null)
-        .or(
-          'scheduled_for.is.null,scheduled_for.lte.$availableUntil',
-        )
-        .order('created_at');
-
-    return orders
-        .map<OrderModel>(
-          (e) => OrderModel.fromSupabase(e),
-        )
-        .toList();
-  }
+  return orders
+      .map<OrderModel>(
+        (e) => OrderModel.fromSupabase(e),
+      )
+      .toList();
+}
 
   // ============================================================
   // DRIVER - GET NEXT FUTURE SCHEDULED ORDER

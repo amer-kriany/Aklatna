@@ -437,7 +437,7 @@ class _HomePageState extends State<HomePage>
                       // ==================================================
                       // ONGOING ORDER
                       // ==================================================
-                     BlocBuilder<OrderBloc, OrderState>(
+                    BlocBuilder<OrderBloc, OrderState>(
   builder: (context, orderState) {
     if (orderState is! CustomerOrdersFetched) {
       return const SizedBox.shrink();
@@ -446,24 +446,22 @@ class _HomePageState extends State<HomePage>
     final now = DateTime.now();
 
     final ongoingOrders = orderState.orders.where((order) {
-      // --------------------------------------------------------
-      // SCHEDULED ORDER
-      // --------------------------------------------------------
-      // A scheduled pending order is NOT active yet.
-      // It becomes active only when its scheduled time arrives.
-      // --------------------------------------------------------
-      if (order.orderStatus == OrderStatus.pending &&
-          order.scheduledFor != null) {
-        return !order.scheduledFor!.isAfter(now);
+      // Must be an active status.
+      if (!order.orderStatus.isOngoing) {
+        return false;
       }
 
-      // --------------------------------------------------------
-      // NORMAL / ACTIVE ORDERS
-      // --------------------------------------------------------
-      return order.orderStatus == OrderStatus.pending ||
-          order.orderStatus == OrderStatus.preparing ||
-          order.orderStatus == OrderStatus.outForDelivery ||
-          order.orderStatus == OrderStatus.ready;
+      // Normal order -> show immediately.
+      if (order.scheduledFor == null) {
+        return true;
+      }
+
+      // Scheduled order -> frozen until 30 minutes before.
+      final releaseTime = order.scheduledFor!.subtract(
+        const Duration(minutes: 30),
+      );
+
+      return !now.isBefore(releaseTime);
     }).toList();
 
     if (ongoingOrders.isEmpty) {

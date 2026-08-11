@@ -6,7 +6,6 @@ import 'package:aklatna/features/orders/domain/usecases/complete_order_usecase.d
 import 'package:aklatna/features/orders/domain/usecases/getDriverOrdersUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_available_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/get_next_scheduled_order_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
@@ -22,35 +21,42 @@ part 'order_state.dart';
 
 class OrderBloc extends Bloc<OrderEvent, OrderState> {
   final Orderstatususecase watchOrderStatusUsecase;
+
   final PlaceOrderUsecase placeOrderUsecase;
+
   final GetAvailableOrdersUseCase getAvailableOrdersUseCase;
-  final GetNextScheduledOrderUseCase getNextScheduledOrderUseCase;
+
   final AcceptOrderUseCase acceptOrderUseCase;
+
   final MarkOutForDeliveryUseCase markOutForDeliveryUseCase;
+
   final CompleteOrderUseCase completeOrderUseCase;
+
   final GetDriverOrdersUseCase getDriverOrdersUseCase;
+
   final WatchAvailableOrdersUseCase watchAvailableOrdersUseCase;
+
   final WatchDriverOrdersUseCase watchDriverOrdersUseCase;
+
   final GetCustomerOrdersUseCase customerOrdersUsecase;
 
   StreamSubscription? _orderStatusSubscription;
+
   StreamSubscription? _availableOrdersRealtimeSubscription;
+
   StreamSubscription? _driverOrdersRealtimeSubscription;
 
-  Timer? _scheduledOrdersTimer;
+  // ============================================================
+  // LAST KNOWN CUSTOMER ORDERS
+  // ============================================================
 
-  // --------------------------------------------------------------
-  // Keeps the last known orders list around even while state is
-  // OrderLoading/OrderPlaced.
-  // --------------------------------------------------------------
+  List<OrderEntity> _lastKnownOrders = [];
 
-List<OrderEntity> _lastKnownOrders = [];
   OrderBloc({
     required this.placeOrderUsecase,
     required this.customerOrdersUsecase,
     required this.watchOrderStatusUsecase,
     required this.getAvailableOrdersUseCase,
-    required this.getNextScheduledOrderUseCase,
     required this.acceptOrderUseCase,
     required this.markOutForDeliveryUseCase,
     required this.completeOrderUseCase,
@@ -58,28 +64,106 @@ List<OrderEntity> _lastKnownOrders = [];
     required this.watchAvailableOrdersUseCase,
     required this.watchDriverOrdersUseCase,
   }) : super(OrderInitial()) {
+    // CUSTOMER
     on<PlaceOrderEvent>(_placeOrder);
-on<GetCustomerOrdersEvent>(_getCustomerOrders);
-on<WatchOrderStatusEvent>(_watchOrderStatus);
-on<GetAvailableOrdersEvent>(_getAvailableOrders);
-on<AcceptOrderEvent>(_acceptOrder);
-on<MarkOutForDeliveryEvent>(_markOutForDelivery);
-on<CompleteOrderEvent>(_completeOrder);
-on<GetDriverOrdersEvent>(_getDriverOrders);
+    on<GetCustomerOrdersEvent>(_getCustomerOrders);
+    on<WatchOrderStatusEvent>(_watchOrderStatus);
 
+    // DRIVER
+    on<GetAvailableOrdersEvent>(_getAvailableOrders);
+    on<AcceptOrderEvent>(_acceptOrder);
+    on<MarkOutForDeliveryEvent>(_markOutForDelivery);
+    on<CompleteOrderEvent>(_completeOrder);
+    on<GetDriverOrdersEvent>(_getDriverOrders);
+
+    // INTERNAL REALTIME EVENTS
     on<_OrderRealtimeUpdatedEvent>(_updateOrderInState);
     on<_OrderRealtimeErrorEvent>(_handleRealtimeError);
+  }
+
+  // ============================================================
+  // SCHEDULED ORDER RELEASE
+  // ============================================================
+  //
+  // A normal order:
+  //     scheduledFor == null
+  //     -> immediately active
+  //
+  // A scheduled order:
+  //     scheduledFor != null
+  //     -> hidden from tracking until 30 minutes before
+  //
+  // Example:
+  //
+  // scheduledFor = 22:56
+  // release time = 22:26
+  //
+  // Before 22:26 -> frozen
+  // At 22:26      -> behaves like normal order
+  //
+  // ============================================================
+
+  bool _isScheduledOrderReleased(OrderEntity order) {
+    if (order.scheduledFor == null) {
+      return true;
+    }
+
+    final releaseTime = order.scheduledFor!.subtract(
+      const Duration(minutes: 30),
+    );
+
+    return !DateTime.now().isBefore(releaseTime);
+  }
+
+  // ============================================================
+  // CUSTOMER TRACKING ORDER
+  // ============================================================
+  //
+  // IMPORTANT:
+  // Scheduled orders do NOT appear in the HomePage tracking card
+  // until they enter the 30-minute window.
+  //
+  // ============================================================
+
+  bool _isOngoingForTracking(OrderEntity order) {
+    if (!order.orderStatus.isOngoing) {
+      return false;
+    }
+
+    if (!_isScheduledOrderReleased(order)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  // ============================================================
+  // ACTIVE ORDER CHECK
+  // ============================================================
+  //
+  // A scheduled order is still an active order from the customer's
+  // perspective.
+  //
+  // Therefore the customer cannot create another order while a
+  // scheduled order is waiting.
+  //
+  // ============================================================
+
+  bool _isOngoingForActiveOrder(OrderEntity order) {
+    return order.orderStatus.isOngoing;
   }
 
   // ============================================================
   // PLACE ORDER
   // ============================================================
 
-  Future _placeOrder(
+  Future<void> _placeOrder(
     PlaceOrderEvent event,
     Emitter<OrderState> emit,
   ) async {
-    final hasActiveOrder = _lastKnownOrders.any(_isOngoing);
+    final hasActiveOrder = _lastKnownOrders.any(
+      _isOngoingForActiveOrder,
+    );
 
     if (hasActiveOrder) {
       emit(
@@ -88,6 +172,7 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
               'لديك طلب قيد التنفيذ حالياً، لا يمكنك إنشاء طلب جديد حتى يكتمل أو يُلغى',
         ),
       );
+
       return;
     }
 
@@ -116,12 +201,14 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
   // GET CUSTOMER ORDERS
   // ============================================================
 
-  Future _getCustomerOrders(
+  Future<void> _getCustomerOrders(
     GetCustomerOrdersEvent event,
     Emitter<OrderState> emit,
   ) async {
     try {
-      final orders = await customerOrdersUsecase(event.customerId);
+      final orders = await customerOrdersUsecase(
+        event.customerId,
+      );
 
       _lastKnownOrders = orders;
 
@@ -131,15 +218,25 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
         ),
       );
 
-      final ongoingOrders = orders.where(_isOngoing).toList();
+      // Only watch an order that is actually released.
+      //
+      // Scheduled order more than 30 minutes away:
+      //     no tracking subscription
+      //
+      // Scheduled order inside 30 minutes:
+      //     realtime tracking starts
+      //
+      final trackingOrders = orders
+          .where(_isOngoingForTracking)
+          .toList();
 
-      if (ongoingOrders.isNotEmpty) {
-        final ongoingOrder = ongoingOrders.first;
+      if (trackingOrders.isNotEmpty) {
+        final trackingOrder = trackingOrders.first;
 
-        if (ongoingOrder.id != null) {
+        if (trackingOrder.id != null) {
           add(
             WatchOrderStatusEvent(
-              orderId: ongoingOrder.id!,
+              orderId: trackingOrder.id!,
             ),
           );
         }
@@ -156,17 +253,19 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
   }
 
   // ============================================================
-  // REALTIME ORDER STATUS
+  // WATCH ORDER STATUS
   // ============================================================
 
-  Future _watchOrderStatus(
+  Future<void> _watchOrderStatus(
     WatchOrderStatusEvent event,
     Emitter<OrderState> emit,
   ) async {
     await _orderStatusSubscription?.cancel();
 
     _orderStatusSubscription =
-        watchOrderStatusUsecase(event.orderId).listen(
+        watchOrderStatusUsecase(
+      event.orderId,
+    ).listen(
       (updatedOrder) {
         add(
           _OrderRealtimeUpdatedEvent(
@@ -174,7 +273,7 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
           ),
         );
       },
-      onError: (error) {
+      onError: (_) {
         add(
           const _OrderRealtimeErrorEvent(),
         );
@@ -183,7 +282,7 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
   }
 
   // ============================================================
-  // REALTIME UPDATE EVENT
+  // REALTIME ORDER UPDATE
   // ============================================================
 
   void _updateOrderInState(
@@ -197,7 +296,8 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
             );
 
     final wasOngoing =
-        previousOrder != null && _isOngoing(previousOrder);
+        previousOrder != null &&
+        _isOngoingForTracking(previousOrder);
 
     final isNowCompleted =
         event.order.orderStatus == OrderStatus.completed;
@@ -205,13 +305,15 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
     final justCompleted =
         wasOngoing && isNowCompleted;
 
-    final updatedOrders = _lastKnownOrders.map((order) {
-      if (order.id == event.order.id) {
-        return event.order;
-      }
+    final updatedOrders = _lastKnownOrders.map(
+      (order) {
+        if (order.id == event.order.id) {
+          return event.order;
+        }
 
-      return order;
-    }).toList();
+        return order;
+      },
+    ).toList();
 
     _lastKnownOrders = updatedOrders;
 
@@ -237,8 +339,10 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
       );
     }
 
-    if (!_isOngoing(event.order)) {
+    // Stop realtime when the order is no longer active.
+    if (!event.order.orderStatus.isOngoing) {
       _orderStatusSubscription?.cancel();
+
       _orderStatusSubscription = null;
     }
   }
@@ -251,21 +355,21 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
     _OrderRealtimeErrorEvent event,
     Emitter<OrderState> emit,
   ) {
-    // Keep the existing state.
+    // Keep current state.
   }
 
   // ============================================================
-  // ONGOING CHECK
+  // DRIVER - GET AVAILABLE ORDERS
+  // ============================================================
+  //
+  // IMPORTANT:
+  // The datasource controls the 30-minute scheduled-order rule.
+  //
+  // This BLoC simply asks for available orders.
+  //
   // ============================================================
 
-  bool _isOngoing(OrderEntity order) =>
-      order.orderStatus.isOngoing;
-
-  // ============================================================
-  // DRIVER - AVAILABLE ORDERS
-  // ============================================================
-
-  Future _getAvailableOrders(
+  Future<void> _getAvailableOrders(
     GetAvailableOrdersEvent event,
     Emitter<OrderState> emit,
   ) async {
@@ -274,8 +378,9 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
     try {
       final orders = await getAvailableOrdersUseCase();
 
-      final driverOrders =
-          await getDriverOrdersUseCase(event.driverId);
+      final driverOrders = await getDriverOrdersUseCase(
+        event.driverId,
+      );
 
       final totalEarnings = driverOrders
           .where(
@@ -298,13 +403,7 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
         ),
       );
 
-      // Schedule the exact moment when the nearest future
-      // scheduled order should become visible.
-      await _scheduleNextScheduledOrderRefresh(
-        event.driverId,
-      );
-
-      // Start realtime listener once.
+      // Start realtime listener only once.
       _availableOrdersRealtimeSubscription ??=
           watchAvailableOrdersUseCase().listen(
         (_) {
@@ -327,66 +426,10 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
   }
 
   // ============================================================
-  // SCHEDULE NEXT SCHEDULED ORDER REFRESH
-  // ============================================================
-
-  Future<void> _scheduleNextScheduledOrderRefresh(
-    String driverId,
-  ) async {
-    _scheduledOrdersTimer?.cancel();
-    _scheduledOrdersTimer = null;
-
-    try {
-      final nextOrder =
-          await getNextScheduledOrderUseCase();
-
-      if (nextOrder == null ||
-          nextOrder.scheduledFor == null) {
-        return;
-      }
-
-      final now = DateTime.now();
-
-      // Scheduled order becomes available 30 minutes before
-      // its scheduled time.
-      final refreshAt =
-          nextOrder.scheduledFor!.subtract(
-        const Duration(minutes: 30),
-      );
-
-      final delay = refreshAt.difference(now);
-
-      // If it already entered the 30-minute window,
-      // refresh immediately.
-      if (delay.isNegative) {
-        add(
-          GetAvailableOrdersEvent(
-            driverId: driverId,
-          ),
-        );
-        return;
-      }
-
-      _scheduledOrdersTimer = Timer(
-        delay,
-        () {
-          add(
-            GetAvailableOrdersEvent(
-              driverId: driverId,
-            ),
-          );
-        },
-      );
-    } catch (_) {
-      // If scheduling fails, realtime still continues working.
-    }
-  }
-
-  // ============================================================
   // DRIVER - ACCEPT ORDER
   // ============================================================
 
-  Future _acceptOrder(
+  Future<void> _acceptOrder(
     AcceptOrderEvent event,
     Emitter<OrderState> emit,
   ) async {
@@ -443,7 +486,7 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
   // DRIVER - OUT FOR DELIVERY
   // ============================================================
 
-  Future _markOutForDelivery(
+  Future<void> _markOutForDelivery(
     MarkOutForDeliveryEvent event,
     Emitter<OrderState> emit,
   ) async {
@@ -467,18 +510,17 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
   }
 
   // ============================================================
-  // DRIVER - MY DELIVERIES
+  // DRIVER - GET DRIVER ORDERS
   // ============================================================
 
-  Future _getDriverOrders(
+  Future<void> _getDriverOrders(
     GetDriverOrdersEvent event,
     Emitter<OrderState> emit,
   ) async {
     emit(OrderLoading());
 
     try {
-      final orders =
-          await getDriverOrdersUseCase(
+      final orders = await getDriverOrdersUseCase(
         event.driverId,
       );
 
@@ -515,7 +557,7 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
   // DRIVER - COMPLETE ORDER
   // ============================================================
 
-  Future _completeOrder(
+  Future<void> _completeOrder(
     CompleteOrderEvent event,
     Emitter<OrderState> emit,
   ) async {
@@ -544,19 +586,19 @@ on<GetDriverOrdersEvent>(_getDriverOrders);
 
   @override
   Future<void> close() async {
-    _scheduledOrdersTimer?.cancel();
-
     await _orderStatusSubscription?.cancel();
+
     await _availableOrdersRealtimeSubscription?.cancel();
+
     await _driverOrdersRealtimeSubscription?.cancel();
 
     return super.close();
   }
 }
 
-// ============================================================================
+// ============================================================
 // INTERNAL REALTIME EVENTS
-// ============================================================================
+// ============================================================
 
 class _OrderRealtimeUpdatedEvent extends OrderEvent {
   final OrderEntity order;
