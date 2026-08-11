@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:aklatna/core/app_update_checker.dart';
+import 'package:aklatna/core/services/app_update_checker.dart';
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/services/onboarding_service.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
@@ -74,31 +74,28 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 3));
+  await Future.delayed(const Duration(seconds: 3));
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    final bool hasCompletedOnboarding = await OnboardingService.isCompleted();
+  final bool hasCompletedOnboarding = await OnboardingService.isCompleted();
 
-    if (!hasCompletedOnboarding) {
-      context.go('/onboarding');
-      return;
-    }
-
-    // Check for app updates (non-blocking unless force_update is true).
-    if (mounted) {
-      AppUpdateChecker.checkForUpdate(context);
-    }
-
-    // Don't navigate manually from here. Dispatch to AuthBloc and let
-    // GoRouter's redirect (wired to AuthBloc's stream) decide where to
-    // go once auth resolves. Previously this screen read Supabase's
-    // session directly and called context.go() itself, bypassing
-    // AuthBloc completely -- which is why AuthBloc stayed stuck at
-    // AuthInitial and ProfileBloc's trigger (fires on AuthAuthenticated)
-    // never ran, leaving the home skeleton spinning forever.
-    sl<AuthBloc>().add(GetCurrentUserEvent());
+  if (!hasCompletedOnboarding) {
+    context.go('/onboarding');
+    return;
   }
+
+  // Await the update check so it can show its dialog BEFORE we
+  // navigate away from splash — otherwise the context becomes
+  // unmounted mid-request and the dialog silently never shows.
+  if (mounted) {
+    await AppUpdateChecker.checkForUpdate(context);
+  }
+
+  if (!mounted) return;
+
+  sl<AuthBloc>().add(GetCurrentUserEvent());
+}
 
   @override
   void dispose() {
