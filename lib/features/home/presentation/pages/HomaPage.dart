@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/core/utils/delivery_price_utils.dart';
@@ -11,6 +13,7 @@ import 'package:aklatna/features/home/presentation/widgets/home/BusinessCard.dar
 import 'package:aklatna/features/home/presentation/widgets/home/HomeDeliveryHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/HomeGreeting.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/HomeSearchBar.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/ProfileTooltipOverlay.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SectionHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SponseredBanner.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/ongoingOrderCard.dart.dart';
@@ -40,25 +43,109 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin, PeriodicRebuildMixin {
   static const double _recommendedTileWidth = 160;
   static const double _recommendedRowHeight = 220;
+
+  final LayerLink _profileLayerLink = LayerLink();
+
+  late final AnimationController _profilePulseController;
+
+  OverlayEntry? _profileTooltipEntry;
+
+  Timer? _profileTooltipTimer;
 
   @override
   void initState() {
     super.initState();
 
     context.read<BusinessBloc>().add(GetBusinesses());
-    context.read<ProfileBloc>().add(GetProfilesEvent());
     context.read<PromotionsBloc>().add(LoadPromotionsEvent());
 
     startPeriodicRebuild();
+
+    _profilePulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+      lowerBound: 1.0,
+      upperBound: 1.08,
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showProfileHint();
+    });
   }
 
   @override
   void dispose() {
     stopPeriodicRebuild();
+
+    _profileTooltipTimer?.cancel();
+    _profileTooltipEntry?.remove();
+    _profileTooltipEntry = null;
+
+    _profilePulseController.dispose();
+
     super.dispose();
+  }
+
+ void _showProfileHint() {
+    if (!mounted) return;
+
+    _hideProfileHint();
+
+    _profileTooltipEntry = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          child: CompositedTransformFollower(
+            link: _profileLayerLink,
+            showWhenUnlinked: false,
+            // Anchor top-right of tooltip to bottom-right of avatar
+            targetAnchor: Alignment.bottomRight,
+            followerAnchor: Alignment.topRight,
+            offset: const Offset(0, 6), // Strictly vertical offset
+            child: const Material(
+              color: Colors.transparent,
+              child: ProfileTooltipOverlay(),
+            ),
+          ),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_profileTooltipEntry!);
+
+    // Gentle pulse effect
+    _profilePulseController
+        .repeat(reverse: true, period: const Duration(milliseconds: 450));
+
+    // Stop pulse after 1.8s
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      if (!mounted) return;
+      _profilePulseController.stop();
+      _profilePulseController.value = 1.0;
+    });
+
+    // Remove tooltip after 3 seconds
+    _profileTooltipTimer?.cancel();
+    _profileTooltipTimer = Timer(
+      const Duration(seconds: 3),
+      _hideProfileHint,
+    );
+  }
+
+  void _hideProfileHint() {
+    _profileTooltipTimer?.cancel();
+    _profileTooltipTimer = null;
+
+    _profileTooltipEntry?.remove();
+    _profileTooltipEntry = null;
+
+    if (mounted) {
+      _profilePulseController.stop();
+      _profilePulseController.value = 1.0;
+    }
   }
 
   // ============================================================
@@ -158,7 +245,6 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
       body: SafeArea(
         child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, profileState) {
@@ -186,9 +272,7 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                       size: 64,
                       color: Colors.orange,
                     ),
-
                     const SizedBox(height: 16),
-
                     const Text(
                       'Profile not found',
                       style: TextStyle(
@@ -196,9 +280,7 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     TextButton(
                       onPressed: () {
                         context.read<ProfileBloc>().add(GetProfilesEvent());
@@ -224,14 +306,6 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
 
             // ========================================================
             // ADDRESSES
-            // ========================================================
-            //
-            // BUGFIX: delivery fee display depends on AddressBloc, but
-            // nothing on Home was ever triggering its initial load —
-            // only CartPage/AddressesPage did. That's why delivery fee
-            // showed "غير متوفر" on first launch until the customer
-            // visited Cart at least once. Same guard pattern as the
-            // OrderBloc check right above.
             // ========================================================
 
             if (context.read<AddressBloc>().state is AddressInitial) {
@@ -290,23 +364,7 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                 // ====================================================
                 // OPEN NOW
                 // ====================================================
-                //
-                // THIS IS THE IMPORTANT PART.
-                //
-                // Every second HomePage rebuilds (via PeriodicRebuildMixin).
-                //
-                // Every rebuild:
-                //
-                // b.isOpen
-                //
-                // is evaluated again.
-                //
-                // So when closing_time is reached:
-                //
-                // b.isOpen == false
-                //
-                // and the restaurant automatically disappears.
-                //
+
                 final openNowCandidates = sorted
                     .where(
                       (b) =>
@@ -323,10 +381,8 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
 
                 return SingleChildScrollView(
                   padding: EdgeInsets.zero,
-
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
                       // ==================================================
                       // HEADER
@@ -334,49 +390,42 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                       Container(
                         decoration: const BoxDecoration(
                           color: AppColors.surface,
-
                           borderRadius: BorderRadius.only(
                             bottomLeft: Radius.circular(AppRadius.xl),
                             bottomRight: Radius.circular(AppRadius.xl),
                           ),
                         ),
-
                         padding: const EdgeInsets.fromLTRB(
                           AppSpacing.pageHorizontal,
                           AppSpacing.md,
                           AppSpacing.pageHorizontal,
                           AppSpacing.lg,
                         ),
-
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-
                           children: [
                             HomeDeliveryHeader(
                               addressLabel: _formatAddress(profile.address),
-
                               avatarUrl: profile.photo,
-
+                              profileLayerLink: _profileLayerLink,
+                              profilePulseAnimation: _profilePulseController,
                               onAvatarTap: () async {
+                                _hideProfileHint();
+
                                 await context.push('/profile');
 
                                 if (context.mounted) {
                                   context.read<ProfileBloc>().add(
-                                    GetProfilesEvent(),
-                                  );
+                                        GetProfilesEvent(),
+                                      );
                                 }
                               },
-
                               onAddressTap: () =>
                                   _showAddressBottomSheet(context, profile.id),
                             ),
-
                             const SizedBox(height: AppSpacing.lg),
-
                             HomeGreeting(userName: profile.userName),
-
                             const SizedBox(height: AppSpacing.md),
-
                             HomeSearchBar(
                               onTap: () => context.go('/search'),
                               onMicTap: null,
@@ -388,26 +437,40 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                       // ==================================================
                       // ONGOING ORDER
                       // ==================================================
-                      BlocBuilder<OrderBloc, OrderState>(
-                        builder: (context, orderState) {
-                          if (orderState is! CustomerOrdersFetched) {
-                            return const SizedBox.shrink();
-                          }
+                    BlocBuilder<OrderBloc, OrderState>(
+  builder: (context, orderState) {
+    if (orderState is! CustomerOrdersFetched) {
+      return const SizedBox.shrink();
+    }
 
-                          final ongoingOrders = orderState.orders.where((
-                            order,
-                          ) {
-                            return order.orderStatus == OrderStatus.pending ||
-                                order.orderStatus == OrderStatus.preparing ||
-                                order.orderStatus == OrderStatus.ready;
-                          }).toList();
+    final now = DateTime.now();
 
-                          if (ongoingOrders.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
+    final ongoingOrders = orderState.orders.where((order) {
+      // Must be an active status.
+      if (!order.orderStatus.isOngoing) {
+        return false;
+      }
 
-                          final order = ongoingOrders.first;
+      // Normal order -> show immediately.
+      if (order.scheduledFor == null) {
+        return true;
+      }
 
+      // Scheduled order -> frozen until 30 minutes before.
+      final releaseTime = order.scheduledFor!.subtract(
+        const Duration(minutes: 30),
+      );
+
+      return !now.isBefore(releaseTime);
+    }).toList();
+
+    if (ongoingOrders.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final order = ongoingOrders.first;
+
+    // Your existing card continues here...
                           return Padding(
                             padding: const EdgeInsets.fromLTRB(
                               AppSpacing.pageHorizontal,
@@ -415,10 +478,8 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                               AppSpacing.pageHorizontal,
                               0,
                             ),
-
                             child: OngoingOrderCard(
                               order: order,
-
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -443,14 +504,11 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-
                           child: SponsoredBanner(
                             imageUrl: sponsoredBannerImageUrl,
-
                             onTap: () {},
                           ),
                         ),
-
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
@@ -492,17 +550,13 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                                 ),
                                 child: SectionHeader(title: 'عروض وخصومات'),
                               ),
-
                               const SizedBox(height: AppSpacing.md),
-
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
-
                                 padding: const EdgeInsets.only(
                                   left: AppSpacing.pageHorizontal,
                                   right: AppSpacing.sm,
                                 ),
-
                                 child: Row(
                                   children: [
                                     for (
@@ -512,43 +566,38 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                                     ) ...[
                                       if (i != 0)
                                         const SizedBox(width: AppSpacing.sm),
-
                                       PromotionCard(
                                         businessName: promoState
                                             .promotions[i]
                                             .businessName,
-
                                         coverUrl:
                                             promoState.promotions[i].photoUrl,
-
                                         itemName:
                                             promoState.promotions[i].itemName,
-
                                         discountPercentage: promoState
                                             .promotions[i]
                                             .discountPercentage,
-
                                         oldPrice: promoState
                                             .promotions[i]
                                             .oldPrice
                                             ?.toDouble(),
-
                                         newPrice: promoState
                                             .promotions[i]
                                             .newPrice
                                             ?.toDouble(),
-
                                         onTap: () {
-                                          context.push(
-                                            '/business/${promoState.promotions[i].businessId}',
-                                          );
-                                        },
+  final promo = promoState.promotions[i]; // أو businessPromotions[index]
+  if (promo.menuItemId != null) {
+    context.push('/food/${promo.menuItemId}');
+  } else {
+context.push('/promotion-details', extra: promo);    // أو اعمل صفحة تفاصيل عرض مستقلة لاحقا
+  }
+},
                                       ),
                                     ],
                                   ],
                                 ),
                               ),
-
                               const SizedBox(height: AppSpacing.xl),
                             ],
                           );
@@ -565,64 +614,45 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                           ),
                           child: SectionHeader(title: 'الأعلى تقييمًا'),
                         ),
-
                         const SizedBox(height: AppSpacing.md),
-
                         SizedBox(
                           height: _recommendedRowHeight,
-
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
-
                             padding: const EdgeInsets.only(
                               left: AppSpacing.pageHorizontal,
                               right: AppSpacing.sm,
                             ),
-
                             itemCount: topRatedBusinesses.length,
-
                             separatorBuilder: (_, __) =>
                                 const SizedBox(width: AppSpacing.sm),
-
                             itemBuilder: (context, index) {
                               final business = topRatedBusinesses[index];
 
                               return BusinessCard(
                                 businessId: business.id,
-
                                 width: _recommendedTileWidth,
-
                                 height: 175,
-
                                 compact: true,
-
                                 businessName: business.nameAr,
-
                                 subtitle:
                                     '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
-
                                 coverUrl: business.coverUrl,
-
                                 rating: business.rating,
-
                                 ratingCount: business.ratingCount,
-
                                 statusText: business.isOpen
                                     ? 'مفتوح الآن'
                                     : 'مغلق الآن',
-
                                 deliveryFeeText: _deliveryFeeText(
                                   context,
                                   business,
                                 ),
-
                                 onTap: () =>
                                     context.push('/business/${business.id}'),
                               );
                             },
                           ),
                         ),
-
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
@@ -636,59 +666,41 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                           ),
                           child: SectionHeader(title: 'مفتوح الآن'),
                         ),
-
                         const SizedBox(height: AppSpacing.md),
-
                         ListView.separated(
                           shrinkWrap: true,
-
                           physics: const NeverScrollableScrollPhysics(),
-
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-
                           itemCount: openNowCandidates.length,
-
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: AppSpacing.md),
-
                           itemBuilder: (context, index) {
                             final business = openNowCandidates[index];
 
                             return BusinessCard(
                               businessId: business.id,
-
                               height: 250,
-
                               compact: false,
-
                               businessName: business.nameAr,
-
                               subtitle:
                                   '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
-
                               coverUrl: business.coverUrl,
-
                               rating: business.rating,
-
                               ratingCount: business.ratingCount,
-
                               statusText: business.isOpen
                                   ? 'مفتوح الآن'
                                   : 'مغلق الآن',
-
                               deliveryFeeText: _deliveryFeeText(
                                 context,
                                 business,
                               ),
-
                               onTap: () =>
                                   context.push('/business/${business.id}'),
                             );
                           },
                         ),
-
                         const SizedBox(height: AppSpacing.xl),
                       ],
                     ],

@@ -3,6 +3,7 @@ import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
+import 'package:aklatna/features/orders/order_type.dart';
 import 'package:flutter/material.dart';
 
 class OngoingOrderCard extends StatelessWidget {
@@ -18,6 +19,18 @@ class OngoingOrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final estimatedTime = order.estimatedPreparationTime;
+
+    // BUGFIX: original condition had a precedence bug —
+    // `a || b && c && d` parses as `a || (b && c && d)`, so when
+    // status was `preparing` with a null estimatedTime, this still
+    // evaluated true and crashed on `estimatedTime!` below. Explicit
+    // parens fix it.
+    final showPredictedTime =
+        (order.orderStatus == OrderStatus.preparing ||
+        order.orderStatus == OrderStatus.outForDelivery||
+            order.orderStatus == OrderStatus.ready) &&
+        estimatedTime != null &&
+        estimatedTime > 0;
 
     return InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -89,9 +102,7 @@ class OngoingOrderCard extends StatelessWidget {
             ),
 
             // Predicted ready clock time
-            if (order.orderStatus == OrderStatus.preparing ||order.orderStatus == OrderStatus.ready &&
-                estimatedTime != null &&
-                estimatedTime > 0) ...[
+            if (showPredictedTime) ...[
               const SizedBox(height: AppSpacing.md),
 
               Container(
@@ -107,7 +118,7 @@ class OngoingOrderCard extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(
-                      _formatReadyTime(estimatedTime!),
+                      _formatReadyTime(estimatedTime),
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w800,
@@ -141,18 +152,6 @@ class OngoingOrderCard extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // PREDICTED READY CLOCK TIME
-  // ============================================================
-  //
-  // now + estimatedPreparationTime (minutes), formatted as HH:mm.
-  //
-  // LIMITATION: computed from the CURRENT moment each time this
-  // widget rebuilds, not anchored to when "preparing" actually
-  // started. If the customer reopens the app later, this will
-  // shift forward rather than count down to a fixed clock time.
-  // ============================================================
-
   String _formatReadyTime(int minutes) {
     final readyTime = DateTime.now().add(Duration(minutes: minutes));
 
@@ -163,24 +162,28 @@ class OngoingOrderCard extends StatelessWidget {
   }
 
   String _statusText(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.pending:
-        return 'بانتظار المطعم';
+  final isPickup = order.orderType == OrderType.pickup;
 
-      case OrderStatus.preparing:
-        return 'جاري تحضير طلبك';
+  switch (status) {
+    case OrderStatus.pending:
+      return 'بانتظار المطعم';
 
-      case OrderStatus.ready:
-        return 'طلبك جاهز';
+    case OrderStatus.preparing:
+      return 'جاري تحضير طلبك';
 
-      case OrderStatus.completed:
-        return 'تم إكمال الطلب';
+    case OrderStatus.ready:
+      return isPickup ? 'طلبك جاهز للاستلام' : 'طلبك جاهز';
 
-      case OrderStatus.cancelled:
-        return 'تم إلغاء الطلب';
-    }
+    case OrderStatus.outForDelivery:
+      return 'الطلب مع السائق';
+
+    case OrderStatus.completed:
+      return 'تم إكمال الطلب';
+
+    case OrderStatus.cancelled:
+      return 'تم إلغاء الطلب';
   }
-
+}
   IconData _statusIcon(OrderStatus status) {
     switch (status) {
       case OrderStatus.pending:
@@ -191,6 +194,9 @@ class OngoingOrderCard extends StatelessWidget {
 
       case OrderStatus.ready:
         return Icons.inventory_2_outlined;
+
+      case OrderStatus.outForDelivery:
+        return Icons.delivery_dining_rounded;
 
       case OrderStatus.completed:
         return Icons.check_circle_rounded;

@@ -1,12 +1,14 @@
 import 'dart:async';
 
+import 'package:aklatna/core/app_update_checker.dart';
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/services/onboarding_service.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/core/widgets/skeleton.dart';
+import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
+import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -77,15 +79,25 @@ class _SplashScreenState extends State<SplashScreen>
     if (!mounted) return;
 
     final bool hasCompletedOnboarding = await OnboardingService.isCompleted();
-    final session = Supabase.instance.client.auth.currentSession;
 
     if (!hasCompletedOnboarding) {
       context.go('/onboarding');
-    } else if (session == null) {
-      context.go('/signin');
-    } else {
-      context.go('/home');
+      return;
     }
+
+    // Check for app updates (non-blocking unless force_update is true).
+    if (mounted) {
+      AppUpdateChecker.checkForUpdate(context);
+    }
+
+    // Don't navigate manually from here. Dispatch to AuthBloc and let
+    // GoRouter's redirect (wired to AuthBloc's stream) decide where to
+    // go once auth resolves. Previously this screen read Supabase's
+    // session directly and called context.go() itself, bypassing
+    // AuthBloc completely -- which is why AuthBloc stayed stuck at
+    // AuthInitial and ProfileBloc's trigger (fires on AuthAuthenticated)
+    // never ran, leaving the home skeleton spinning forever.
+    sl<AuthBloc>().add(GetCurrentUserEvent());
   }
 
   @override

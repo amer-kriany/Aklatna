@@ -69,6 +69,10 @@ dependencies:
   flutter_map: ^8.3.1
   latlong2: ^0.10.1
   http: ^1.6.0
+  firebase_core: ^4.13.0
+  firebase_messaging: ^16.5.0
+  flutter_local_notifications: ^19.4.0
+  package_info_plus: ^8.0.0
 
 dev_dependencies:
   flutter_test:

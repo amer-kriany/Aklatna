@@ -1,12 +1,12 @@
 class Promotionmodel {
   final String id;
-  final String label;
+  final String? label;
   final int discountPercentage;
 
   final String businessId;
   final String businessName;
 
-  final String menuItemId;
+  final String? menuItemId;
   final String menuItemName;
 
   final String? photoUrl;
@@ -18,11 +18,11 @@ class Promotionmodel {
 
   const Promotionmodel({
     required this.id,
-    required this.label,
+     this.label,
     required this.discountPercentage,
     required this.businessId,
     required this.businessName,
-    required this.menuItemId,
+     this.menuItemId,
     required this.menuItemName,
     this.photoUrl,
     required this.createdAt,
@@ -53,13 +53,13 @@ class Promotionmodel {
 
     return Promotionmodel(
       id: asStringOrEmpty(json['id']),
-      label: asStringOrEmpty(json['label']),
+      label: asNullableString(json['label']),
       discountPercentage: asIntOrZero(json['discount_percentage']),
 
       businessId: asStringOrEmpty(json['business_id']),
       businessName: asStringOrEmpty(json['business_name']),
 
-      menuItemId: asStringOrEmpty(json['menu_item_id']),
+      menuItemId: asNullableString(json['menu_item_id']),
       menuItemName: asStringOrEmpty(json['menu_item_name']),
 
       photoUrl: asNullableString(json['photo_url']),

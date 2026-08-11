@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "569317859981",
+    "project_id": "aklatna-6b67f",
+    "storage_bucket": "aklatna-6b67f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:569317859981:android:c2ee72a2bbe4b0d30bf8c4",
+        "android_client_info": {
+          "package_name": "com.aklatna.daria"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkmyRChLBkOhLJSxpGCmEIa_Y1sGONWe8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:569317859981:android:2631b47875a1a9930bf8c4",
+        "android_client_info": {
+          "package_name": "com.example.aklatna"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkmyRChLBkOhLJSxpGCmEIa_Y1sGONWe8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

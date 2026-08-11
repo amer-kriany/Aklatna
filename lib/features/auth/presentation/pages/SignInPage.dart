@@ -151,15 +151,14 @@ class _SignInPageState extends State<SignInPage> {
 
                               // Login Action Button
                               BlocBuilder<AuthBloc, AuthState>(
-                                builder: (context, state) {
-                                  return AuthPrimaryButton(
-                                    label: 'تسجيل الدخول',
-                                    onPressed: state is AuthLoading
-                                        ? null
-                                        : _onLogin,
-                                  );
-                                },
-                              ),
+  builder: (context, state) {
+    return AuthPrimaryButton(
+      label: 'إنشاء حساب', // أو 'تسجيل الدخول' بالـ sign in
+      isLoading: state is AuthLoading,
+      onPressed: state is AuthLoading ? null : _onLogin,
+    );
+  },
+),
                             ],
                           ),
 

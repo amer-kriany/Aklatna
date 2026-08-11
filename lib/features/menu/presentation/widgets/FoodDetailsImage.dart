@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_spacing.dart';
@@ -6,7 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 class FoodDetailsImage extends StatelessWidget {
   const FoodDetailsImage({
     super.key,
-    required this.imageUrl,
+    this.imageUrl,
     this.onBack,
     this.onFavorite,
     this.isFavorite = false,
@@ -20,6 +21,7 @@ class FoodDetailsImage extends StatelessWidget {
   bool get _hasValidCoverUrl {
     final coverUrl = imageUrl ?? '';
     final uri = Uri.tryParse(coverUrl);
+
     return uri != null &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&
         uri.host.isNotEmpty;
@@ -32,41 +34,117 @@ class FoodDetailsImage extends StatelessWidget {
       width: double.infinity,
       child: Stack(
         children: [
-          Container(
-            height: 260,
-            width: double.infinity,
-            decoration: const BoxDecoration(
-              // NOTE: Figma uses a yellow (#FFC869) not present in AppColors.
-              // Substituting primaryLight to stay inside the token system —
-              // swap this if you add the exact tone to app_colors.dart.
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(AppRadius.xl),
-                bottomRight: Radius.circular(AppRadius.xl),
-              ),
+          // ============================================================
+          // FOOD COVER IMAGE
+          // ============================================================
+
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(AppRadius.xl),
+              bottomRight: Radius.circular(AppRadius.xl),
             ),
-            child: Center(
+            child: Container(
+              height: 300,
+              width: double.infinity,
+              color: AppColors.primaryLight,
               child: Hero(
                 tag: imageUrl ?? '',
                 child: _hasValidCoverUrl
                     ? Image.network(
                         imageUrl!,
-                        height: 210,
-                        fit: BoxFit.contain,
+                        width: double.infinity,
+                        height: double.infinity,
+
+                        // IMPORTANT:
+                        // Cover makes the image fill the entire area.
+                        // It crops the image instead of leaving empty space.
+                        fit: BoxFit.cover,
+
+                        errorBuilder: (
+                          context,
+                          error,
+                          stackTrace,
+                        ) {
+                          return Container(
+                            width: double.infinity,
+                            height: double.infinity,
+                            color: AppColors.primaryLight,
+                            alignment: Alignment.center,
+                            child: const Icon(
+                              Icons.storefront,
+                              color: AppColors.textSecondary,
+                              size: 48,
+                            ),
+                          );
+                        },
+
+                        loadingBuilder: (
+                          context,
+                          child,
+                          loadingProgress,
+                        ) {
+                          if (loadingProgress == null) {
+                            return child;
+                          }
+
+                          return Container(
+                            width: double.infinity,
+                            height: double.infinity,
+                            color: AppColors.primaryLight,
+                            alignment: Alignment.center,
+                            child: const CircularProgressIndicator(
+                              color: AppColors.primary,
+                              strokeWidth: 2,
+                            ),
+                          );
+                        },
                       )
                     : Container(
-                        width: AppSizes.avatarLg,
-                        height: AppSizes.avatarLg,
-                        color: AppColors.surface,
+                        width: double.infinity,
+                        height: double.infinity,
+                        color: AppColors.primaryLight,
                         alignment: Alignment.center,
                         child: const Icon(
                           Icons.storefront,
                           color: AppColors.textSecondary,
+                          size: 48,
                         ),
                       ),
               ),
             ),
           ),
+
+          // ============================================================
+          // SLIGHT DARK OVERLAY
+          // Makes the top buttons easier to see on bright images.
+          // ============================================================
+
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.10),
+                      Colors.transparent,
+                      Colors.transparent,
+                    ],
+                    stops: const [
+                      0.0,
+                      0.35,
+                      1.0,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ============================================================
+          // TOP BUTTONS
+          // ============================================================
 
           SafeArea(
             child: Padding(
@@ -77,13 +155,20 @@ class FoodDetailsImage extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // BACK
                   _CircleIconButton(
                     icon: Icons.arrow_back_ios_new_rounded,
                     onPressed: onBack,
                   ),
+
+                  // FAVORITE
                   _CircleIconButton(
-                    icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-                    iconColor: isFavorite ? AppColors.primary : AppColors.textPrimary,
+                    icon: isFavorite
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    iconColor: isFavorite
+                        ? AppColors.primary
+                        : AppColors.textPrimary,
                     onPressed: onFavorite,
                   ),
                 ],
@@ -95,6 +180,10 @@ class FoodDetailsImage extends StatelessWidget {
     );
   }
 }
+
+// ============================================================
+// CIRCLE BUTTON
+// ============================================================
 
 class _CircleIconButton extends StatelessWidget {
   const _CircleIconButton({
@@ -129,3 +218,4 @@ class _CircleIconButton extends StatelessWidget {
     );
   }
 }
+

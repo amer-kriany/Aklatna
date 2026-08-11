@@ -19,6 +19,26 @@ class SearchResultCard extends StatelessWidget {
         uri.host.isNotEmpty;
   }
 
+  String _shortAddress(String fullAddress) {
+  final parts = fullAddress
+      .split(',')
+      .map((e) => e.trim())
+      .where((e) => e.isNotEmpty)
+      .toList();
+
+  if (parts.isEmpty) return 'داريا';
+
+  final firstPart = parts.first;
+
+  // لو أول جزء هو نفسه "داريا" أو يحتوي عليها، خليه لحاله
+  if (firstPart.contains('داريا')) {
+    return 'داريا';
+  }
+
+  // غير هيك (يعني أول جزء هو اسم شارع فعلي)، اعرض الشارع + داريا
+  return '$firstPart, داريا';
+}
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -48,13 +68,34 @@ class SearchResultCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(business.nameAr, style: AppTextStyles.h4),
-              const SizedBox(height: AppSpacing.xxs),
               Text(
-                business.adress,
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+                business.nameAr,
+                style: AppTextStyles.h4,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppSpacing.xxs),
+              Text(
+                _shortAddress(business.adress),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppSpacing.xxs),
+              Row(
+                children: [
+                  const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
+                  const SizedBox(width: 2),
+                  Text(
+                    business.rating.toStringAsFixed(1),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

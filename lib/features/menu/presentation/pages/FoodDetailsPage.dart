@@ -7,6 +7,8 @@ import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/menu/presentation/widgets/AddToCartSection.dart';
 import 'package:aklatna/features/menu/presentation/widgets/FoodDetailsImage.dart';
 import 'package:aklatna/features/menu/presentation/widgets/FoodDetailsInfo.dart';
+import 'package:aklatna/features/promotions/domain/entities/promotionEntity.dart';
+import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -82,15 +84,31 @@ class _FoodetailspageState extends State<Foodetailspage> {
               );
             }
             if (state is MenuLoaded) {
-              // Fetch the business once we know its id from the loaded item.
-              // Guarded so this only fires once per page instance, not on
-              // every rebuild.
               if (!_businessFetchTriggered) {
                 _businessFetchTriggered = true;
                 context.read<BusinessBloc>().add(
                   GetBusinessById(id: state.item.businessId),
                 );
               }
+
+              // ============================================================
+              // PROMOTION LOOKUP
+              // ============================================================
+
+              final promoState = context.watch<PromotionsBloc>().state;
+
+              PromotionEntity? matchingPromo;
+              if (promoState is PromotionsLoaded) {
+                for (final p in promoState.promotions) {
+                  if (p.menuItemId == state.item.id) {
+                    matchingPromo = p;
+                    break;
+                  }
+                }
+              }
+
+              final effectivePrice =
+                  matchingPromo?.newPrice ?? state.item.price;
 
               return BlocBuilder<AddonBloc, AddOnesState>(
                 builder: (context, addonState) {
@@ -118,15 +136,6 @@ class _FoodetailspageState extends State<Foodetailspage> {
                                     isFavorite: false,
                                   ),
 
-                                  // ============================================================
-                                  // VIEW RESTAURANT BUTTON
-                                  // ============================================================
-                                  //
-                                  // Lets the customer navigate back to the business page from a food
-                                  // item reached via Search's popular dishes / category grid, where
-                                  // they'd otherwise have no way to know which restaurant this item
-                                  // belongs to.
-                                  // ============================================================
                                   if (business != null)
                                     Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -218,6 +227,53 @@ class _FoodetailspageState extends State<Foodetailspage> {
                                     category: state.category.nameAr,
                                     description: state.item.description ?? '',
                                   ),
+
+                                  // ============================================================
+                                  // PROMO PRICE ROW (لو في عرض)
+                                  // ============================================================
+
+                                  if (matchingPromo != null &&
+                                      matchingPromo.oldPrice != null)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.lg,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            '${matchingPromo.oldPrice!.toStringAsFixed(0)} ل.س',
+                                            style: AppTextStyles.bodySmall
+                                                .copyWith(
+                                              color: AppColors.textSecondary,
+                                              decoration:
+                                                  TextDecoration.lineThrough,
+                                            ),
+                                          ),
+                                          const SizedBox(width: AppSpacing.xs),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary,
+                                              borderRadius:
+                                                  BorderRadius.circular(
+                                                AppRadius.sm,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              '-${matchingPromo.discountPercentage}%',
+                                              style: AppTextStyles.bodySmall
+                                                  .copyWith(
+                                                color: AppColors.textOnPrimary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
                                   if (addonState is AddonLoading)
                                     const Padding(
                                       padding: EdgeInsets.symmetric(
@@ -322,7 +378,7 @@ class _FoodetailspageState extends State<Foodetailspage> {
                           ),
                           AddToCartSection(
                             price:
-                                ((state.item.price + addonsTotal) * _quantity)
+                                ((effectivePrice + addonsTotal) * _quantity)
                                     .toString(),
                             quantity: _quantity,
                             onIncrement: () => setState(() => _quantity++),
@@ -350,7 +406,7 @@ class _FoodetailspageState extends State<Foodetailspage> {
                                     nameAr: state.item.nameAr,
                                     description: state.item.description ?? '',
                                     photoUrl: state.item.photoUrl,
-                                    price: state.item.price + addonsTotal,
+                                    price: effectivePrice + addonsTotal,
                                     quantity: _quantity,
                                     businessId: state.item.businessId,
                                     note: _noteController.text.trim(),
