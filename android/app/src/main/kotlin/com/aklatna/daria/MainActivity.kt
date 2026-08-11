@@ -1,4 +1,4 @@
-package com.example.aklatna
+package com.aklatna.daria
 
 import io.flutter.embedding.android.FlutterActivity
 
