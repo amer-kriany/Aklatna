@@ -80,7 +80,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                               return AvailableOrderCard(
                                 order: state.orders[index],
                                 onAccepted: widget.onOrderAccepted,
-                                isDisabled: state.hasActiveDelivery,
+                                isDisabled: false,
                               );
                             },
                           ),
