@@ -13,11 +13,13 @@ import 'package:aklatna/features/profile/presentaion/bloc/profile_bloc.dart';
 import 'package:aklatna/features/promotions/presentaion/bloc/promotions_bloc.dart';
 import 'package:aklatna/firebase_options.dart';
 import 'package:aklatna/injection_container.dart';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    hide AuthState;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +28,9 @@ void main() async {
   // ENVIRONMENT
   // ============================================================
 
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(
+    fileName: '.env',
+  );
 
   // ============================================================
   // SUPABASE
@@ -35,6 +39,9 @@ void main() async {
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.implicit,
+    ),
   );
 
   // ============================================================
@@ -60,38 +67,68 @@ void main() async {
 
   // ============================================================
   // NOTIFICATIONS
-  // Intentionally NOT awaited — permission prompts and FCM token
-  // fetch/save both involve network round-trips that used to block
-  // the first frame from rendering, causing a black screen before
-  // splash. Firing these after runApp() lets the UI show immediately
-  // while notifications set themselves up in the background. Nothing
-  // here touches GetIt/DI or BLoC providers, so it's safe to run
-  // independently of the widget tree below.
   // ============================================================
 
-  NotificationService.initialize().then((_) async {
-    await NotificationService.saveFcmToken();
-    NotificationService.listenForTokenRefresh();
-  });
+  NotificationService.initialize().then(
+    (_) async {
+      await NotificationService.saveFcmToken();
+
+      NotificationService.listenForTokenRefresh();
+    },
+  );
 
   // ============================================================
   // APP
   // ============================================================
+
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider.value(value: sl<AuthBloc>()),
-        BlocProvider.value(value: sl<ProfileBloc>()),
-        BlocProvider(create: (_) => sl<BusinessBloc>()),
-        BlocProvider(create: (_) => sl<PromotionsBloc>()),
-        BlocProvider(create: (_) => sl<AddressBloc>()),
-        BlocProvider(create: (_) => sl<JobBloc>()),
-        BlocProvider(create: (_) => sl<FavoriteBloc>()),
-        BlocProvider(create: (_) => sl<MenuBloc>()),
-        BlocProvider(create: (_) => sl<CartBloc>()),
-        BlocProvider(create: (_) => sl<OrderBloc>()),
+        BlocProvider.value(
+          value: sl<AuthBloc>(),
+        ),
+
+        BlocProvider.value(
+          value: sl<ProfileBloc>(),
+        ),
+
+        BlocProvider(
+          create: (_) => sl<BusinessBloc>(),
+        ),
+
+        BlocProvider(
+          create: (_) => sl<PromotionsBloc>(),
+        ),
+
+        BlocProvider(
+          create: (_) => sl<AddressBloc>(),
+        ),
+
+        BlocProvider(
+          create: (_) => sl<JobBloc>(),
+        ),
+
+        BlocProvider(
+          create: (_) => sl<FavoriteBloc>(),
+        ),
+
+        BlocProvider(
+          create: (_) => sl<MenuBloc>(),
+        ),
+
+        BlocProvider(
+          create: (_) => sl<CartBloc>(),
+        ),
+
+        BlocProvider(
+          create: (_) => sl<OrderBloc>(),
+        ),
       ],
-      child: MyApp(hasCompletedOnboarding: hasCompletedOnboarding),
+
+      child: MyApp(
+        hasCompletedOnboarding:
+            hasCompletedOnboarding,
+      ),
     ),
   );
 }
