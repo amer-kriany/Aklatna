@@ -14,7 +14,7 @@ class BusinessModel {
   final String? logoUrl;
   final String? coverUrl;
   final String adress;
-  final String? createdAt;
+  final String createdAt;
   final String? ownerId;
 
   // Restaurant location
@@ -41,7 +41,7 @@ class BusinessModel {
     this.coverUrl,
     required this.adress,
     required this.type,
-    this.createdAt,
+   required this.createdAt,
     this.ownerId,
     required this.isActive,
     required this.rating,
@@ -192,7 +192,7 @@ class BusinessModel {
         business['description'],
       ),
 
-      createdAt: asNullableString(
+      createdAt: asStringOrEmpty(
         business['created_at'],
       ),
 

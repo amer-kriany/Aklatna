@@ -80,34 +80,23 @@ class NotificationService {
       await androidPlugin.createNotificationChannel(
         _driverChannel,
       );
-
-      print('✅ Android notification channels created');
-      print('🔊 Driver sound: aklatna_driver');
-      print('🔔 Notification icon: aklatna_notification');
     }
 
     // ==========================================================
     // FCM PERMISSION
     // ==========================================================
 
-    final settings = await _messaging.requestPermission(
+    await _messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
-    );
-
-    print(
-      'Notification permission: '
-      '${settings.authorizationStatus}',
     );
 
     // ==========================================================
     // FCM TOKEN
     // ==========================================================
 
-    final token = await _messaging.getToken();
-
-    print('🔥 FCM TOKEN: $token');
+    await _messaging.getToken();
 
     // ==========================================================
     // FOREGROUND NOTIFICATIONS
@@ -115,20 +104,6 @@ class NotificationService {
 
     FirebaseMessaging.onMessage.listen(
       (RemoteMessage message) {
-        print('🔔 Notification received');
-
-        print(
-          'Title: ${message.notification?.title}',
-        );
-
-        print(
-          'Body: ${message.notification?.body}',
-        );
-
-        print(
-          'Data: ${message.data}',
-        );
-
         // FCM handles notification messages.
         // We do not manually show another notification here.
       },
@@ -139,13 +114,7 @@ class NotificationService {
     // ==========================================================
 
     FirebaseMessaging.onMessageOpenedApp.listen(
-      (RemoteMessage message) {
-        print('📱 Notification opened');
-
-        print(
-          'Data: ${message.data}',
-        );
-      },
+      (RemoteMessage message) {},
     );
 
     // ==========================================================
@@ -155,13 +124,7 @@ class NotificationService {
     final RemoteMessage? initialMessage =
         await _messaging.getInitialMessage();
 
-    if (initialMessage != null) {
-      print('📱 App opened from notification');
-
-      print(
-        'Data: ${initialMessage.data}',
-      );
-    }
+    if (initialMessage != null) {}
   }
 
   // ============================================================
@@ -174,17 +137,12 @@ class NotificationService {
           Supabase.instance.client.auth.currentUser;
 
       if (user == null) {
-        print(
-          '⚠️ No logged-in user, '
-          'cannot save FCM token',
-        );
         return;
       }
 
       final token = await _messaging.getToken();
 
       if (token == null || token.isEmpty) {
-        print('⚠️ FCM token is null');
         return;
       }
 
@@ -193,12 +151,8 @@ class NotificationService {
           .update({
         'fcm_token': token,
       }).eq('id', user.id);
-
-      print('✅ FCM token saved to Supabase');
     } catch (e) {
-      print(
-        '❌ Failed to save FCM token: $e',
-      );
+      // Intentionally ignored.
     }
   }
 
@@ -214,10 +168,6 @@ class NotificationService {
               Supabase.instance.client.auth.currentUser;
 
           if (user == null) {
-            print(
-              '⚠️ No logged-in user, '
-              'cannot save refreshed token',
-            );
             return;
           }
 
@@ -226,14 +176,8 @@ class NotificationService {
               .update({
             'fcm_token': newToken,
           }).eq('id', user.id);
-
-          print(
-            '✅ Refreshed FCM token saved',
-          );
         } catch (e) {
-          print(
-            '❌ Failed to save refreshed FCM token: $e',
-          );
+          // Intentionally ignored.
         }
       },
     );

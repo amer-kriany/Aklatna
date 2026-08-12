@@ -23,7 +23,7 @@ class AppUpdateChecker {
       if (latestVersionCode > currentVersionCode) {
         if (!context.mounted) return;
 
-        showDialog(
+        await showDialog(
           context: context,
           barrierDismissible: !forceUpdate,
           builder: (dialogContext) => PopScope(

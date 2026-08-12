@@ -153,13 +153,14 @@ class OngoingOrderCard extends StatelessWidget {
   }
 
   String _formatReadyTime(int minutes) {
-    final readyTime = DateTime.now().add(Duration(minutes: minutes));
+  final baseTime = order.createdAt ?? DateTime.now();
+  final readyTime = baseTime.add(Duration(minutes: minutes));
 
-    final hour = readyTime.hour.toString().padLeft(2, '0');
-    final minute = readyTime.minute.toString().padLeft(2, '0');
+  final hour = readyTime.hour.toString().padLeft(2, '0');
+  final minute = readyTime.minute.toString().padLeft(2, '0');
 
-    return '$hour:$minute';
-  }
+  return '$hour:$minute';
+}
 
   String _statusText(OrderStatus status) {
   final isPickup = order.orderType == OrderType.pickup;

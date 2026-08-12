@@ -1,4 +1,5 @@
 import 'package:aklatna/core/errors/authErrorMapper.dart';
+import 'package:aklatna/core/services/notification_service.dart';
 import 'package:aklatna/features/auth/domain/entities/appuser_entity.dart';
 import 'package:aklatna/features/auth/domain/usecases/currentuser_usecase.dart';
 import 'package:aklatna/features/auth/domain/usecases/requestPasswordResetUsecase.dart';
@@ -54,8 +55,7 @@ Future<void> _signUp(SignUpEvent event, Emitter<AuthState> emit) async {
     await signUpUsecase(event.email, event.password, event.username, event.phone);
     emit(AuthSignUpOtpSent(email: event.email));
   } catch (e) {
-    print('DEBUG raw signup error: $e');
-    print('DEBUG error type: ${e.runtimeType}');
+   
     emit(AuthError(message: AuthErrorMapper.map(e)));
   }
 }
@@ -64,6 +64,7 @@ Future<void> _verifySignUpOtp(VerifySignUpOtpEvent event, Emitter<AuthState> emi
     emit(AuthLoading());
     final user = await verifysignupotpusecase(event.email, event.token);
     emit(AuthAuthenticated(user: user));
+    await NotificationService.saveFcmToken();
   } catch (e) {
     emit(AuthError(message: AuthErrorMapper.map(e)));
   }
@@ -108,18 +109,19 @@ Future<void> _updatePassword(UpdatePasswordEvent event, Emitter<AuthState> emit)
 }
 
   // sign in
-  Future<void> _signIn(
-    SignInEvent event,
-    Emitter<AuthState> emit,
-  ) async {
-    try {
-      emit(AuthLoading());
-      final user = await signInUsecase(event.email, event.password, event.phone);
-      emit(AuthAuthenticated(user: user));
-    } catch (e) {
-      emit(AuthError(message: AuthErrorMapper.map(e)));
-    }
+Future<void> _signIn(
+  SignInEvent event,
+  Emitter<AuthState> emit,
+) async {
+  try {
+    emit(AuthLoading());
+    final user = await signInUsecase(event.email, event.password, event.phone);
+    emit(AuthAuthenticated(user: user));
+    await NotificationService.saveFcmToken();
+  } catch (e) {
+    emit(AuthError(message: AuthErrorMapper.map(e)));
   }
+}
 
   // sign out
   Future<void> _signOut(SignOutEvent event, Emitter<AuthState> emit) async {
@@ -133,26 +135,21 @@ Future<void> _updatePassword(UpdatePasswordEvent event, Emitter<AuthState> emit)
   }
 
   // current user
-  Future<void> _getCurrentUser(
-    GetCurrentUserEvent event,
-    Emitter<AuthState> emit,
-  ) async {
-    try {
-      emit(AuthLoading());
-      final user = await currentUserUsecase();
-      emit(AuthAuthenticated(user: user));
-    } catch (e) {
-      // "No user found" is thrown by our own repository whenever
-      // there's simply no logged-in session yet — completely normal
-      // at cold start for a logged-out user, not a real error. Showing
-      // an error snackbar for this would scare every first-time user
-      // the moment they open the app.
-      if (e.toString().contains('No user found')) {
-        emit(AuthUnauthenticated());
-        return;
-      }
-
-      emit(AuthError(message: AuthErrorMapper.map(e)));
+ Future<void> _getCurrentUser(
+  GetCurrentUserEvent event,
+  Emitter<AuthState> emit,
+) async {
+  try {
+    emit(AuthLoading());
+    final user = await currentUserUsecase();
+    emit(AuthAuthenticated(user: user));
+    await NotificationService.saveFcmToken();
+  } catch (e) {
+    if (e.toString().contains('No user found')) {
+      emit(AuthUnauthenticated());
+      return;
     }
+    emit(AuthError(message: AuthErrorMapper.map(e)));
   }
+}
 }

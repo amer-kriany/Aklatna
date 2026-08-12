@@ -34,6 +34,7 @@ class FavoriteRepositoryImpl implements FavoriteRepository {
             type: model.type,
             rating: model.rating,
             ratingCount: model.ratingCount,
+            createdAt: model.createdAt
           ),
         )
         .toList();
