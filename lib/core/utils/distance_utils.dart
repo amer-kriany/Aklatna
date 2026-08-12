@@ -3,9 +3,11 @@ import 'package:latlong2/latlong.dart';
 class DistanceUtils {
   static final Distance _distance = const Distance();
 
-  /// Returns the distance between two coordinates in kilometers.
+  const DistanceUtils._();
+
+  /// Returns the straight-line distance between two coordinates in kilometers.
   ///
-  /// Returns null if either location is missing.
+  /// Returns null if any location is missing.
   static double? calculateDistanceKm({
     required double? customerLatitude,
     required double? customerLongitude,
@@ -38,7 +40,7 @@ class DistanceUtils {
     return distanceInMeters / 1000;
   }
 
-  /// Formats a distance nicely for displaying in the UI.
+  /// Formats distance for UI.
   static String formatDistance(double? distanceKm) {
     if (distanceKm == null) {
       return 'الموقع غير متوفر';
