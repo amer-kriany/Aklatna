@@ -95,6 +95,7 @@ class _CircleIconButton extends StatelessWidget {
   const _CircleIconButton({
     required this.icon,
     required this.onPressed,
+    // ignore: unused_element_parameter
     this.iconColor = AppColors.textPrimary,
   });
 

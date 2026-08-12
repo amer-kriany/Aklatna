@@ -5,14 +5,18 @@ class ProfileDatasource {
   final supabase = Supabase.instance.client;
 
   // get profile data
-  Future<List<Profilemodel>> getProfiles() async {
-    try {
-      final profiles = await supabase.from("profiles").select();
-      return profiles.map((e) => Profilemodel.fromSupabase(e)).toList();
-    } catch (e) {
-      rethrow;
-    }
+ Future<List<Profilemodel>> getProfiles() async {
+  try {
+    final userId = supabase.auth.currentUser!.id;
+    final profiles = await supabase
+        .from("profiles")
+        .select()
+        .eq('id', userId);
+    return profiles.map((e) => Profilemodel.fromSupabase(e)).toList();
+  } catch (e) {
+    rethrow;
   }
+}
 
   // update profile data
  // update profile data

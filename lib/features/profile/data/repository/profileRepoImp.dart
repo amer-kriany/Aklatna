@@ -37,6 +37,7 @@ Profileentity mapToEntity(Profilemodel model) {
     email: model.email,
     address: model.address,
     photo: model.photo,
-    bio: model.bio
+    bio: model.bio,
+    role: model.role,
   );
 }

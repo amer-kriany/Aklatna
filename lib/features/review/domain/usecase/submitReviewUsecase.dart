@@ -1,8 +1,8 @@
-import 'package:aklatna/features/review/data/repository/reviewRepoImp.dart' ;
 import 'package:aklatna/features/review/domain/entity/reviewEntity.dart';
+import 'package:aklatna/features/review/domain/repository/reviewRepository.dart';
 
 class SubmitReviewUsecase {
-  final ReviewRepositoryImpl reviewRepositoryImpl;
+  final ReviewRepository reviewRepositoryImpl;
 
   SubmitReviewUsecase({required this.reviewRepositoryImpl});
 

@@ -36,7 +36,7 @@ class BusinessEntity {
 
   final String adress;
 
-  final String? createdAt;
+  final String createdAt;
 
   final String? ownerId;
 
@@ -93,7 +93,7 @@ class BusinessEntity {
     this.logoUrl,
     this.coverUrl,
     required this.adress,
-    this.createdAt,
+    required this.createdAt,
     this.ownerId,
 
     // Rating

@@ -1,4 +1,5 @@
 import 'package:aklatna/features/promotions/domain/entities/promotionEntity.dart';
+import 'package:aklatna/features/promotions/domain/usecases/GetPromotionsMapUseCase.dart';
 import 'package:aklatna/features/promotions/domain/usecases/promotionsUseCase.dart';
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
@@ -7,29 +8,47 @@ part 'promotions_event.dart';
 part 'promotions_state.dart';
 
 class PromotionsBloc extends Bloc<PromotionsEvent, PromotionsState> {
-  final GetPromotionsUseCase promotionsusecase;
-  PromotionsBloc({required this.promotionsusecase})
-    : super(PromotionsInitial()) {
-    on<PromotionsEvent>(_getPromotions);
+  final GetPromotionsUseCase promotionsUseCase;
+  final GetPromotionsMapUseCase getPromotionsMapUseCase;
+
+  PromotionsBloc({
+    required this.promotionsUseCase, required this.getPromotionsMapUseCase,
+  }) : super(PromotionsInitial()) {
+    on<LoadPromotionsEvent>(_getPromotions);
+    on<LoadPromotionsMapEvent>(_getPromotionsMap);
   }
-  // get all promotions
+
   Future<void> _getPromotions(
-  PromotionsEvent event,
+    LoadPromotionsEvent event,
+    Emitter<PromotionsState> emit,
+  ) async {
+    emit(PromotionsLoading());
+
+    try {
+      final promotions = await promotionsUseCase();
+
+      emit(
+        PromotionsLoaded(
+          promotions: promotions,
+        ),
+      );
+    } catch (e) {
+      emit(
+        PromotionsError(
+          message: e.toString(),
+        ),
+      );
+    }
+  }
+  Future<void> _getPromotionsMap(
+  LoadPromotionsMapEvent event,
   Emitter<PromotionsState> emit,
 ) async {
-  print("Loading promotions...");
-
   emit(PromotionsLoading());
-
   try {
-    final promotions = await promotionsusecase();
-
-    print(promotions.length);
-
-    emit(PromotionsLoaded(promotions: promotions));
+    final map = await getPromotionsMapUseCase(event.businessId);
+    emit(PromotionsMapLoaded(promotionsMap: map));
   } catch (e) {
-    print(e);
-
     emit(PromotionsError(message: e.toString()));
   }
 }

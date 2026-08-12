@@ -7,13 +7,22 @@ class Promotionsrepoimp implements Promotionsrepo {
   final Promotiondatasource promotiondatasource;
   Promotionsrepoimp({required this.promotiondatasource});
 
-  // get all promotions
   @override
   Future<List<PromotionEntity>> getPromotions() async {
     final promotions = await promotiondatasource.getPromotions();
     return promotions.map((e) => mapToEntity(e)).toList();
   }
+
+ @override
+Future<Map<String, PromotionEntity>> getPromotionsMapForBusiness(String businessId) async {
+  final all = await getPromotions();
+  return {
+    for (final p in all.where((p) => p.businessId == businessId && p.menuItemId != null))
+      p.menuItemId!: p,
+  };
 }
+}
+
 
 PromotionEntity mapToEntity(Promotionmodel model) {
   return PromotionEntity(
@@ -25,8 +34,9 @@ PromotionEntity mapToEntity(Promotionmodel model) {
     itemName: model.menuItemName,
     oldPrice: model.oldPrice,
     newPrice: model.newPrice,
-    photoUrl: model.photoUrl ?? '',
+    photoUrl: model.photoUrl,
     id: model.id,
     isActive: model.isActive,
+    
   );
 }

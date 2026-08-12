@@ -1,7 +1,7 @@
-import 'package:aklatna/features/profile/data/repository/profileRepoImp.dart';
+import 'package:aklatna/features/profile/domain/repository/profileRepo.dart';
 
 class Updateprofileusecase {
-  final Profilerepoimp repo;
+  final Profilerepo repo;
   Updateprofileusecase({required this.repo});
 
   Future<void> call( String userId,

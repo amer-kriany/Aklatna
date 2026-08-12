@@ -29,18 +29,17 @@ class PromotionCard extends StatelessWidget {
 
   static const double _coverAspectRatio = 1.45;
 
+  bool get _hasDiscount => discountPercentage > 0;
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
 
-    final double cardWidth = width ??
-        (screenWidth * 0.44).clamp(
-          165.0,
-          210.0,
-        );
+    final double cardWidth = width ?? (screenWidth * 0.44).clamp(165.0, 210.0);
 
     final double savingsAmount =
-        oldPrice != null &&
+        _hasDiscount &&
+                oldPrice != null &&
                 newPrice != null &&
                 oldPrice! > newPrice!
             ? oldPrice! - newPrice!
@@ -57,9 +56,7 @@ class PromotionCard extends StatelessWidget {
             width: cardWidth,
             decoration: BoxDecoration(
               color: AppColors.background,
-              borderRadius: BorderRadius.circular(
-                AppRadius.lg,
-              ),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               boxShadow: [
                 BoxShadow(
                   color: AppColors.shadow.withOpacity(0.08),
@@ -77,7 +74,6 @@ class PromotionCard extends StatelessWidget {
                 // ============================================================
                 // IMAGE
                 // ============================================================
-
                 SizedBox(
                   width: cardWidth,
                   child: AspectRatio(
@@ -86,31 +82,30 @@ class PromotionCard extends StatelessWidget {
                       fit: StackFit.expand,
                       children: [
                         _buildCoverImage(),
-
-                        Positioned(
-                          top: AppSpacing.sm,
-                          right: AppSpacing.sm,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.full,
+                        if (_hasDiscount)
+                          Positioned(
+                            top: AppSpacing.sm,
+                            right: AppSpacing.sm,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                                vertical: 5,
                               ),
-                            ),
-                            child: Text(
-                              'خصم $discountPercentage%',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.textOnPrimary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 10,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.full),
+                              ),
+                              child: Text(
+                                'خصم %$discountPercentage',
+                                style: AppTextStyles.caption.copyWith(
+                                  color: AppColors.textOnPrimary,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10,
+                                ),
                               ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -119,7 +114,6 @@ class PromotionCard extends StatelessWidget {
                 // ============================================================
                 // ITEM INFO
                 // ============================================================
-
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.sm,
@@ -140,9 +134,7 @@ class PromotionCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-
                       const SizedBox(height: 5),
-
                       Row(
                         children: [
                           const Icon(
@@ -151,14 +143,12 @@ class PromotionCard extends StatelessWidget {
                             color: AppColors.primary,
                           ),
                           const SizedBox(width: 4),
-
                           Expanded(
                             child: Text(
                               businessName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style:
-                                  AppTextStyles.regularSmall.copyWith(
+                              style: AppTextStyles.regularSmall.copyWith(
                                 color: AppColors.textSecondary,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 11,
@@ -174,11 +164,8 @@ class PromotionCard extends StatelessWidget {
                 // ============================================================
                 // DIVIDER
                 // ============================================================
-
                 const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: AppSpacing.sm,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                   child: Divider(
                     height: 10,
                     thickness: 0.5,
@@ -189,7 +176,6 @@ class PromotionCard extends StatelessWidget {
                 // ============================================================
                 // PRICES
                 // ============================================================
-
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     AppSpacing.sm,
@@ -202,33 +188,27 @@ class PromotionCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (oldPrice != null)
+                            if (_hasDiscount && oldPrice != null)
                               Text(
                                 '${_formatPrice(oldPrice!)} $currencySymbol',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style:
-                                    AppTextStyles.bodySmall.copyWith(
-                                  decoration:
-                                      TextDecoration.lineThrough,
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  decoration: TextDecoration.lineThrough,
                                   color: AppColors.textHint,
                                   fontSize: 9,
                                 ),
                               ),
-
                             const SizedBox(height: 1),
-
                             if (newPrice != null)
                               Text(
                                 '${_formatPrice(newPrice!)} $currencySymbol',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style:
-                                    AppTextStyles.priceMedium.copyWith(
+                                style: AppTextStyles.priceMedium.copyWith(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w800,
                                   color: AppColors.primary,
@@ -237,7 +217,6 @@ class PromotionCard extends StatelessWidget {
                           ],
                         ),
                       ),
-
                       if (savingsAmount > 0)
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -246,17 +225,14 @@ class PromotionCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.primaryLight,
-                            borderRadius: BorderRadius.circular(
-                              AppRadius.sm,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 'وفر',
-                                style:
-                                    AppTextStyles.caption.copyWith(
+                                style: AppTextStyles.caption.copyWith(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 8,
@@ -265,8 +241,7 @@ class PromotionCard extends StatelessWidget {
                               const SizedBox(height: 1),
                               Text(
                                 '${_formatPrice(savingsAmount)} $currencySymbol',
-                                style:
-                                    AppTextStyles.caption.copyWith(
+                                style: AppTextStyles.caption.copyWith(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 8,
@@ -290,27 +265,17 @@ class PromotionCard extends StatelessWidget {
     if (coverUrl == null || coverUrl!.trim().isEmpty) {
       return const _ImagePlaceholder();
     }
-
     return Image.network(
       coverUrl!,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      errorBuilder: (
-        context,
-        error,
-        stackTrace,
-      ) {
-        return const _ImagePlaceholder();
-      },
+      errorBuilder: (context, error, stackTrace) => const _ImagePlaceholder(),
     );
   }
 
   String _formatPrice(double price) {
-    return price
-        .toInt()
-        .toString()
-        .replaceAllMapped(
+    return price.toInt().toString().replaceAllMapped(
           RegExp(r'\B(?=(\d{3})+(?!\d))'),
           (match) => ',',
         );

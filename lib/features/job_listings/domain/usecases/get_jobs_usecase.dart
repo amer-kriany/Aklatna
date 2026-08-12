@@ -1,11 +1,11 @@
-import 'package:aklatna/features/job_listings/data/repository/job_repoImp.dart';
 import 'package:aklatna/features/job_listings/domain/entities/jobEntity.dart';
+import 'package:aklatna/features/job_listings/domain/repository/jobRepo.dart';
 
 class GetJobsUsecase {
-  final JobRepoimp jobRepoimp;
-  GetJobsUsecase({required this.jobRepoimp});
+  final Jobrepo jobRepo;
+  GetJobsUsecase({required this.jobRepo});
 
   Future<List<JobEntity>> call() async {
-    return await jobRepoimp.getAllJobs() ;
+    return await jobRepo.getAllJobs() ;
   }
 }

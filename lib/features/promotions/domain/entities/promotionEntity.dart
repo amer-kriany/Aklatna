@@ -1,9 +1,9 @@
 class PromotionEntity {
   final String id;
-  final String label;
+  final String? label;
   final int discountPercentage;
 
-  final String menuItemId;
+  final String? menuItemId;
   final String itemName;
   final String? photoUrl;
   final double? oldPrice;
@@ -15,9 +15,9 @@ class PromotionEntity {
 
   const PromotionEntity({
     required this.id,
-    required this.label,
+     this.label,
     required this.discountPercentage,
-    required this.menuItemId,
+     this.menuItemId,
     required this.itemName,
     this.photoUrl,
     required this.businessId,

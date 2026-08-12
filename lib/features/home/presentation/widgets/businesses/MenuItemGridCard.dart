@@ -14,13 +14,15 @@ class MenuItemGridCard extends StatelessWidget {
     this.quantity,
     this.onAdd,
     this.onRemove,
-    this.onTap,
+    this.onTap,  this.oldPrice,  this.discountPercentage,
   });
 
   final String? photoUrl;
   final String nameAr;
   final String? businessNameAr;
   final double price;
+  final double? oldPrice;
+  final int? discountPercentage;
 
   /// Current quantity of this item in the cart (optional).
   final int? quantity;
@@ -135,32 +137,71 @@ class MenuItemGridCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           // Price with Currency Label
-                          Flexible(
-                            child: RichText(
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: price.toStringAsFixed(0),
-                                    style: AppTextStyles.priceMedium.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: ' ل.س',
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 10,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          // Price with Currency Label (+ discount if present)
+Flexible(
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (oldPrice != null && discountPercentage != null && discountPercentage! > 0) ...[
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              oldPrice!.toStringAsFixed(0),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                decoration: TextDecoration.lineThrough,
+                fontSize: 10,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+              ),
+              child: Text(
+                '-$discountPercentage%',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textOnPrimary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 9,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+      ],
+      RichText(
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: price.toStringAsFixed(0),
+              style: AppTextStyles.priceMedium.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+              ),
+            ),
+            TextSpan(
+              text: ' ل.س',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  ),
+),
 
                           const SizedBox(width: AppSpacing.xs),
 

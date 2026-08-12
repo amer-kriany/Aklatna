@@ -1,12 +1,14 @@
 import 'dart:async';
 
+import 'package:aklatna/core/services/app_update_checker.dart';
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/services/onboarding_service.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/core/widgets/skeleton.dart';
+import 'package:aklatna/features/auth/presentation/bloc/bloc/auth_bloc.dart';
+import 'package:aklatna/injection_container.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -72,21 +74,28 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 3));
+  await Future.delayed(const Duration(seconds: 3));
 
-    if (!mounted) return;
+  if (!mounted) return;
 
-    final bool hasCompletedOnboarding = await OnboardingService.isCompleted();
-    final session = Supabase.instance.client.auth.currentSession;
+  final bool hasCompletedOnboarding = await OnboardingService.isCompleted();
 
-    if (!hasCompletedOnboarding) {
-      context.go('/onboarding');
-    } else if (session == null) {
-      context.go('/signin');
-    } else {
-      context.go('/home');
-    }
+  if (!hasCompletedOnboarding) {
+    context.go('/onboarding');
+    return;
   }
+
+  // Await the update check so it can show its dialog BEFORE we
+  // navigate away from splash — otherwise the context becomes
+  // unmounted mid-request and the dialog silently never shows.
+  if (mounted) {
+    await AppUpdateChecker.checkForUpdate(context);
+  }
+
+  if (!mounted) return;
+
+  sl<AuthBloc>().add(GetCurrentUserEvent());
+}
 
   @override
   void dispose() {

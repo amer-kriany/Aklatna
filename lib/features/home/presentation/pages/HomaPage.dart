@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:aklatna/core/utils/delivery_price_utils.dart';
 import 'package:aklatna/core/utils/distance_utils.dart';
 import 'package:aklatna/features/addresses/domain/entity/addressEntity.dart';
 import 'package:aklatna/features/addresses/presentation/bloc/address_bloc.dart';
+import 'package:aklatna/features/favorit/presentation/bloc/favorite_bloc.dart';
 import 'package:aklatna/features/home/presentation/pages/PeriodicRebuildMixin.dart';
 
 import 'package:aklatna/features/home/presentation/widgets/home/AddressSelectionBottomSheet.dart';
@@ -11,6 +14,7 @@ import 'package:aklatna/features/home/presentation/widgets/home/BusinessCard.dar
 import 'package:aklatna/features/home/presentation/widgets/home/HomeDeliveryHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/HomeGreeting.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/HomeSearchBar.dart';
+import 'package:aklatna/features/home/presentation/widgets/home/ProfileTooltipOverlay.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SectionHeader.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/SponseredBanner.dart';
 import 'package:aklatna/features/home/presentation/widgets/home/ongoingOrderCard.dart.dart';
@@ -40,30 +44,106 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin, PeriodicRebuildMixin {
   static const double _recommendedTileWidth = 160;
   static const double _recommendedRowHeight = 220;
+
+  final LayerLink _profileLayerLink = LayerLink();
+
+  late final AnimationController _profilePulseController;
+
+  OverlayEntry? _profileTooltipEntry;
+
+  Timer? _profileTooltipTimer;
 
   @override
   void initState() {
     super.initState();
 
     context.read<BusinessBloc>().add(GetBusinesses());
-    context.read<ProfileBloc>().add(GetProfilesEvent());
     context.read<PromotionsBloc>().add(LoadPromotionsEvent());
 
     startPeriodicRebuild();
+
+    _profilePulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+      lowerBound: 1.0,
+      upperBound: 1.08,
+    );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showProfileHint();
+    });
   }
 
   @override
   void dispose() {
     stopPeriodicRebuild();
+
+    _profileTooltipTimer?.cancel();
+    _profileTooltipEntry?.remove();
+    _profileTooltipEntry = null;
+
+    _profilePulseController.dispose();
+
     super.dispose();
   }
 
-  // ============================================================
-  // ADDRESS
-  // ============================================================
+  void _showProfileHint() {
+    if (!mounted) return;
+
+    _hideProfileHint();
+
+   _profileTooltipEntry = OverlayEntry(
+  builder: (context) {
+    return IgnorePointer(
+      child: CompositedTransformFollower(
+        link: _profileLayerLink,
+        showWhenUnlinked: false,
+        targetAnchor: Alignment.bottomRight,
+        followerAnchor: Alignment.topRight,
+        offset: const Offset(0, 6),
+        child: const Material(
+          color: Colors.transparent,
+          child: ProfileTooltipOverlay(),
+        ),
+      ),
+    );
+  },
+);
+
+    Overlay.of(context).insert(_profileTooltipEntry!);
+
+    _profilePulseController
+        .repeat(reverse: true, period: const Duration(milliseconds: 450));
+
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      if (!mounted) return;
+      _profilePulseController.stop();
+      _profilePulseController.value = 1.0;
+    });
+
+    _profileTooltipTimer?.cancel();
+    _profileTooltipTimer = Timer(
+      const Duration(seconds: 6),
+      _hideProfileHint,
+    );
+  }
+
+  void _hideProfileHint() {
+    _profileTooltipTimer?.cancel();
+    _profileTooltipTimer = null;
+
+    _profileTooltipEntry?.remove();
+    _profileTooltipEntry = null;
+
+    if (mounted) {
+      _profilePulseController.stop();
+      _profilePulseController.value = 1.0;
+    }
+  }
 
   String _formatAddress(String? fullAddress) {
     if (fullAddress == null || fullAddress.trim().isEmpty) {
@@ -83,23 +163,14 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
     return fullAddress;
   }
 
-  // ============================================================
-  // BUSINESS TYPE
-  // ============================================================
-
   String _typeLabel(BusinessType type) {
     switch (type) {
       case BusinessType.restaurant:
         return 'مطعم';
-
       case BusinessType.juice_shop:
         return 'محل عصائر';
     }
   }
-
-  // ============================================================
-  // ADDRESS BOTTOM SHEET
-  // ============================================================
 
   void _showAddressBottomSheet(BuildContext context, String userId) async {
     await showModalBottomSheet(
@@ -119,10 +190,6 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
 
     context.read<ProfileBloc>().add(GetProfilesEvent());
   }
-
-  // ============================================================
-  // DELIVERY FEE
-  // ============================================================
 
   String _deliveryFeeText(BuildContext context, BusinessEntity business) {
     final addressState = context.watch<AddressBloc>().state;
@@ -150,30 +217,17 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
     return DeliveryPriceUtils.formatDeliveryPrice(price);
   }
 
-  // ============================================================
-  // BUILD
-  // ============================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-
       body: SafeArea(
         child: BlocBuilder<ProfileBloc, ProfileState>(
           builder: (context, profileState) {
-            // ========================================================
-            // PROFILE LOADING
-            // ========================================================
-
             if (profileState is ProfileLoading ||
                 profileState is ProfileInitial) {
               return const DashboardSkeleton();
             }
-
-            // ========================================================
-            // PROFILE ERROR
-            // ========================================================
 
             if (profileState is ProfileError ||
                 profileState is! ProfileLoaded) {
@@ -186,9 +240,7 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                       size: 64,
                       color: Colors.orange,
                     ),
-
                     const SizedBox(height: 16),
-
                     const Text(
                       'Profile not found',
                       style: TextStyle(
@@ -196,9 +248,7 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     TextButton(
                       onPressed: () {
                         context.read<ProfileBloc>().add(GetProfilesEvent());
@@ -212,27 +262,11 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
 
             final profile = profileState.profile;
 
-            // ========================================================
-            // ORDERS
-            // ========================================================
-
             final orderBloc = context.read<OrderBloc>();
 
             if (orderBloc.state is OrderInitial) {
               orderBloc.add(GetCustomerOrdersEvent(customerId: profile.id));
             }
-
-            // ========================================================
-            // ADDRESSES
-            // ========================================================
-            //
-            // BUGFIX: delivery fee display depends on AddressBloc, but
-            // nothing on Home was ever triggering its initial load —
-            // only CartPage/AddressesPage did. That's why delivery fee
-            // showed "غير متوفر" on first launch until the customer
-            // visited Cart at least once. Same guard pattern as the
-            // OrderBloc check right above.
-            // ========================================================
 
             if (context.read<AddressBloc>().state is AddressInitial) {
               context.read<AddressBloc>().add(
@@ -240,31 +274,21 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
               );
             }
 
-            // ========================================================
-            // BUSINESSES
-            // ========================================================
+            if (context.read<FavoriteBloc>().state is FavoriteInitial) {
+              context.read<FavoriteBloc>().add(
+                LoadFavoritesEvent(userId: profile.id),
+              );
+            }
 
             return BlocBuilder<BusinessBloc, BusinessState>(
               builder: (context, businessState) {
-                // ====================================================
-                // BUSINESS LOADING
-                // ====================================================
-
                 if (businessState is BusinessLoading) {
                   return const DashboardSkeleton();
                 }
 
-                // ====================================================
-                // BUSINESS ERROR
-                // ====================================================
-
                 if (businessState is BusinessError) {
                   return Center(child: Text(businessState.message));
                 }
-
-                // ====================================================
-                // BUSINESS LIST
-                // ====================================================
 
                 List<BusinessEntity> businesses = <BusinessEntity>[];
 
@@ -272,111 +296,71 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                   businesses = businessState.businesses;
                 }
 
-                // ====================================================
-                // SORT BY RATING
-                // ====================================================
-
                 final sorted = [...businesses]
                   ..sort((a, b) => b.rating.compareTo(a.rating));
-
-                // ====================================================
-                // TOP RATED
-                // ====================================================
 
                 final topRatedBusinesses = sorted
                     .where((b) => b.rating > 4.5)
                     .toList();
 
-                // ====================================================
-                // OPEN NOW
-                // ====================================================
-                //
-                // THIS IS THE IMPORTANT PART.
-                //
-                // Every second HomePage rebuilds (via PeriodicRebuildMixin).
-                //
-                // Every rebuild:
-                //
-                // b.isOpen
-                //
-                // is evaluated again.
-                //
-                // So when closing_time is reached:
-                //
-                // b.isOpen == false
-                //
-                // and the restaurant automatically disappears.
-                //
                 final openNowCandidates = sorted
-                    .where(
-                      (b) =>
-                          b.isOpen &&
-                          !topRatedBusinesses.any((t) => t.id == b.id),
-                    )
+                    .where((b) => b.isOpen)
+                    .toList();
+
+                final newestBusinesses = [...businesses]
+                  ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                final newestList = newestBusinesses.take(10).toList();
+
+                final juiceShops = sorted
+                    .where((b) => b.type == BusinessType.juice_shop)
                     .toList();
 
                 const String? sponsoredBannerImageUrl = null;
 
-                // ====================================================
-                // PAGE
-                // ====================================================
-
                 return SingleChildScrollView(
                   padding: EdgeInsets.zero,
-
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
-                      // ==================================================
-                      // HEADER
-                      // ==================================================
                       Container(
                         decoration: const BoxDecoration(
                           color: AppColors.surface,
-
                           borderRadius: BorderRadius.only(
                             bottomLeft: Radius.circular(AppRadius.xl),
                             bottomRight: Radius.circular(AppRadius.xl),
                           ),
                         ),
-
                         padding: const EdgeInsets.fromLTRB(
                           AppSpacing.pageHorizontal,
                           AppSpacing.md,
                           AppSpacing.pageHorizontal,
                           AppSpacing.lg,
                         ),
-
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-
                           children: [
                             HomeDeliveryHeader(
                               addressLabel: _formatAddress(profile.address),
-
                               avatarUrl: profile.photo,
-
+                              profileLayerLink: _profileLayerLink,
+                              profilePulseAnimation: _profilePulseController,
                               onAvatarTap: () async {
+                                _hideProfileHint();
+
                                 await context.push('/profile');
 
                                 if (context.mounted) {
                                   context.read<ProfileBloc>().add(
-                                    GetProfilesEvent(),
-                                  );
+                                        GetProfilesEvent(),
+                                      );
                                 }
                               },
-
                               onAddressTap: () =>
                                   _showAddressBottomSheet(context, profile.id),
                             ),
-
                             const SizedBox(height: AppSpacing.lg),
-
                             HomeGreeting(userName: profile.userName),
-
                             const SizedBox(height: AppSpacing.md),
-
                             HomeSearchBar(
                               onTap: () => context.go('/search'),
                               onMicTap: null,
@@ -385,21 +369,28 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                         ),
                       ),
 
-                      // ==================================================
-                      // ONGOING ORDER
-                      // ==================================================
                       BlocBuilder<OrderBloc, OrderState>(
                         builder: (context, orderState) {
                           if (orderState is! CustomerOrdersFetched) {
                             return const SizedBox.shrink();
                           }
 
-                          final ongoingOrders = orderState.orders.where((
-                            order,
-                          ) {
-                            return order.orderStatus == OrderStatus.pending ||
-                                order.orderStatus == OrderStatus.preparing ||
-                                order.orderStatus == OrderStatus.ready;
+                          final now = DateTime.now();
+
+                          final ongoingOrders = orderState.orders.where((order) {
+                            if (!order.orderStatus.isOngoing) {
+                              return false;
+                            }
+
+                            if (order.scheduledFor == null) {
+                              return true;
+                            }
+
+                            final releaseTime = order.scheduledFor!.subtract(
+                              const Duration(minutes: 30),
+                            );
+
+                            return !now.isBefore(releaseTime);
                           }).toList();
 
                           if (ongoingOrders.isEmpty) {
@@ -415,10 +406,8 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                               AppSpacing.pageHorizontal,
                               0,
                             ),
-
                             child: OngoingOrderCard(
                               order: order,
-
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -435,28 +424,19 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
 
                       const SizedBox(height: AppSpacing.xl),
 
-                      // ==================================================
-                      // SPONSORED
-                      // ==================================================
                       if (sponsoredBannerImageUrl != null) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-
                           child: SponsoredBanner(
                             imageUrl: sponsoredBannerImageUrl,
-
                             onTap: () {},
                           ),
                         ),
-
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
-                      // ==================================================
-                      // PROMOTIONS
-                      // ==================================================
                       BlocBuilder<PromotionsBloc, PromotionsState>(
                         builder: (context, promoState) {
                           if (promoState is PromotionsLoading) {
@@ -492,17 +472,13 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                                 ),
                                 child: SectionHeader(title: 'عروض وخصومات'),
                               ),
-
                               const SizedBox(height: AppSpacing.md),
-
                               SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
-
                                 padding: const EdgeInsets.only(
                                   left: AppSpacing.pageHorizontal,
                                   right: AppSpacing.sm,
                                 ),
-
                                 child: Row(
                                   children: [
                                     for (
@@ -512,52 +488,116 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                                     ) ...[
                                       if (i != 0)
                                         const SizedBox(width: AppSpacing.sm),
-
                                       PromotionCard(
                                         businessName: promoState
                                             .promotions[i]
                                             .businessName,
-
                                         coverUrl:
                                             promoState.promotions[i].photoUrl,
-
                                         itemName:
                                             promoState.promotions[i].itemName,
-
                                         discountPercentage: promoState
                                             .promotions[i]
                                             .discountPercentage,
-
                                         oldPrice: promoState
                                             .promotions[i]
                                             .oldPrice
                                             ?.toDouble(),
-
                                         newPrice: promoState
                                             .promotions[i]
                                             .newPrice
                                             ?.toDouble(),
-
                                         onTap: () {
-                                          context.push(
-                                            '/business/${promoState.promotions[i].businessId}',
-                                          );
+                                          final promo = promoState.promotions[i];
+                                          if (promo.menuItemId != null) {
+                                            context.push('/food/${promo.menuItemId}');
+                                          } else {
+                                            context.push('/promotion-details', extra: promo);
+                                          }
                                         },
                                       ),
                                     ],
                                   ],
                                 ),
                               ),
-
                               const SizedBox(height: AppSpacing.xl),
                             ],
                           );
                         },
                       ),
 
-                      // ==================================================
-                      // TOP RATED
-                      // ==================================================
+                      BlocBuilder<FavoriteBloc, FavoriteState>(
+                        builder: (context, favoriteState) {
+                          if (favoriteState is! FavoriteLoaded ||
+                              favoriteState.favoriteIds.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final favoriteBusinesses = sorted
+                              .where(
+                                (b) => favoriteState.favoriteIds.contains(b.id),
+                              )
+                              .toList();
+
+                          if (favoriteBusinesses.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.pageHorizontal,
+                                ),
+                                child: SectionHeader(title: 'المفضلة لديك'),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              SizedBox(
+                                height: _recommendedRowHeight,
+                                child: ListView.separated(
+                                  scrollDirection: Axis.horizontal,
+                                  padding: const EdgeInsets.only(
+                                    left: AppSpacing.pageHorizontal,
+                                    right: AppSpacing.sm,
+                                  ),
+                                  itemCount: favoriteBusinesses.length,
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(width: AppSpacing.sm),
+                                  itemBuilder: (context, index) {
+                                    final business = favoriteBusinesses[index];
+
+                                    return BusinessCard(
+                                      businessId: business.id,
+                                      width: _recommendedTileWidth,
+                                      height: 175,
+                                      compact: true,
+                                      businessName: business.nameAr,
+                                      subtitle:
+                                          '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
+                                      coverUrl: business.coverUrl,
+                                      rating: business.rating,
+                                      ratingCount: business.ratingCount,
+                                      statusText: business.isOpen
+                                          ? 'مفتوح الآن'
+                                          : 'مغلق الآن',
+                                      deliveryFeeText: _deliveryFeeText(
+                                        context,
+                                        business,
+                                      ),
+                                      onTap: () => context.push(
+                                        '/business/${business.id}',
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                            ],
+                          );
+                        },
+                      ),
+
                       if (topRatedBusinesses.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(
@@ -565,70 +605,195 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                           ),
                           child: SectionHeader(title: 'الأعلى تقييمًا'),
                         ),
-
                         const SizedBox(height: AppSpacing.md),
-
                         SizedBox(
                           height: _recommendedRowHeight,
-
                           child: ListView.separated(
                             scrollDirection: Axis.horizontal,
-
                             padding: const EdgeInsets.only(
                               left: AppSpacing.pageHorizontal,
                               right: AppSpacing.sm,
                             ),
-
                             itemCount: topRatedBusinesses.length,
-
                             separatorBuilder: (_, __) =>
                                 const SizedBox(width: AppSpacing.sm),
-
                             itemBuilder: (context, index) {
                               final business = topRatedBusinesses[index];
 
                               return BusinessCard(
                                 businessId: business.id,
-
                                 width: _recommendedTileWidth,
-
                                 height: 175,
-
                                 compact: true,
-
                                 businessName: business.nameAr,
-
                                 subtitle:
                                     '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
-
                                 coverUrl: business.coverUrl,
-
                                 rating: business.rating,
-
                                 ratingCount: business.ratingCount,
-
                                 statusText: business.isOpen
                                     ? 'مفتوح الآن'
                                     : 'مغلق الآن',
-
                                 deliveryFeeText: _deliveryFeeText(
                                   context,
                                   business,
                                 ),
-
                                 onTap: () =>
                                     context.push('/business/${business.id}'),
                               );
                             },
                           ),
                         ),
-
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
-                      // ==================================================
-                      // OPEN NOW
-                      // ==================================================
+                      if (newestList.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.pageHorizontal,
+                          ),
+                          child: SectionHeader(title: 'الأحدث'),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        SizedBox(
+                          height: _recommendedRowHeight,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.only(
+                              left: AppSpacing.pageHorizontal,
+                              right: AppSpacing.sm,
+                            ),
+                            itemCount: newestList.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: AppSpacing.sm),
+                            itemBuilder: (context, index) {
+                              final business = newestList[index];
+
+                              return BusinessCard(
+                                businessId: business.id,
+                                width: _recommendedTileWidth,
+                                height: 175,
+                                compact: true,
+                                businessName: business.nameAr,
+                                subtitle:
+                                    '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
+                                coverUrl: business.coverUrl,
+                                rating: business.rating,
+                                ratingCount: business.ratingCount,
+                                statusText: business.isOpen
+                                    ? 'مفتوح الآن'
+                                    : 'مغلق الآن',
+                                deliveryFeeText: _deliveryFeeText(
+                                  context,
+                                  business,
+                                ),
+                                onTap: () =>
+                                    context.push('/business/${business.id}'),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
+
+                      if (juiceShops.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.pageHorizontal,
+                          ),
+                          child: SectionHeader(title: 'محلات العصائر'),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        SizedBox(
+                          height: _recommendedRowHeight,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.only(
+                              left: AppSpacing.pageHorizontal,
+                              right: AppSpacing.sm,
+                            ),
+                            itemCount: juiceShops.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: AppSpacing.sm),
+                            itemBuilder: (context, index) {
+                              final business = juiceShops[index];
+
+                              return BusinessCard(
+                                businessId: business.id,
+                                width: _recommendedTileWidth,
+                                height: 175,
+                                compact: true,
+                                businessName: business.nameAr,
+                                subtitle:
+                                    '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
+                                coverUrl: business.coverUrl,
+                                rating: business.rating,
+                                ratingCount: business.ratingCount,
+                                statusText: business.isOpen
+                                    ? 'مفتوح الآن'
+                                    : 'مغلق الآن',
+                                deliveryFeeText: _deliveryFeeText(
+                                  context,
+                                  business,
+                                ),
+                                onTap: () =>
+                                    context.push('/business/${business.id}'),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
+
+                      if (sorted.isNotEmpty) ...[
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: AppSpacing.pageHorizontal,
+                          ),
+                          child: SectionHeader(title: 'تصفح الكل'),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        SizedBox(
+                          height: _recommendedRowHeight,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.only(
+                              left: AppSpacing.pageHorizontal,
+                              right: AppSpacing.sm,
+                            ),
+                            itemCount: sorted.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: AppSpacing.sm),
+                            itemBuilder: (context, index) {
+                              final business = sorted[index];
+
+                              return BusinessCard(
+                                businessId: business.id,
+                                width: _recommendedTileWidth,
+                                height: 175,
+                                compact: true,
+                                businessName: business.nameAr,
+                                subtitle:
+                                    '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
+                                coverUrl: business.coverUrl,
+                                rating: business.rating,
+                                ratingCount: business.ratingCount,
+                                statusText: business.isOpen
+                                    ? 'مفتوح الآن'
+                                    : 'مغلق الآن',
+                                deliveryFeeText: _deliveryFeeText(
+                                  context,
+                                  business,
+                                ),
+                                onTap: () =>
+                                    context.push('/business/${business.id}'),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
+
                       if (openNowCandidates.isNotEmpty) ...[
                         const Padding(
                           padding: EdgeInsets.symmetric(
@@ -636,59 +801,41 @@ class _HomePageState extends State<HomePage> with PeriodicRebuildMixin {
                           ),
                           child: SectionHeader(title: 'مفتوح الآن'),
                         ),
-
                         const SizedBox(height: AppSpacing.md),
-
                         ListView.separated(
                           shrinkWrap: true,
-
                           physics: const NeverScrollableScrollPhysics(),
-
                           padding: const EdgeInsets.symmetric(
                             horizontal: AppSpacing.pageHorizontal,
                           ),
-
                           itemCount: openNowCandidates.length,
-
                           separatorBuilder: (_, __) =>
                               const SizedBox(height: AppSpacing.md),
-
                           itemBuilder: (context, index) {
                             final business = openNowCandidates[index];
 
                             return BusinessCard(
                               businessId: business.id,
-
                               height: 250,
-
                               compact: false,
-
                               businessName: business.nameAr,
-
                               subtitle:
                                   '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
-
                               coverUrl: business.coverUrl,
-
                               rating: business.rating,
-
                               ratingCount: business.ratingCount,
-
                               statusText: business.isOpen
                                   ? 'مفتوح الآن'
                                   : 'مغلق الآن',
-
                               deliveryFeeText: _deliveryFeeText(
                                 context,
                                 business,
                               ),
-
                               onTap: () =>
                                   context.push('/business/${business.id}'),
                             );
                           },
                         ),
-
                         const SizedBox(height: AppSpacing.xl),
                       ],
                     ],

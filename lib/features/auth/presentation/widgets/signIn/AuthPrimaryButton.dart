@@ -9,10 +9,12 @@ class AuthPrimaryButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.onPressed,
+    this.isLoading = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +22,7 @@ class AuthPrimaryButton extends StatelessWidget {
       width: double.infinity,
       height: AppSizes.buttonHeight,
       child: FilledButton(
-        onPressed: onPressed,
+        onPressed: isLoading ? null : onPressed,
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.primary,
           disabledBackgroundColor: AppColors.disabled,
@@ -28,10 +30,19 @@ class AuthPrimaryButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
         ),
-        child: Text(
-          label,
-          style: AppTextStyles.buttonLarge.copyWith(color: Colors.white),
-        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.5,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                label,
+                style: AppTextStyles.buttonLarge.copyWith(color: Colors.white),
+              ),
       ),
     );
   }
