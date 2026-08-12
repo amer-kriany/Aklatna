@@ -96,23 +96,23 @@ class _HomePageState extends State<HomePage>
 
     _hideProfileHint();
 
-    _profileTooltipEntry = OverlayEntry(
-      builder: (context) {
-        return Positioned(
-          child: CompositedTransformFollower(
-            link: _profileLayerLink,
-            showWhenUnlinked: false,
-            targetAnchor: Alignment.bottomRight,
-            followerAnchor: Alignment.topRight,
-            offset: const Offset(0, 6),
-            child: const Material(
-              color: Colors.transparent,
-              child: ProfileTooltipOverlay(),
-            ),
-          ),
-        );
-      },
+   _profileTooltipEntry = OverlayEntry(
+  builder: (context) {
+    return IgnorePointer(
+      child: CompositedTransformFollower(
+        link: _profileLayerLink,
+        showWhenUnlinked: false,
+        targetAnchor: Alignment.bottomRight,
+        followerAnchor: Alignment.topRight,
+        offset: const Offset(0, 6),
+        child: const Material(
+          color: Colors.transparent,
+          child: ProfileTooltipOverlay(),
+        ),
+      ),
     );
+  },
+);
 
     Overlay.of(context).insert(_profileTooltipEntry!);
 
