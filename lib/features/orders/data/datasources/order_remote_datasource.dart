@@ -163,17 +163,23 @@ class OrderRemoteDatasource {
   // ACCEPT ORDER
   // ============================================================
 
-  Future<void> acceptOrder({
-    required String orderId,
-    required String driverId,
-  }) async {
-    await supabase
-        .from('order')
-        .update({
-          'driver_id': driverId,
-        })
-        .eq('id', orderId);
+ Future<void> acceptOrder({
+  required String orderId,
+  required String driverId,
+}) async {
+  final result = await supabase
+      .from('order')
+      .update({
+        'driver_id': driverId,
+      })
+      .eq('id', orderId)
+      .isFilter('driver_id', null)
+      .select();
+
+  if (result.isEmpty) {
+    throw Exception('تم قبول هذا الطلب من قبل سائق آخر');
   }
+}
 
   // ============================================================
   // OUT FOR DELIVERY
