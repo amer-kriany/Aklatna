@@ -429,58 +429,75 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   // DRIVER - ACCEPT ORDER
   // ============================================================
 
-  Future<void> _acceptOrder(
-    AcceptOrderEvent event,
-    Emitter<OrderState> emit,
-  ) async {
-    try {
-      await acceptOrderUseCase(
-        orderId: event.orderId,
-        driverId: event.driverId,
-      );
+Future<void> _acceptOrder(
+  AcceptOrderEvent event,
+  Emitter<OrderState> emit,
+) async {
+  try {
+    await acceptOrderUseCase(
+      orderId: event.orderId,
+      driverId: event.driverId,
+    );
 
-      if (state is AvailableOrdersLoaded) {
-        final liveState =
-            state as AvailableOrdersLoaded;
+    if (state is AvailableOrdersLoaded) {
+      final liveState =
+          state as AvailableOrdersLoaded;
 
-        emit(
-          AvailableOrdersLoaded(
-            orders: liveState.orders
-                .where(
-                  (o) => o.id != event.orderId,
-                )
-                .toList(),
-            totalEarnings: liveState.totalEarnings,
-            hasActiveDelivery: true,
-          ),
-        );
-      }
-
-      add(
-        WatchOrderStatusEvent(
-          orderId: event.orderId,
+      emit(
+        AvailableOrdersLoaded(
+          orders: liveState.orders
+              .where(
+                (o) => o.id != event.orderId,
+              )
+              .toList(),
+          totalEarnings: liveState.totalEarnings,
+          hasActiveDelivery: true,
         ),
       );
-    } catch (e) {
-      if (state is AvailableOrdersLoaded) {
-        final liveState =
-            state as AvailableOrdersLoaded;
+    }
 
-        emit(
-          AvailableOrdersLoaded(
-            orders: liveState.orders
-                .where(
-                  (o) => o.id != event.orderId,
-                )
-                .toList(),
-            totalEarnings: liveState.totalEarnings,
-            hasActiveDelivery:
-                liveState.hasActiveDelivery,
-          ),
-        );
-      }
+    add(
+      WatchOrderStatusEvent(
+        orderId: event.orderId,
+      ),
+    );
+  } catch (e) {
+    // Someone else claimed it first (or another failure) --
+    // remove the now-stale card from this driver's list and
+    // let them know why, instead of silently pretending it
+    // just disappeared.
+    if (state is AvailableOrdersLoaded) {
+      final liveState =
+          state as AvailableOrdersLoaded;
+
+      emit(
+        AvailableOrdersLoaded(
+          orders: liveState.orders
+              .where(
+                (o) => o.id != event.orderId,
+              )
+              .toList(),
+          totalEarnings: liveState.totalEarnings,
+          hasActiveDelivery:
+              liveState.hasActiveDelivery,
+        ),
+      );
+    }
+
+    emit(
+      OrderAcceptFailed(
+        message: e.toString().replaceFirst('Exception: ', ''),
+      ),
+    );
+
+    // Re-emit AvailableOrdersLoaded right after so the list UI
+    // keeps working normally -- OrderAcceptFailed is just a
+    // one-shot signal for a snackbar via BlocListener.
+    if (state is AvailableOrdersLoaded) {
+      emit(state as AvailableOrdersLoaded);
     }
   }
+}
 
   // ============================================================
   // DRIVER - OUT FOR DELIVERY

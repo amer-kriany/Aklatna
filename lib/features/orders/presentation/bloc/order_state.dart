@@ -89,6 +89,14 @@ final class OrderFailure extends OrderState {
   @override
   List<Object?> get props => [error];
 }
+class OrderAcceptFailed extends OrderState {
+  final String message;
+
+  const OrderAcceptFailed({required this.message});
+
+  @override
+  List<Object?> get props => [message];
+}
 
 // ============================================================
 // ORDER STATUS ERROR
