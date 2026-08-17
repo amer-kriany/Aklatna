@@ -3,7 +3,7 @@ import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-/// Bloc-blind card for popular dishes with responsive spacing.
+/// Bloc-blind card for popular dishes with RTL layout.
 class PopularDishCard extends StatelessWidget {
   const PopularDishCard({
     super.key,
@@ -29,6 +29,7 @@ class PopularDishCard extends StatelessWidget {
 
   bool get _hasValidImageUrl {
     final uri = Uri.tryParse(photoUrl.trim());
+
     return uri != null &&
         (uri.scheme == 'http' || uri.scheme == 'https') &&
         uri.host.isNotEmpty;
@@ -36,121 +37,162 @@ class PopularDishCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 160,
-        padding: const EdgeInsets.all(AppSpacing.xs),
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ================= IMAGE (USING ASPECT RATIO) =================
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: AspectRatio(
-                aspectRatio: 16 / 10,
-                child: _hasValidImageUrl
-                    ? Image.network(
-                        photoUrl,
-                        fit: BoxFit.cover,
-                      )
-                    : Container(
-                        color: AppColors.surface,
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.fastfood,
-                          color: AppColors.textSecondary,
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 160,
+          padding: const EdgeInsets.all(AppSpacing.xs),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: AppColors.border,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ===============================================================
+              // IMAGE
+              // ===============================================================
+
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                child: AspectRatio(
+                  aspectRatio: 16 / 10,
+                  child: _hasValidImageUrl
+                      ? Image.network(
+                          photoUrl,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          color: AppColors.surface,
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.fastfood,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                ),
+              ),
+
+              const SizedBox(height: AppSpacing.xs),
+
+              // ===============================================================
+              // DISH NAME
+              // ===============================================================
+
+              Text(
+                dishNameAr,
+                textAlign: TextAlign.right,
+                style: AppTextStyles.bodyLarge.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: 2),
+
+              // ===============================================================
+              // BUSINESS NAME
+              // ===============================================================
+
+              Text(
+                businessNameAr,
+                textAlign: TextAlign.right,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: AppSpacing.xs),
+
+              // ===============================================================
+              // PRICE + CART
+              //
+              // PRICE  → FAR RIGHT
+              // CART   → FAR LEFT
+              // ===============================================================
+
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // -----------------------------------------------------------
+                  // PRICE — FAR RIGHT
+                  // -----------------------------------------------------------
+
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: RichText(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textDirection: TextDirection.rtl,
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'ل.س ',
+                              style: AppTextStyles.bodySmall.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 10,
+                              ),
+                            ),
+                            TextSpan(
+                              text: dishPrice.toStringAsFixed(0),
+                              style: AppTextStyles.priceMedium.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.xs),
-
-            // ================= INFO =================
-            Text(
-              dishNameAr,
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              businessNameAr,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-                fontSize: 11,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-
-            const SizedBox(height: AppSpacing.xs),
-
-            // ================= PRICE & CART ACTION =================
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Price
-                Flexible(
-                  child: RichText(
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: dishPrice.toStringAsFixed(0),
-                          style: AppTextStyles.priceMedium.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                          ),
-                        ),
-                        TextSpan(
-                          text: ' ل.س',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-                ),
 
-                const SizedBox(width: AppSpacing.xs),
+                  // -----------------------------------------------------------
+                  // CART — LEFT
+                  // DO NOT CHANGE
+                  // -----------------------------------------------------------
 
-                // Controls
-                quantity == 0
-                    ? _AddButton(onPressed: onAdd)
-                    : _QuantityControl(
-                        quantity: quantity,
-                        onAdd: onAdd,
-                        onRemove: onRemove,
-                      ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: AppSpacing.xs),
+
+                  quantity == 0
+                      ? _AddButton(onPressed: onAdd)
+                      : _QuantityControl(
+                          quantity: quantity,
+                          onAdd: onAdd,
+                          onRemove: onRemove,
+                        ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+// ============================================================================
+// ADD BUTTON
+// ============================================================================
+
 class _AddButton extends StatelessWidget {
-  const _AddButton({required this.onPressed});
+  const _AddButton({
+    required this.onPressed,
+  });
 
   final VoidCallback onPressed;
 
@@ -175,6 +217,10 @@ class _AddButton extends StatelessWidget {
   }
 }
 
+// ============================================================================
+// QUANTITY CONTROL
+// ============================================================================
+
 class _QuantityControl extends StatelessWidget {
   const _QuantityControl({
     required this.quantity,
@@ -189,7 +235,10 @@ class _QuantityControl extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 4,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: AppColors.primaryLight,
         borderRadius: BorderRadius.circular(AppRadius.full),
@@ -202,7 +251,9 @@ class _QuantityControl extends StatelessWidget {
             onPressed: onRemove,
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 4,
+            ),
             child: Text(
               '$quantity',
               style: AppTextStyles.bodySmall.copyWith(
@@ -220,6 +271,10 @@ class _QuantityControl extends StatelessWidget {
     );
   }
 }
+
+// ============================================================================
+// SMALL BUTTON
+// ============================================================================
 
 class _SmallButton extends StatelessWidget {
   const _SmallButton({

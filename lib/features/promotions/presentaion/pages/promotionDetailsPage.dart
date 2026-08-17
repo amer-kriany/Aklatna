@@ -117,56 +117,53 @@ class _PromotionDetailsPageState extends State<PromotionDetailsPage> {
                     const SizedBox(height: AppSpacing.xs),
 
                     // ============================================================
-                    // PRICE ROW (شطب + بادج)
+                    // PRICE ROW (شطب + بادج) — فقط لو في خصم فعلي
                     // ============================================================
-                   // ============================================================
-// PRICE ROW (شطب + بادج) — فقط لو في خصم فعلي
-// ============================================================
-Padding(
-  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-  child: Row(
-    children: [
-      if (promo.oldPrice != null && promo.discountPercentage > 0) ...[
-        Text(
-          '${promo.oldPrice!.toStringAsFixed(0)} ل.س',
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
-            decoration: TextDecoration.lineThrough,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-      ],
-      Text(
-        '${price.toStringAsFixed(0)} ل.س',
-        style: AppTextStyles.priceMedium.copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w900,
-        ),
-      ),
-      if (promo.discountPercentage > 0) ...[
-        const SizedBox(width: AppSpacing.sm),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-          ),
-          child: Text(
-            '-${promo.discountPercentage}%',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textOnPrimary,
-            ),
-          ),
-        ),
-      ],
-    ],
-  ),
-),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                      child: Row(
+                        children: [
+                          if (promo.oldPrice != null && promo.discountPercentage > 0) ...[
+                            Text(
+                              '${promo.oldPrice!.toStringAsFixed(0)} ل.س',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textSecondary,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                          ],
+                          Text(
+                            '${price.toStringAsFixed(0)} ل.س',
+                            style: AppTextStyles.priceMedium.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          if (promo.discountPercentage > 0) ...[
+                            const SizedBox(width: AppSpacing.sm),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(AppRadius.sm),
+                              ),
+                              child: Text(
+                                '-${promo.discountPercentage}%',
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.textOnPrimary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
 
                     // ============================================================
-                    // LABEL (لو موجود)
+                    // DESCRIPTION
                     // ============================================================
-                    if (promo.label != null && promo.label!.trim().isNotEmpty)
+                    if (promo.description != null && promo.description!.trim().isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.fromLTRB(
                           AppSpacing.lg,
@@ -175,7 +172,7 @@ Padding(
                           0,
                         ),
                         child: Text(
-                          promo.label!,
+                          promo.description!,
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.textSecondary,
                           ),
