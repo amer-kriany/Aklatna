@@ -192,6 +192,7 @@ class PromotionCard extends StatelessWidget {
                         SizedBox(
                           height: 18,
                           child: Row(
+                            textDirection: TextDirection.rtl,
                             children: [
                               const Icon(
                                 Icons.storefront_rounded,
