@@ -48,8 +48,7 @@ class _PromotionDetailsPageState extends State<PromotionDetailsPage> {
                     FoodDetailsImage(
                       imageUrl: promo.photoUrl,
                       onBack: () => Navigator.pop(context),
-                      onFavorite: () {},
-                      isFavorite: false,
+                   
                     ),
 
                     // ============================================================
