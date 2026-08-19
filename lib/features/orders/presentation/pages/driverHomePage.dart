@@ -31,9 +31,16 @@ class _DriverHomePageState extends State<DriverHomePage> {
     // customer HomePage fires GetBusinesses(). Without this, the
     // address silently never shows (guarded by a null check, no error).
     final businessBloc = context.read<BusinessBloc>();
+
     if (businessBloc.state is! BusinessFetched) {
       businessBloc.add(GetBusinesses());
     }
+  }
+
+  Future<void> _refreshOrders() async {
+    context.read<OrderBloc>().add(
+      GetAvailableOrdersEvent(driverId: _driverId),
+    );
   }
 
   @override
@@ -62,27 +69,59 @@ class _DriverHomePageState extends State<DriverHomePage> {
             }
 
             if (state is OrderFailure) {
-              return Center(child: Text('خطأ: ${state.error}'));
+              return RefreshIndicator(
+                onRefresh: _refreshOrders,
+                child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: Center(
+                        child: Text('خطأ: ${state.error}'),
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
             if (state is AvailableOrdersLoaded) {
               return Column(
                 children: [
-                  EarningsHeader(total: state.totalEarnings),
+                  EarningsHeader(
+                    total: state.totalEarnings,
+                  ),
                   Expanded(
                     child: state.orders.isEmpty
-                        ? const Center(
-                            child: Text("لا يوجد طلبات حالياً"),
+                        ? RefreshIndicator(
+                            onRefresh: _refreshOrders,
+                            child: ListView(
+                              physics:
+                                  const AlwaysScrollableScrollPhysics(),
+                              children: const [
+                                SizedBox(
+                                  height: 300,
+                                  child: Center(
+                                    child: Text("لا يوجد طلبات حالياً"),
+                                  ),
+                                ),
+                              ],
+                            ),
                           )
-                        : ListView.builder(
-                            itemCount: state.orders.length,
-                            itemBuilder: (_, index) {
-                              return AvailableOrderCard(
-                                order: state.orders[index],
-                                onAccepted: widget.onOrderAccepted,
-                                isDisabled: false,
-                              );
-                            },
+                        : RefreshIndicator(
+                            onRefresh: _refreshOrders,
+                            child: ListView.builder(
+                              physics:
+                                  const AlwaysScrollableScrollPhysics(),
+                              itemCount: state.orders.length,
+                              itemBuilder: (_, index) {
+                                return AvailableOrderCard(
+                                  order: state.orders[index],
+                                  onAccepted: widget.onOrderAccepted,
+                                  isDisabled: false,
+                                );
+                              },
+                            ),
                           ),
                   ),
                 ],
