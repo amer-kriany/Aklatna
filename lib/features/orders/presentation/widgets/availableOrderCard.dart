@@ -78,57 +78,53 @@ class AvailableOrderCard extends StatelessWidget {
                   style: AppTextStyles.h4,
                 ),
 
-                if (businessAddress != null) ...[
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    businessAddress,
-                    style: AppTextStyles.regularSmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-
                 const SizedBox(height: AppSpacing.sm),
 
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      size: AppSizes.iconSm,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: AppSpacing.xxs),
-                    Expanded(
-                      child: Text(
-                        order.deliveryAddress ?? '',
-                        style: AppTextStyles.regularSmall.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                // =============================================================
+                // ADDRESSES — pickup (business) then dropoff (customer),
+                // each clearly labeled so the driver can't confuse the two.
+                // =============================================================
+
+                if (businessAddress != null)
+                  _AddressRow(
+                    icon: Icons.storefront_rounded,
+                    label: 'من',
+                    address: businessAddress,
+                  ),
+
+                if (businessAddress != null)
+                  const SizedBox(height: AppSpacing.xs),
+
+                _AddressRow(
+                  icon: Icons.location_on_rounded,
+                  label: 'إلى',
+                  address: order.deliveryAddress ?? '',
                 ),
 
                 const SizedBox(height: AppSpacing.sm),
+                const Divider(height: 1),
+                const SizedBox(height: AppSpacing.sm),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${order.totalPrice} ل.س',
-                      style: AppTextStyles.priceMedium,
-                    ),
-                    Text(
-                      'التوصيل: ${order.deliveryFee} ل.س',
-                      style: AppTextStyles.regularSmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                // =============================================================
+                // PRICE BREAKDOWN — subtotal, then delivery fee, then total.
+                // =============================================================
+
+                _PriceRow(
+                  label: 'سعر الطلب',
+                  value: order.subtotal,
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                _PriceRow(
+                  label: 'أجرة التوصيل',
+                  value: order.deliveryFee,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                const Divider(height: 1),
+                const SizedBox(height: AppSpacing.xs),
+                _PriceRow(
+                  label: 'الإجمالي (تُحصَّل من الزبون)',
+                  value: order.totalPrice,
+                  isTotal: true,
                 ),
 
                 const SizedBox(height: AppSpacing.md),
@@ -158,6 +154,90 @@ class AvailableOrderCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// =============================================================================
+// ADDRESS ROW
+// =============================================================================
+
+class _AddressRow extends StatelessWidget {
+  const _AddressRow({
+    required this.icon,
+    required this.label,
+    required this.address,
+  });
+
+  final IconData icon;
+  final String label;
+  final String address;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          icon,
+          size: AppSizes.iconSm,
+          color: AppColors.primary,
+        ),
+        const SizedBox(width: AppSpacing.xxs),
+        Text(
+          '$label: ',
+          style: AppTextStyles.regularSmall.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            address,
+            style: AppTextStyles.regularSmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// =============================================================================
+// PRICE ROW
+// =============================================================================
+
+class _PriceRow extends StatelessWidget {
+  const _PriceRow({
+    required this.label,
+    required this.value,
+    this.isTotal = false,
+  });
+
+  final String label;
+  final num? value;
+  final bool isTotal;
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = isTotal
+        ? AppTextStyles.priceMedium.copyWith(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w800,
+          )
+        : AppTextStyles.regularSmall.copyWith(
+            color: AppColors.textSecondary,
+          );
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: textStyle),
+        Text('${value ?? 0} ل.س', style: textStyle),
+      ],
     );
   }
 }

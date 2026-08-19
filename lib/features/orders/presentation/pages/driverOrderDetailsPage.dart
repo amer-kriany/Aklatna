@@ -377,6 +377,11 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
                   ),
                 const Divider(),
                 _InfoRow(
+                  label: 'مجموع الطلب',
+                  value:
+                      '${_order.subtotal ?? (_order.totalPrice - _order.deliveryFee)} ل.س',
+                ),
+                _InfoRow(
                   label: 'رسوم التوصيل',
                   value: '${_order.deliveryFee} ل.س',
                 ),

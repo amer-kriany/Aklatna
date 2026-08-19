@@ -501,6 +501,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       totalPrice: totalPrice,
       deliveryFee: deliveryPrice,
+      
 
       orderType:
           isDelivery

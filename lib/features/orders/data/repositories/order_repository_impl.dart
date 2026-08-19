@@ -106,7 +106,7 @@ Future<List<OrderEntity>> getAvailableOrders() async {
 
       driverId: order.driverId,
       pickedUpAt: order.pickedUpAt,
-      deliveredAt: order.deliveredAt,
+      deliveredAt: order.deliveredAt, subtotal: order.subtotal,
     );
   }
 
@@ -144,7 +144,7 @@ Future<List<OrderEntity>> getAvailableOrders() async {
 
       driverId: entity.driverId,
       pickedUpAt: entity.pickedUpAt,
-      deliveredAt: entity.deliveredAt,
+      deliveredAt: entity.deliveredAt, subtotal: entity.subtotal,
     );
   }
 }

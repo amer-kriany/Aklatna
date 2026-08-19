@@ -23,6 +23,7 @@ class OrderModel {
   final OrderStatus orderStatus;
   final DateTime? scheduledFor;
   final int? estimatedPreparationTime;
+  final double? subtotal;
   final String? driverId;
 final DateTime? pickedUpAt;
 final DateTime? deliveredAt;
@@ -48,7 +49,7 @@ final DateTime? deliveredAt;
     this.businessLogo,
     this.businessName,
     this.estimatedPreparationTime,
-    this.driverId, this.pickedUpAt, this.deliveredAt,
+    this.driverId, this.pickedUpAt, this.deliveredAt,  this.subtotal,
   });
 
   Map<String, dynamic> toJson() {
@@ -158,6 +159,7 @@ final DateTime? deliveredAt;
   businessLogo: asNullableString(orders['business_logo']),
 
   totalPrice: asDoubleOrZero(orders['total_price']),
+  subtotal: asDoubleOrZero(orders['subtotal']),
   deliveryFee: asDoubleOrZero(orders['delivery_fee']),
 
   orderType: asOrderType(orders['order_type']),
