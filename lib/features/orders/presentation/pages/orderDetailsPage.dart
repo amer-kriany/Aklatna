@@ -707,31 +707,22 @@ Widget _buildDriverInfo(BuildContext context) {
     );
   }
 
-  // ===========================================================================
+   // ===========================================================================
   // PRICE SUMMARY (with delivery fee breakdown)
   // ===========================================================================
   //
-  // Delivery fee is DERIVED as totalPrice - itemsSubtotal, rather than
-  // recalculated from current distance/address. This is intentional:
-  // totalPrice is the authoritative, correctly-stored amount from when
-  // the order was actually placed (post-fix), so deriving from it is
-  // exact — recomputing via current address would reintroduce the
-  // "customer's address may have changed since" staleness problem.
+  // total_price is now items-only (post-fix). delivery_fee is a direct
+  // column, read as-is — no longer derived. Grand total is computed
+  // client-side for display: total_price + delivery_fee.
   // ===========================================================================
 
   Widget _buildPriceSummary() {
-    final itemsSubtotal = order.items.fold<double>(
-      0,
-      (sum, item) => sum + (item.price * item.quantity),
-    );
+    final itemsSubtotal = order.totalPrice;
 
-    // Clamp to 0 as a safety net against float rounding producing a
-    // tiny negative value, or against pre-fix legacy orders where
-    // totalPrice might be less than itemsSubtotal for other reasons.
-    final deliveryFee = (order.totalPrice - itemsSubtotal).clamp(
-      0,
-      double.infinity,
-    );
+    final deliveryFee =
+        order.orderType == OrderType.delivery ? order.deliveryFee : 0.0;
+
+    final grandTotal = itemsSubtotal + deliveryFee;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -743,7 +734,7 @@ Widget _buildDriverInfo(BuildContext context) {
       child: Column(
         children: [
           _priceRow(
-            'المجموع الفرعي',
+            'سعر الطلب',
             '${itemsSubtotal.toStringAsFixed(0)} ل.س',
           ),
 
@@ -766,7 +757,7 @@ Widget _buildDriverInfo(BuildContext context) {
               Text('الإجمالي', style: AppTextStyles.h4),
 
               Text(
-                '${order.totalPrice.toStringAsFixed(0)} ل.س',
+                '${grandTotal.toStringAsFixed(0)} ل.س',
                 style: AppTextStyles.h4.copyWith(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,

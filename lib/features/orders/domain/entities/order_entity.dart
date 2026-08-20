@@ -25,9 +25,7 @@ class OrderEntity {
   final int? estimatedPreparationTime;
   final String? driverId;
   final DateTime? pickedUpAt;
-final DateTime? deliveredAt;
-  
-  
+  final DateTime? deliveredAt;
 
   OrderEntity({
     this.id,
@@ -50,7 +48,9 @@ final DateTime? deliveredAt;
     this.businessLogo,
     this.businessName,
     this.estimatedPreparationTime,
-    this.driverId, this.pickedUpAt, this.deliveredAt,
+    this.driverId,
+    this.pickedUpAt,
+    this.deliveredAt,
   });
 
   OrderEntity copyWith({
@@ -75,9 +75,8 @@ final DateTime? deliveredAt;
     DateTime? scheduledFor,
     int? estimatedPreparationTime,
     String? driverId,
-     DateTime? pickedUpAt,
- DateTime? deliveredAt,
-    
+    DateTime? pickedUpAt,
+    DateTime? deliveredAt,
   }) {
     return OrderEntity(
       id: id ?? this.id,
@@ -102,8 +101,8 @@ final DateTime? deliveredAt;
       estimatedPreparationTime:
           estimatedPreparationTime ?? this.estimatedPreparationTime,
       driverId: driverId ?? this.driverId,
-      pickedUpAt: pickedUpAt?? this.pickedUpAt,
-      deliveredAt: deliveredAt?? this.deliveredAt,
+      pickedUpAt: pickedUpAt ?? this.pickedUpAt,
+      deliveredAt: deliveredAt ?? this.deliveredAt,
     );
   }
 }

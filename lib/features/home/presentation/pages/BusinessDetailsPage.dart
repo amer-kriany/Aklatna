@@ -183,6 +183,7 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                               )
                             : Container(color: const Color(0xFFEDEDEF)),
                       ),
+
                       SafeArea(
                         child: Padding(
                           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -205,6 +206,7 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                                   ),
                                 ),
                               ),
+
                               BlocBuilder<FavoriteBloc, FavoriteState>(
                                 builder: (context, favoriteState) {
                                   final isFavorite =
@@ -304,7 +306,7 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                           .toList();
 
                       // ==================================================
-                      // PROMO MAP (item id -> promotion), مطعم هيدا بس
+                      // PROMOTIONS
                       // ==================================================
 
                       final promoState = context.watch<PromotionsBloc>().state;
@@ -332,9 +334,9 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // ==============================================
-                            // PROMOTIONS SECTION
-                            // ==============================================
+                            // ==================================================
+                            // PROMOTIONS
+                            // ==================================================
                             if (promoState is PromotionsLoading)
                               const Padding(
                                 padding: EdgeInsets.symmetric(
@@ -350,72 +352,14 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                                 ),
                               )
                             else if (businessPromotions.isNotEmpty)
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.lg,
-                                    ),
-                                    child: Text(
-                                      'عروض وخصومات',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.sm),
-                                  SizedBox(
-                                    height: 250,
-                                    child: ListView.separated(
-                                      padding: const EdgeInsets.only(
-                                        left: AppSpacing.lg,
-                                        right: AppSpacing.sm,
-                                      ),
-                                      scrollDirection: Axis.horizontal,
-                                      physics: const BouncingScrollPhysics(),
-                                      itemCount: businessPromotions.length,
-                                      separatorBuilder: (context, index) =>
-                                          const SizedBox(width: AppSpacing.sm),
-                                      itemBuilder: (context, index) {
-                                        final promotion =
-                                            businessPromotions[index];
-
-                                        return PromotionCard(
-                                          width: 180,
-                                          businessName: promotion.businessName,
-                                          coverUrl: promotion.photoUrl,
-                                          itemName: promotion.itemName,
-                                          discountPercentage:
-                                              promotion.discountPercentage,
-                                          oldPrice: promotion.oldPrice
-                                              ?.toDouble(),
-                                          newPrice: promotion.newPrice
-                                              ?.toDouble(),
-                                          onTap: () {
-                                            if (promotion.menuItemId != null) {
-                                              context.push(
-                                                '/food/${promotion.menuItemId}',
-                                              );
-                                            } else {
-                                              context.push(
-                                                '/promotion-details',
-                                                extra: promotion,
-                                              );
-                                            }
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.lg),
-                                ],
+                              _buildPromotionsSection(
+                                context,
+                                businessPromotions,
                               ),
 
-                            // ==============================================
+                            // ==================================================
                             // CATEGORY CHIPS
-                            // ==============================================
+                            // ==================================================
                             BusinessCategoryChips(
                               categoryNames: categoryNames,
                               selectedIndex: _selectedIndex,
@@ -428,9 +372,9 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
 
                             const SizedBox(height: AppSpacing.md),
 
-                            // ==============================================
+                            // ==================================================
                             // CATEGORY TITLE
-                            // ==============================================
+                            // ==================================================
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppSpacing.lg,
@@ -443,9 +387,9 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
 
                             const SizedBox(height: AppSpacing.sm),
 
-                            // ==============================================
+                            // ==================================================
                             // FOOD GRID
-                            // ==============================================
+                            // ==================================================
                             itemsInCategory.isEmpty
                                 ? const Padding(
                                     padding: EdgeInsets.symmetric(vertical: 60),
@@ -455,81 +399,12 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
                                   )
                                 : BlocBuilder<CartBloc, CartState>(
                                     builder: (context, cartState) {
-                                      return GridView.builder(
-                                        shrinkWrap: true,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: AppSpacing.lg,
-                                          vertical: AppSpacing.sm,
-                                        ),
-                                        gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 2,
-                                              mainAxisSpacing: AppSpacing.sm,
-                                              crossAxisSpacing: AppSpacing.sm,
-                                              childAspectRatio: 0.72,
-                                            ),
-                                        itemCount: itemsInCategory.length,
-                                        itemBuilder: (context, index) {
-                                          final item = itemsInCategory[index];
-
-                                          final promo = promoByItemId[item.id];
-                                          final effectivePrice =
-                                              promo?.newPrice ?? item.price;
-
-                                          final matchingItemIndex = cartState
-                                              .items
-                                              .indexWhere(
-                                                (element) =>
-                                                    element.itemId == item.id,
-                                              );
-
-                                          final itemQuantity =
-                                              matchingItemIndex != -1
-                                              ? cartState
-                                                    .items[matchingItemIndex]
-                                                    .quantity
-                                              : 0;
-
-                                          return MenuItemGridCard(
-                                            photoUrl: item.photoUrl,
-                                            nameAr: item.nameAr,
-                                            price: effectivePrice,
-                                            oldPrice: promo?.oldPrice,
-                                            discountPercentage:
-                                                promo?.discountPercentage,
-                                            quantity: itemQuantity,
-                                            onTap: () => context.push(
-                                              '/food/${item.id}',
-                                            ),
-                                            onAdd: () {
-                                              context.read<CartBloc>().add(
-                                                AddItemEvent(
-                                                  item: CartItem(
-                                                    itemId: item.id,
-                                                    nameAr: item.nameAr,
-                                                    description:
-                                                        item.description ?? '',
-                                                    price: effectivePrice,
-                                                    quantity: 1,
-                                                    businessId: item.businessId,
-                                                  ),
-                                                  businessName: business.nameAr,
-                                                  businessLogo:
-                                                      business.logoUrl,
-                                                ),
-                                              );
-                                            },
-                                            onRemove: () {
-                                              context.read<CartBloc>().add(
-                                                RemoveItemEvent(
-                                                  itemId: item.id,
-                                                ),
-                                              );
-                                            },
-                                          );
-                                        },
+                                      return _buildFoodRows(
+                                        context,
+                                        itemsInCategory,
+                                        cartState,
+                                        business,
+                                        promoByItemId,
                                       );
                                     },
                                   ),
@@ -611,5 +486,186 @@ class _BusinessDetailsPageState extends State<BusinessDetailsPage>
         },
       ),
     );
+  }
+
+  // ============================================================
+  // PROMOTIONS SECTION
+  // ============================================================
+
+ Widget _buildPromotionsSection(
+  BuildContext context,
+  List<PromotionEntity> promotions,
+) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+        ),
+        child: Text(
+          'عروض وخصومات',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+
+      const SizedBox(
+        height: AppSpacing.sm,
+      ),
+
+      SizedBox(
+        height: PromotionCard.cardHeight,
+        child: ListView.separated(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.lg,
+            right: AppSpacing.sm,
+          ),
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          itemCount: promotions.length,
+          separatorBuilder: (_, __) {
+            return const SizedBox(
+              width: AppSpacing.sm,
+            );
+          },
+          itemBuilder: (context, index) {
+            final promotion =
+                promotions[index];
+
+            return PromotionCard(
+              width: 180,
+              businessName:
+                  promotion.businessName,
+              coverUrl:
+                  promotion.photoUrl,
+              itemName:
+                  promotion.itemName,
+              label:
+                  promotion.label,
+              menuItemId:
+                  promotion.menuItemId,
+              discountPercentage:
+                  promotion.discountPercentage,
+              oldPrice:
+                  promotion.oldPrice?.toDouble(),
+              newPrice:
+                  promotion.newPrice?.toDouble(),
+              onTap: () {
+                if (promotion.menuItemId != null) {
+                  context.push(
+                    '/food/${promotion.menuItemId}',
+                  );
+                } else {
+                  context.push(
+                    '/promotion-details',
+                    extra: promotion,
+                  );
+                }
+              },
+            );
+          },
+        ),
+      ),
+
+      const SizedBox(
+        height: AppSpacing.lg,
+      ),
+    ],
+  );
+}
+
+  // ============================================================
+  // FOOD ROWS
+  // ============================================================
+
+  Widget _buildFoodRows(
+    BuildContext context,
+    List<dynamic> items,
+    CartState cartState,
+    dynamic business,
+    Map<String, PromotionEntity> promoByItemId,
+  ) {
+    final rows = <Widget>[];
+
+    const columns = 2;
+
+    for (int i = 0; i < items.length; i += columns) {
+      final rowItems = items.skip(i).take(columns).toList();
+
+      final children = <Widget>[];
+
+      for (int column = 0; column < columns; column++) {
+        if (column < rowItems.length) {
+          final item = rowItems[column];
+
+          final promo = promoByItemId[item.id];
+
+          final effectivePrice = promo?.newPrice ?? item.price;
+
+          final matchingItemIndex = cartState.items.indexWhere(
+            (element) => element.itemId == item.id,
+          );
+
+          final itemQuantity = matchingItemIndex != -1
+              ? cartState.items[matchingItemIndex].quantity
+              : 0;
+
+          children.add(
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: column == 0 ? AppSpacing.lg : AppSpacing.xs,
+                  right: column == 1 ? AppSpacing.lg : AppSpacing.xs,
+                  bottom: AppSpacing.sm,
+                ),
+                child: MenuItemGridCard(
+                  photoUrl: item.photoUrl,
+                  nameAr: item.nameAr,
+                  price: effectivePrice,
+                  oldPrice: promo?.oldPrice,
+                  discountPercentage: promo?.discountPercentage,
+                  quantity: itemQuantity,
+                  onTap: () {
+                    context.push('/food/${item.id}');
+                  },
+                  onAdd: () {
+                    context.read<CartBloc>().add(
+                      AddItemEvent(
+                        item: CartItem(
+                          itemId: item.id,
+                          nameAr: item.nameAr,
+                          description: item.description ?? '',
+                          price: effectivePrice,
+                          quantity: 1,
+                          businessId: item.businessId,
+                        ),
+                        businessName: business.nameAr,
+                        businessLogo: business.logoUrl,
+                      ),
+                    );
+                  },
+                  onRemove: () {
+                    context.read<CartBloc>().add(
+                      RemoveItemEvent(itemId: item.id),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        } else {
+          children.add(const Expanded(child: SizedBox()));
+        }
+      }
+
+      rows.add(
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: children),
+      );
+    }
+
+    return Column(children: rows);
   }
 }

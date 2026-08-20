@@ -425,7 +425,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     final profile = profileState.profile;
 
-    // ----------------------------------------------------------
+      // ----------------------------------------------------------
     // DELIVERY
     // ----------------------------------------------------------
 
@@ -435,12 +435,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
       cartState.businessId!,
     );
 
-    final totalPrice =
-        cartState.totalPrice + deliveryPrice;
+    // FIX: total_price now means items-only. Do NOT add deliveryPrice here.
+    // delivery_fee is stored separately and combined only in UI for display.
+    final totalPrice = cartState.totalPrice;
 
     final isDelivery =
         selectedDeliveryOption == 'توصيل';
-
     final defaultAddress =
         _defaultAddress(context);
 
@@ -501,6 +501,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
       totalPrice: totalPrice,
       deliveryFee: deliveryPrice,
+      
 
       orderType:
           isDelivery

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -57,9 +58,14 @@ class AppUpdateChecker {
           ),
         );
       }
-    } catch (e) {
-      // Silently fail — don't block app startup if the check fails
-      // (e.g. no internet, table missing, etc.)
+    } catch (e, st) {
+      // Don't block app startup if the check fails (no internet,
+      // table missing, RLS issue, etc.) — but log in debug mode
+      // so it's not a silent black box next time something's wrong.
+      if (kDebugMode) {
+        debugPrint('[AppUpdateChecker] FAILED: $e');
+        debugPrint('$st');
+      }
     }
   }
 }

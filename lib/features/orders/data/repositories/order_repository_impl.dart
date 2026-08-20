@@ -29,16 +29,15 @@ class OrderRepositoryImpl implements OrderRepository {
   Stream<void> watchAvailableOrdersChanges() {
     return orderRemoteDatasource.watchAvailableOrdersChanges();
   }
- 
 
   @override
-Future<List<OrderEntity>> getAvailableOrders() async {
-  final orders = await orderRemoteDatasource.getAvailableOrders();
+  Future<List<OrderEntity>> getAvailableOrders() async {
+    final orders = await orderRemoteDatasource.getAvailableOrders();
 
-  return orders
-      .map<OrderEntity>((order) => mapToEntity(order))
-      .toList();
-}
+    return orders
+        .map<OrderEntity>((order) => mapToEntity(order))
+        .toList();
+  }
 
   @override
   Stream<void> watchDriverOrdersChanges(String driverId) {

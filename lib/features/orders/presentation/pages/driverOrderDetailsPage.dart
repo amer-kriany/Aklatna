@@ -21,8 +21,7 @@ class DriverOrderDetailsPage extends StatefulWidget {
   final OrderEntity order;
 
   @override
-  State<DriverOrderDetailsPage> createState() =>
-      _DriverOrderDetailsPageState();
+  State<DriverOrderDetailsPage> createState() => _DriverOrderDetailsPageState();
 }
 
 class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
@@ -48,7 +47,8 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
     _subscription = repo.watchOrderStatus(_order.id!).listen((updated) {
       if (!mounted) return;
 
-      final justCancelled = _order.orderStatus != OrderStatus.cancelled &&
+      final justCancelled =
+          _order.orderStatus != OrderStatus.cancelled &&
           updated.orderStatus == OrderStatus.cancelled;
 
       setState(() => _order = updated);
@@ -68,7 +68,9 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
           textDirection: TextDirection.rtl,
           child: AlertDialog(
             title: const Text('تم إلغاء الطلب'),
-            content: const Text('تم إلغاء هذا الطلب. لم يعد بإمكانك المتابعة به.'),
+            content: const Text(
+              'تم إلغاء هذا الطلب. لم يعد بإمكانك المتابعة به.',
+            ),
             actions: [
               ElevatedButton(
                 onPressed: () {
@@ -119,53 +121,58 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
     return parts.isEmpty ? null : parts.join('، ');
   }
 
- Future<void> _openCustomerLocationInMaps(BuildContext context) async {
-  final businessPoint = _businessLocation(context);
-  final Uri mapsUri;
+  Future<void> _openCustomerLocationInMaps(BuildContext context) async {
+    final businessPoint = _businessLocation(context);
+    final Uri mapsUri;
 
-  if (businessPoint != null &&
-      _order.deliveryLatitude != null &&
-      _order.deliveryLongitude != null) {
-    // Directions from restaurant -> customer, shows route + distance
-    // natively in the maps app instead of just a single pin.
-    mapsUri = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1'
-      '&origin=${businessPoint.latitude},${businessPoint.longitude}'
-      '&destination=${_order.deliveryLatitude},${_order.deliveryLongitude}'
-      '&travelmode=driving',
+    if (businessPoint != null &&
+        _order.deliveryLatitude != null &&
+        _order.deliveryLongitude != null) {
+      // Directions from restaurant -> customer, shows route + distance
+      // natively in the maps app instead of just a single pin.
+      mapsUri = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1'
+        '&origin=${businessPoint.latitude},${businessPoint.longitude}'
+        '&destination=${_order.deliveryLatitude},${_order.deliveryLongitude}'
+        '&travelmode=driving',
+      );
+    } else if (_order.deliveryLatitude != null &&
+        _order.deliveryLongitude != null) {
+      mapsUri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=${_order.deliveryLatitude},${_order.deliveryLongitude}',
+      );
+    } else if (_order.deliveryAddress != null &&
+        _order.deliveryAddress!.isNotEmpty) {
+      mapsUri = Uri.parse(
+        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(_order.deliveryAddress!)}',
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لا يوجد موقع محدد لهذا الطلب')),
+      );
+      return;
+    }
+
+    final launched = await launchUrl(
+      mapsUri,
+      mode: LaunchMode.externalApplication,
     );
-  } else if (_order.deliveryLatitude != null && _order.deliveryLongitude != null) {
-    mapsUri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${_order.deliveryLatitude},${_order.deliveryLongitude}',
-    );
-  } else if (_order.deliveryAddress != null && _order.deliveryAddress!.isNotEmpty) {
-    mapsUri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(_order.deliveryAddress!)}',
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('لا يوجد موقع محدد لهذا الطلب')),
-    );
-    return;
+
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('لا يوجد تطبيق خرائط مثبت')));
+    }
   }
-
-  final launched = await launchUrl(mapsUri, mode: LaunchMode.externalApplication);
-
-  if (!launched && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('لا يوجد تطبيق خرائط مثبت')),
-    );
-  }
-}
 
   Future<void> _callCustomer(BuildContext context) async {
     final uri = Uri(scheme: 'tel', path: _order.customerPhone);
     final launched = await launchUrl(uri);
 
     if (!launched && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر فتح تطبيق الاتصال')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تعذر فتح تطبيق الاتصال')));
     }
   }
 
@@ -187,8 +194,10 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
   Widget _buildMap(BuildContext context) {
     latlong.LatLng? customerPoint;
     if (_order.deliveryLatitude != null && _order.deliveryLongitude != null) {
-      customerPoint =
-          latlong.LatLng(_order.deliveryLatitude!, _order.deliveryLongitude!);
+      customerPoint = latlong.LatLng(
+        _order.deliveryLatitude!,
+        _order.deliveryLongitude!,
+      );
     }
 
     final businessPoint = _businessLocation(context);
@@ -268,8 +277,9 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'منزل الزبون',
-                style: AppTextStyles.regularSmall
-                    .copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.regularSmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
             if (customerPoint != null && businessPoint != null)
@@ -286,8 +296,9 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
               const SizedBox(width: AppSpacing.xxs),
               Text(
                 'المطعم',
-                style: AppTextStyles.regularSmall
-                    .copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.regularSmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             ],
           ],
@@ -303,13 +314,23 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(title: Text('طلب #${_order.orderNumber ?? ''}', style: AppTextStyles.h4)),
+        appBar: AppBar(
+          title: Text(
+            'طلب #${_order.orderNumber ?? ''}',
+            style: AppTextStyles.h4,
+          ),
+        ),
         body: ListView(
           padding: const EdgeInsets.all(AppSpacing.pageHorizontal),
           children: [
             _SectionCard(
               title: 'حالة الطلب',
-              children: [_InfoRow(label: 'الحالة', value: orderStatusLabel(_order.orderStatus))],
+              children: [
+                _InfoRow(
+                  label: 'الحالة',
+                  value: orderStatusLabel(_order.orderStatus),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.sm),
 
@@ -317,7 +338,11 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
               title: 'المطعم',
               children: [
                 _InfoRow(label: 'الاسم', value: _order.businessName ?? '—'),
-                _InfoRow(label: 'العنوان', value: businessAddress ?? 'غير متوفر'),
+                _InfoRow(
+                  label: 'العنوان',
+                  value: businessAddress ?? 'غير متوفر',
+                  maxLines: 2,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -330,6 +355,7 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
                 _InfoRow(
                   label: 'عنوان التوصيل',
                   value: _order.deliveryAddress ?? 'استلام من المطعم',
+                  maxLines: 2,
                 ),
               ],
             ),
@@ -366,29 +392,42 @@ class _DriverOrderDetailsPageState extends State<DriverOrderDetailsPage> {
               children: [
                 for (final item in _order.items)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xxs,
+                    ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('${item.quantity} × ${item.nameAr}', style: AppTextStyles.regularMedium),
-                        Text('${item.price * item.quantity} ل.س', style: AppTextStyles.regularMedium),
+                        Text(
+                          '${item.quantity} × ${item.nameAr}',
+                          style: AppTextStyles.regularMedium,
+                        ),
+                        Text(
+                          '${item.price * item.quantity} ل.س',
+                          style: AppTextStyles.regularMedium,
+                        ),
                       ],
                     ),
                   ),
                 const Divider(),
+                _InfoRow(
+                  label: 'مجموع الطلب',
+                  value: '${_order.totalPrice} ل.س',
+                ),
                 _InfoRow(
                   label: 'رسوم التوصيل',
                   value: '${_order.deliveryFee} ل.س',
                 ),
                 _InfoRow(
                   label: 'الإجمالي',
-                  value: '${_order.totalPrice} ل.س',
+                  value: '${_order.totalPrice + _order.deliveryFee} ل.س',
                   bold: true,
                 ),
               ],
             ),
 
-            if (_order.description != null && _order.description!.isNotEmpty) ...[
+            if (_order.description != null &&
+                _order.description!.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.sm),
               _SectionCard(
                 title: 'ملاحظات',
@@ -427,17 +466,24 @@ class _SectionCard extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value, this.bold = false});
+  const _InfoRow({
+    required this.label,
+    required this.value,
+    this.bold = false,
+    this.maxLines = 1,
+  });
 
   final String label;
   final String value;
   final bool bold;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
@@ -446,11 +492,19 @@ class _InfoRow extends StatelessWidget {
               color: AppColors.textSecondary,
             ),
           ),
-          Text(
-            value,
-            style: bold
-                ? AppTextStyles.bodyMedium
-                : AppTextStyles.regularMedium,
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              maxLines: maxLines,
+              overflow: maxLines > 1
+                  ? TextOverflow.ellipsis
+                  : TextOverflow.ellipsis,
+              style: bold
+                  ? AppTextStyles.bodyMedium
+                  : AppTextStyles.regularMedium,
+            ),
           ),
         ],
       ),

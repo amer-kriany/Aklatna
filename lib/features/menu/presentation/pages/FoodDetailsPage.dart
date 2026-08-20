@@ -132,8 +132,7 @@ class _FoodetailspageState extends State<Foodetailspage> {
                                   FoodDetailsImage(
                                     imageUrl: state.item.photoUrl,
                                     onBack: () => Navigator.pop(context),
-                                    onFavorite: () {},
-                                    isFavorite: false,
+                                  
                                   ),
 
                                   if (business != null)

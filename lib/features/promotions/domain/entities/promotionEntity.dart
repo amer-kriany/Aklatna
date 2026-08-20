@@ -11,18 +11,20 @@ class PromotionEntity {
 
   final String businessId;
   final String businessName;
+  final String? description;
   final bool isActive;
 
   const PromotionEntity({
     required this.id,
-     this.label,
+    this.label,
     required this.discountPercentage,
-     this.menuItemId,
+    this.menuItemId,
     required this.itemName,
     this.photoUrl,
     required this.businessId,
     required this.businessName,
     this.oldPrice,
-    this.newPrice, required this.isActive,
+    this.newPrice,
+    required this.isActive, this.description,
   });
 }

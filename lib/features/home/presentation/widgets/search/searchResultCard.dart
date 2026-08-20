@@ -20,87 +20,168 @@ class SearchResultCard extends StatelessWidget {
   }
 
   String _shortAddress(String fullAddress) {
-  final parts = fullAddress
-      .split(',')
-      .map((e) => e.trim())
-      .where((e) => e.isNotEmpty)
-      .toList();
+    final parts = fullAddress
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
 
-  if (parts.isEmpty) return 'داريا';
+    if (parts.isEmpty) return 'داريا';
 
-  final firstPart = parts.first;
+    final firstPart = parts.first;
 
-  // لو أول جزء هو نفسه "داريا" أو يحتوي عليها، خليه لحاله
-  if (firstPart.contains('داريا')) {
-    return 'داريا';
+    if (firstPart.contains('داريا')) {
+      return 'داريا';
+    }
+
+    return '$firstPart, داريا';
   }
-
-  // غير هيك (يعني أول جزء هو اسم شارع فعلي)، اعرض الشارع + داريا
-  return '$firstPart, داريا';
-}
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          child: _hasValidCoverUrl
-              ? Image.network(
-                  business.coverUrl!.trim(),
-                  width: AppSizes.avatarLg,
-                  height: AppSizes.avatarLg,
-                  fit: BoxFit.cover,
-                )
-              : Container(
-                  width: AppSizes.avatarLg,
-                  height: AppSizes.avatarLg,
-                  color: AppColors.surface,
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.storefront,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ============================================================
+          // IMAGE + STATUS DOT
+          // ============================================================
+          Stack(
+            clipBehavior: Clip.none,
             children: [
-              Text(
-                business.nameAr,
-                style: AppTextStyles.h4,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                child: _hasValidCoverUrl
+                    ? Image.network(
+                        business.coverUrl!.trim(),
+                        width: AppSizes.avatarLg,
+                        height: AppSizes.avatarLg,
+                        fit: BoxFit.cover,
+                      )
+                    : Container(
+                        width: AppSizes.avatarLg,
+                        height: AppSizes.avatarLg,
+                        color: AppColors.surface,
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.storefront_rounded,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
               ),
-              const SizedBox(height: AppSpacing.xxs),
-              Text(
-                _shortAddress(business.adress),
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: AppSpacing.xxs),
-              Row(
-                children: [
-                  const Icon(Icons.star_rounded, color: Colors.amber, size: 16),
-                  const SizedBox(width: 2),
-                  Text(
-                    business.rating.toStringAsFixed(1),
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
+              Positioned(
+                bottom: -4,
+                right: -4,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: business.isOpen
+                        ? AppColors.success
+                        : AppColors.textHint,
+                    border: Border.all(
+                      color: AppColors.background,
+                      width: 2,
                     ),
                   ),
-                ],
+                ),
               ),
             ],
           ),
-        ),
-      ],
+
+          const SizedBox(width: AppSpacing.sm),
+
+          // ============================================================
+          // TEXT INFO
+          // ============================================================
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  business.nameAr,
+                  style: AppTextStyles.h4.copyWith(fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 3),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_rounded,
+                      size: 13,
+                      color: AppColors.textHint,
+                    ),
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: Text(
+                        _shortAddress(business.adress),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            color: Colors.amber,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            business.rating.toStringAsFixed(1),
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      business.isOpen ? 'مفتوح الآن' : 'مغلق الآن',
+                      style: AppTextStyles.caption.copyWith(
+                        color: business.isOpen
+                            ? AppColors.success
+                            : AppColors.textHint,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
