@@ -56,7 +56,10 @@ class _DriverOrdersPageState extends State<DriverOrdersPage>
           title: Text('توصيلاتي', style: AppTextStyles.h4),
           bottom: TabBar(
             controller: _tabController,
-            tabs: const [Tab(text: 'جارية'), Tab(text: 'السجل')],
+            tabs: const [
+              Tab(text: 'جارية'),
+              Tab(text: 'السجل'),
+            ],
           ),
         ),
         body: BlocConsumer<OrderBloc, OrderState>(
@@ -68,16 +71,11 @@ class _DriverOrdersPageState extends State<DriverOrdersPage>
                 .map((o) => o.id!)
                 .toSet();
 
-            // An order that WAS in our ongoing set last time but is now
-            // gone from it, and specifically landed on cancelled (not
-            // completed), just got cancelled out from under the driver
-            // -- e.g. the restaurant cancelled it, or it hit the 20-min
-            // auto-cancel. Surface it instead of letting it silently
-            // vanish from "جارية".
             final droppedIds = _lastOngoingIds.difference(nowOngoingIds);
             if (droppedIds.isNotEmpty) {
               final justCancelled = state.orders.where(
-                (o) => droppedIds.contains(o.id) &&
+                (o) =>
+                    droppedIds.contains(o.id) &&
                     o.orderStatus == OrderStatus.cancelled,
               );
 
@@ -99,10 +97,12 @@ class _DriverOrdersPageState extends State<DriverOrdersPage>
               return const SizedBox();
             }
 
-            final ongoing =
-                state.orders.where((o) => o.orderStatus.isOngoing).toList();
-            final history =
-                state.orders.where((o) => o.orderStatus.isHistory).toList();
+            final ongoing = state.orders
+                .where((o) => o.orderStatus.isOngoing)
+                .toList();
+            final history = state.orders
+                .where((o) => o.orderStatus.isHistory)
+                .toList();
 
             return TabBarView(
               controller: _tabController,
@@ -142,8 +142,7 @@ class _DriverOrderCard extends StatelessWidget {
 
   final OrderEntity order;
 
-  String get _driverId =>
-      Supabase.instance.client.auth.currentUser!.id;
+  String get _driverId => Supabase.instance.client.auth.currentUser!.id;
 
   String? _businessAddress(BuildContext context) {
     final businessState = context.read<BusinessBloc>().state;
@@ -168,11 +167,7 @@ class _DriverOrderCard extends StatelessWidget {
         .split(',')
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
-        .where(
-          (e) =>
-              !e.contains('سوريا') &&
-              !e.contains('محافظة'),
-        )
+        .where((e) => !e.contains('سوريا') && !e.contains('محافظة'))
         .toList();
 
     return parts.isEmpty ? null : parts.join('، ');
@@ -197,8 +192,7 @@ class _DriverOrderCard extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) =>
-                          DriverOrderDetailsPage(order: order),
+                      builder: (_) => DriverOrderDetailsPage(order: order),
                     ),
                   );
                 },
@@ -207,10 +201,6 @@ class _DriverOrderCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ============================================================
-                // BUSINESS NAME + STATUS
-                // ============================================================
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -228,12 +218,8 @@ class _DriverOrderCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(
-                          AppRadius.full,
-                        ),
-                        border: Border.all(
-                          color: statusColor.withOpacity(0.4),
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        border: Border.all(color: statusColor.withOpacity(0.4)),
                       ),
                       child: Text(
                         orderStatusLabel(order.orderStatus),
@@ -246,10 +232,6 @@ class _DriverOrderCard extends StatelessWidget {
                 ),
 
                 const SizedBox(height: AppSpacing.sm),
-
-                // ============================================================
-                // ADDRESSES
-                // ============================================================
 
                 if (businessAddress != null)
                   _AddressRow(
@@ -271,21 +253,11 @@ class _DriverOrderCard extends StatelessWidget {
                 const Divider(height: 1),
                 const SizedBox(height: AppSpacing.sm),
 
-                // ============================================================
-                // PRICE BREAKDOWN
-                // ============================================================
-
-                _PriceRow(
-                  label: 'سعر الطلب',
-                  value: order.subtotal,
-                ),
+                _PriceRow(label: 'سعر الطلب', value: order.totalPrice),
 
                 const SizedBox(height: AppSpacing.xxs),
 
-                _PriceRow(
-                  label: 'أجرة التوصيل',
-                  value: order.deliveryFee,
-                ),
+                _PriceRow(label: 'أجرة التوصيل', value: order.deliveryFee),
 
                 const SizedBox(height: AppSpacing.xs),
 
@@ -295,15 +267,11 @@ class _DriverOrderCard extends StatelessWidget {
 
                 _PriceRow(
                   label: 'الإجمالي',
-                  value: order.totalPrice,
+                  value: order.totalPrice + order.deliveryFee,
                   isTotal: true,
                 ),
 
                 const SizedBox(height: AppSpacing.md),
-
-                // ============================================================
-                // ACTION BUTTON
-                // ============================================================
 
                 _actionButton(context),
               ],
@@ -321,10 +289,7 @@ class _DriverOrderCard extends StatelessWidget {
         child: ElevatedButton(
           onPressed: () {
             context.read<OrderBloc>().add(
-              MarkOutForDeliveryEvent(
-                orderId: order.id!,
-                driverId: _driverId,
-              ),
+              MarkOutForDeliveryEvent(orderId: order.id!, driverId: _driverId),
             );
           },
           child: const Text('بدء التوصيل'),
@@ -338,10 +303,7 @@ class _DriverOrderCard extends StatelessWidget {
         child: ElevatedButton(
           onPressed: () {
             context.read<OrderBloc>().add(
-              CompleteOrderEvent(
-                orderId: order.id!,
-                driverId: _driverId,
-              ),
+              CompleteOrderEvent(orderId: order.id!, driverId: _driverId),
             );
           },
           child: const Text('تم التسليم'),
@@ -352,6 +314,7 @@ class _DriverOrderCard extends StatelessWidget {
     return const SizedBox.shrink();
   }
 }
+
 class _AddressRow extends StatelessWidget {
   const _AddressRow({
     required this.icon,
@@ -368,11 +331,7 @@ class _AddressRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: AppSizes.iconSm,
-          color: AppColors.primary,
-        ),
+        Icon(icon, size: AppSizes.iconSm, color: AppColors.primary),
         const SizedBox(width: AppSpacing.xxs),
         Text(
           '$label: ',
@@ -387,7 +346,7 @@ class _AddressRow extends StatelessWidget {
             style: AppTextStyles.regularSmall.copyWith(
               color: AppColors.textSecondary,
             ),
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ),
@@ -414,21 +373,13 @@ class _PriceRow extends StatelessWidget {
             color: AppColors.primary,
             fontWeight: FontWeight.w800,
           )
-        : AppTextStyles.regularSmall.copyWith(
-            color: AppColors.textSecondary,
-          );
+        : AppTextStyles.regularSmall.copyWith(color: AppColors.textSecondary);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: textStyle,
-        ),
-        Text(
-          '${value ?? 0} ل.س',
-          style: textStyle,
-        ),
+        Text(label, style: textStyle),
+        Text('${value ?? 0} ل.س', style: textStyle),
       ],
     );
   }

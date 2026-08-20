@@ -23,10 +23,9 @@ class OrderModel {
   final OrderStatus orderStatus;
   final DateTime? scheduledFor;
   final int? estimatedPreparationTime;
-  final double? subtotal;
   final String? driverId;
-final DateTime? pickedUpAt;
-final DateTime? deliveredAt;
+  final DateTime? pickedUpAt;
+  final DateTime? deliveredAt;
 
   OrderModel({
     this.id,
@@ -49,7 +48,9 @@ final DateTime? deliveredAt;
     this.businessLogo,
     this.businessName,
     this.estimatedPreparationTime,
-    this.driverId, this.pickedUpAt, this.deliveredAt,  this.subtotal,
+    this.driverId,
+    this.pickedUpAt,
+    this.deliveredAt,
   });
 
   Map<String, dynamic> toJson() {
@@ -69,7 +70,7 @@ final DateTime? deliveredAt;
       'business_logo': businessLogo,
       'business_name': businessName,
       'order_status': 'pending',
-    'scheduled_for': scheduledFor?.toUtc().toIso8601String(),
+      'scheduled_for': scheduledFor?.toUtc().toIso8601String(),
       // id, created_at, order_number — DB-generated, not sent from client
       // estimated_preparation_time — set later by the restaurant dashboard
       // driver_id — set later when a driver claims the order
@@ -147,53 +148,52 @@ final DateTime? deliveredAt;
       }
     }
 
-    return  OrderModel(
-  id: asStringOrEmpty(orders['id']),
-  businessId: asStringOrEmpty(orders['business_id']),
-  customerId: asStringOrEmpty(orders['customer_id']),
-  customername: asStringOrEmpty(orders['customer_name']),
-  customerPhone: asStringOrEmpty(orders['customer_phone']),
-  items: asCartItems(orders['items']),
+    return OrderModel(
+      id: asStringOrEmpty(orders['id']),
+      businessId: asStringOrEmpty(orders['business_id']),
+      customerId: asStringOrEmpty(orders['customer_id']),
+      customername: asStringOrEmpty(orders['customer_name']),
+      customerPhone: asStringOrEmpty(orders['customer_phone']),
+      items: asCartItems(orders['items']),
 
-  businessName: asNullableString(orders['business_name']),
-  businessLogo: asNullableString(orders['business_logo']),
+      businessName: asNullableString(orders['business_name']),
+      businessLogo: asNullableString(orders['business_logo']),
 
-  totalPrice: asDoubleOrZero(orders['total_price']),
-  subtotal: asDoubleOrZero(orders['subtotal']),
-  deliveryFee: asDoubleOrZero(orders['delivery_fee']),
+      totalPrice: asDoubleOrZero(orders['total_price']),
+      deliveryFee: asDoubleOrZero(orders['delivery_fee']),
 
-  orderType: asOrderType(orders['order_type']),
-  deliveryAddress: asNullableString(orders['delivery_address']),
-  deliveryLatitude: orders['delivery_latitude'] == null
-      ? null
-      : asDoubleOrZero(orders['delivery_latitude']),
-  deliveryLongitude: orders['delivery_longitude'] == null
-      ? null
-      : asDoubleOrZero(orders['delivery_longitude']),
+      orderType: asOrderType(orders['order_type']),
+      deliveryAddress: asNullableString(orders['delivery_address']),
+      deliveryLatitude: orders['delivery_latitude'] == null
+          ? null
+          : asDoubleOrZero(orders['delivery_latitude']),
+      deliveryLongitude: orders['delivery_longitude'] == null
+          ? null
+          : asDoubleOrZero(orders['delivery_longitude']),
 
-  orderNumber: asStringOrEmpty(orders['order_number']),
-  createdAt: asDateOrEpoch(orders['created_at']),
+      orderNumber: asStringOrEmpty(orders['order_number']),
+      createdAt: asDateOrEpoch(orders['created_at']),
 
-  orderStatus: asOrderStatus(orders['order_status']),
+      orderStatus: asOrderStatus(orders['order_status']),
 
-  description: asNullableString(orders['description']),
-  scheduledFor: asNullableDate(orders['scheduled_for']),
+      description: asNullableString(orders['description']),
+      scheduledFor: asNullableDate(orders['scheduled_for']),
 
-  estimatedPreparationTime: asNullableInt(
-    orders['estimated_preparation_time'],
-  ),
+      estimatedPreparationTime: asNullableInt(
+        orders['estimated_preparation_time'],
+      ),
 
-  driverId: asNullableString(
-    orders['driver_id'],
-  ),
+      driverId: asNullableString(
+        orders['driver_id'],
+      ),
 
-  pickedUpAt: asNullableDate(
-    orders['picked_up_at'],
-  ),
+      pickedUpAt: asNullableDate(
+        orders['picked_up_at'],
+      ),
 
-  deliveredAt: asNullableDate(
-    orders['delivered_at'],
-  ),
-);
+      deliveredAt: asNullableDate(
+        orders['delivered_at'],
+      ),
+    );
   }
 }

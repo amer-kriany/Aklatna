@@ -26,7 +26,6 @@ class OrderEntity {
   final String? driverId;
   final DateTime? pickedUpAt;
   final DateTime? deliveredAt;
-  final double? subtotal;
 
   OrderEntity({
     this.id,
@@ -52,7 +51,6 @@ class OrderEntity {
     this.driverId,
     this.pickedUpAt,
     this.deliveredAt,
-     this.subtotal,
   });
 
   OrderEntity copyWith({
@@ -79,7 +77,6 @@ class OrderEntity {
     String? driverId,
     DateTime? pickedUpAt,
     DateTime? deliveredAt,
-    double? subtotal,
   }) {
     return OrderEntity(
       id: id ?? this.id,
@@ -106,7 +103,6 @@ class OrderEntity {
       driverId: driverId ?? this.driverId,
       pickedUpAt: pickedUpAt ?? this.pickedUpAt,
       deliveredAt: deliveredAt ?? this.deliveredAt,
-      subtotal: subtotal ?? this.subtotal,
     );
   }
 }

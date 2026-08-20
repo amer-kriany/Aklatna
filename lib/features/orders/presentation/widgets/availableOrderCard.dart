@@ -111,7 +111,7 @@ class AvailableOrderCard extends StatelessWidget {
 
                 _PriceRow(
                   label: 'سعر الطلب',
-                  value: order.subtotal,
+                  value: order.totalPrice,
                 ),
                 const SizedBox(height: AppSpacing.xxs),
                 _PriceRow(
@@ -123,7 +123,7 @@ class AvailableOrderCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xs),
                 _PriceRow(
                   label: 'الإجمالي (تُحصَّل من الزبون)',
-                  value: order.totalPrice,
+                  value: order.totalPrice + order.deliveryFee,
                   isTotal: true,
                 ),
 
@@ -197,7 +197,7 @@ class _AddressRow extends StatelessWidget {
             style: AppTextStyles.regularSmall.copyWith(
               color: AppColors.textSecondary,
             ),
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ),
