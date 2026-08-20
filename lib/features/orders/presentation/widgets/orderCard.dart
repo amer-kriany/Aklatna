@@ -17,6 +17,10 @@ class OrderCard extends StatelessWidget {
     final statusColor = OrderStatusHelper.colorFor(order.orderStatus);
     final statusLabel = OrderStatusHelper.labelAr(order.orderStatus);
 
+    final grandTotal =
+        order.totalPrice +
+        (order.orderType.name == 'delivery' ? order.deliveryFee : 0);
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -33,12 +37,12 @@ class OrderCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  order.orderNumber ?? '—',
-                  style: AppTextStyles.bodyMedium,
-                ),
+                Text(order.orderNumber ?? '—', style: AppTextStyles.bodyMedium),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xxs),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xxs,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(AppRadius.full),
@@ -53,7 +57,9 @@ class OrderCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.xs),
             Text(
               '${order.items.length} عناصر',
-              style: AppTextStyles.regularSmall.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.regularSmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: AppSpacing.xs),
             Row(
@@ -66,7 +72,7 @@ class OrderCard extends StatelessWidget {
                   style: AppTextStyles.caption,
                 ),
                 Text(
-                  order.totalPrice.toStringAsFixed(0),
+                  grandTotal.toStringAsFixed(0),
                   style: AppTextStyles.priceMedium,
                 ),
               ],

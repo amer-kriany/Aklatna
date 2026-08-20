@@ -182,11 +182,11 @@ class _SignUpPageState extends State<SignUpPage> {
                             padding: const EdgeInsets.only(top: AppSpacing.xl),
                             child: Column(
                               children: [
-                                AuthFooterLink(
-                                  text: 'لديك حساب بالفعل؟',
-                                  actionText: 'تسجيل الدخول',
-                                  onTap: () => context.pop(),
-                                ),
+                              AuthFooterLink(
+  text: 'لديك حساب بالفعل؟',
+  actionText: 'تسجيل الدخول',
+  onTap: () => context.go('/signin'),
+),
                                 const SizedBox(height: AppSpacing.sm),
                               ],
                             ),

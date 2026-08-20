@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_spacing.dart';
@@ -9,14 +8,10 @@ class FoodDetailsImage extends StatelessWidget {
     super.key,
     this.imageUrl,
     this.onBack,
-    this.onFavorite,
-    this.isFavorite = false,
   });
 
   final String? imageUrl;
   final VoidCallback? onBack;
-  final VoidCallback? onFavorite;
-  final bool isFavorite;
 
   bool get _hasValidCoverUrl {
     final coverUrl = imageUrl ?? '';
@@ -143,7 +138,7 @@ class FoodDetailsImage extends StatelessWidget {
           ),
 
           // ============================================================
-          // TOP BUTTONS
+          // TOP BUTTON (BACK ONLY)
           // ============================================================
 
           SafeArea(
@@ -153,23 +148,12 @@ class FoodDetailsImage extends StatelessWidget {
                 vertical: AppSpacing.md,
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   // BACK
                   _CircleIconButton(
                     icon: Icons.arrow_back_ios_new_rounded,
                     onPressed: onBack,
-                  ),
-
-                  // FAVORITE
-                  _CircleIconButton(
-                    icon: isFavorite
-                        ? Icons.favorite
-                        : Icons.favorite_border,
-                    iconColor: isFavorite
-                        ? AppColors.primary
-                        : AppColors.textPrimary,
-                    onPressed: onFavorite,
                   ),
                 ],
               ),
@@ -189,6 +173,7 @@ class _CircleIconButton extends StatelessWidget {
   const _CircleIconButton({
     required this.icon,
     required this.onPressed,
+    // ignore: unused_element_parameter
     this.iconColor = AppColors.textPrimary,
   });
 
@@ -218,4 +203,3 @@ class _CircleIconButton extends StatelessWidget {
     );
   }
 }
-

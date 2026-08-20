@@ -437,94 +437,109 @@ class _HomePageState extends State<HomePage>
                         const SizedBox(height: AppSpacing.xl),
                       ],
 
-                      BlocBuilder<PromotionsBloc, PromotionsState>(
-                        builder: (context, promoState) {
-                          if (promoState is PromotionsLoading) {
-                            return const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: AppSpacing.xl,
-                              ),
-                              child: SizedBox(
-                                height: 110,
-                                child: ListSkeleton(
-                                  itemCount: 2,
-                                  showLeadingCircle: false,
-                                ),
-                              ),
-                            );
-                          }
+                     BlocBuilder<PromotionsBloc, PromotionsState>(
+  builder: (context, promoState) {
+    if (promoState is PromotionsLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(
+          vertical: AppSpacing.xl,
+        ),
+        child: SizedBox(
+          height: 110,
+          child: ListSkeleton(
+            itemCount: 2,
+            showLeadingCircle: false,
+          ),
+        ),
+      );
+    }
 
-                          if (promoState is PromotionsError) {
-                            return const SizedBox.shrink();
-                          }
+    if (promoState is PromotionsError) {
+      return const SizedBox.shrink();
+    }
 
-                          if (promoState is! PromotionsLoaded ||
-                              promoState.promotions.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
+    if (promoState is! PromotionsLoaded ||
+        promoState.promotions.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: AppSpacing.pageHorizontal,
-                                ),
-                                child: SectionHeader(title: 'عروض وخصومات'),
-                              ),
-                              const SizedBox(height: AppSpacing.md),
-                              SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.only(
-                                  left: AppSpacing.pageHorizontal,
-                                  right: AppSpacing.sm,
-                                ),
-                                child: Row(
-                                  children: [
-                                    for (
-                                      int i = 0;
-                                      i < promoState.promotions.length;
-                                      i++
-                                    ) ...[
-                                      if (i != 0)
-                                        const SizedBox(width: AppSpacing.sm),
-                                      PromotionCard(
-                                        businessName: promoState
-                                            .promotions[i]
-                                            .businessName,
-                                        coverUrl:
-                                            promoState.promotions[i].photoUrl,
-                                        itemName:
-                                            promoState.promotions[i].itemName,
-                                        discountPercentage: promoState
-                                            .promotions[i]
-                                            .discountPercentage,
-                                        oldPrice: promoState
-                                            .promotions[i]
-                                            .oldPrice
-                                            ?.toDouble(),
-                                        newPrice: promoState
-                                            .promotions[i]
-                                            .newPrice
-                                            ?.toDouble(),
-                                        onTap: () {
-                                          final promo = promoState.promotions[i];
-                                          if (promo.menuItemId != null) {
-                                            context.push('/food/${promo.menuItemId}');
-                                          } else {
-                                            context.push('/promotion-details', extra: promo);
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: AppSpacing.xl),
-                            ],
-                          );
-                        },
-                      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSpacing.pageHorizontal,
+          ),
+          child: SectionHeader(
+            title: 'عروض وخصومات',
+          ),
+        ),
+
+        const SizedBox(
+          height: AppSpacing.md,
+        ),
+
+        SizedBox(
+          height: PromotionCard.cardHeight,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(
+              left: AppSpacing.pageHorizontal,
+              right: AppSpacing.sm,
+            ),
+            itemCount:
+                promoState.promotions.length,
+            separatorBuilder: (_, __) {
+              return const SizedBox(
+                width: AppSpacing.sm,
+              );
+            },
+            itemBuilder: (context, index) {
+              final promo =
+                  promoState.promotions[index];
+
+              return PromotionCard(
+                businessName:
+                    promo.businessName,
+                coverUrl:
+                    promo.photoUrl,
+                itemName:
+                    promo.itemName,
+                label:
+                    promo.label,
+                menuItemId:
+                    promo.menuItemId,
+                discountPercentage:
+                    promo.discountPercentage,
+                oldPrice:
+                    promo.oldPrice?.toDouble(),
+                newPrice:
+                    promo.newPrice?.toDouble(),
+                onTap: () {
+                  if (promo.menuItemId != null) {
+                    context.push(
+                      '/food/${promo.menuItemId}',
+                    );
+                  } else {
+                    context.push(
+                      '/promotion-details',
+                      extra: promo,
+                    );
+                  }
+                },
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(
+          height: AppSpacing.xl,
+        ),
+      ],
+    );
+  },
+),
 
                       BlocBuilder<FavoriteBloc, FavoriteState>(
                         builder: (context, favoriteState) {

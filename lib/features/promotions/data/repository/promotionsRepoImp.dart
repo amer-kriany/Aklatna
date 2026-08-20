@@ -37,6 +37,8 @@ PromotionEntity mapToEntity(Promotionmodel model) {
     photoUrl: model.photoUrl,
     id: model.id,
     isActive: model.isActive,
+    description: model.description,
+    
     
   );
 }

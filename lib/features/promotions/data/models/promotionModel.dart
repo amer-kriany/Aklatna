@@ -13,22 +13,23 @@ class Promotionmodel {
   final double? oldPrice;
   final double? newPrice;
   final bool isActive;
+  final String? description;
 
   final DateTime createdAt;
 
   const Promotionmodel({
     required this.id,
-     this.label,
+    this.label,
     required this.discountPercentage,
     required this.businessId,
     required this.businessName,
-     this.menuItemId,
+    this.menuItemId,
     required this.menuItemName,
     this.photoUrl,
     required this.createdAt,
     this.oldPrice,
     this.newPrice,
-    required this.isActive,
+    required this.isActive, this.description,
   });
 
   factory Promotionmodel.fromJson(Map<String, dynamic> json) {
@@ -68,6 +69,7 @@ class Promotionmodel {
       isActive: json['is_active'] ?? false,
       oldPrice: asNullableDouble(json['old_price']),
       newPrice: asNullableDouble(json['new_price']),
+      description: asNullableString(json['description']),
     );
   }
 }
