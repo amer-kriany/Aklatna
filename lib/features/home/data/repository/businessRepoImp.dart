@@ -15,13 +15,13 @@ class Businessrepoimp implements Businessrepo {
   Future<List<BusinessEntity>> getBusinessTable() async {
     final business = await businessDatasrouce.getBusinesses();
 
-    final todayHours = await _fetchTodayHoursSafely();
+    final hours = await _fetchTodayAndYesterdayHoursSafely();
 
     return business
         .map(
           (e) => mapToEntity(
             e,
-            todayHours: todayHours,
+            allHours: hours,
           ),
         )
         .toList();
@@ -35,32 +35,33 @@ class Businessrepoimp implements Businessrepo {
       query: query,
     );
 
-    final todayHours = await _fetchTodayHoursSafely();
+    final hours = await _fetchTodayAndYesterdayHoursSafely();
 
     return response
         .map(
           (e) => mapToEntity(
             e,
-            todayHours: todayHours,
+            allHours: hours,
           ),
         )
         .toList();
   }
 
   // ============================================================
-  // TODAY'S HOURS
+  // TODAY + YESTERDAY'S HOURS
   // ============================================================
 
-Future<List<RestaurantHourModel>> _fetchTodayHoursSafely() async {
-  try {
-    final todayIndex = DateTime.now().weekday - 1;
-    final hours = await businessDatasrouce.getTodayHours(dayOfWeek: todayIndex);
-   
-    return hours;
-  } catch (e) {
-    return [];
+  Future<List<RestaurantHourModel>> _fetchTodayAndYesterdayHoursSafely() async {
+    try {
+      final todayIndex = DateTime.now().weekday - 1; // 0=Mon..6=Sun
+      final hours = await businessDatasrouce.getTodayAndYesterdayHours(
+        dayOfWeek: todayIndex,
+      );
+      return hours;
+    } catch (e) {
+      return [];
+    }
   }
-}
 
   // ============================================================
   // BUSINESS MODEL -> BUSINESS ENTITY
@@ -68,25 +69,23 @@ Future<List<RestaurantHourModel>> _fetchTodayHoursSafely() async {
 
   BusinessEntity mapToEntity(
     BusinessModel model, {
-    List<RestaurantHourModel> todayHours = const [],
+    List<RestaurantHourModel> allHours = const [],
   }) {
-    RestaurantHourModel? matchingHours;
+    final todayIndex = DateTime.now().weekday - 1; // 0=Mon..6=Sun
+    final yesterdayIndex = (todayIndex - 1 + 7) % 7;
 
-    for (final hours in todayHours) {
-      if (hours.businessId == model.id) {
-        matchingHours = hours;
-        break;
-      }
+    RestaurantHourModel? todayHours;
+    RestaurantHourModel? yesterdayHours;
+
+    for (final h in allHours) {
+      if (h.businessId != model.id) continue;
+      if (h.dayOfWeek == todayIndex) todayHours = h;
+      if (h.dayOfWeek == yesterdayIndex) yesterdayHours = h;
     }
 
-    final openingTime =
-        matchingHours?.openTime ?? model.openingTime;
-
-    final closingTime =
-        matchingHours?.closeTime ?? model.closingTime;
-
-    final isClosedToday =
-        matchingHours?.isClosed ?? false;
+    final openingTime = todayHours?.openTime ?? model.openingTime;
+    final closingTime = todayHours?.closeTime ?? model.closingTime;
+    final isClosedToday = todayHours?.isClosed ?? false;
 
     return BusinessEntity(
       id: model.id,
@@ -100,6 +99,11 @@ Future<List<RestaurantHourModel>> _fetchTodayHoursSafely() async {
       closingTime: closingTime,
 
       isClosedToday: isClosedToday,
+
+      // NEW: yesterday's hours, needed for overnight spillover check.
+      openingTimeYesterday: yesterdayHours?.openTime,
+      closingTimeYesterday: yesterdayHours?.closeTime,
+      isClosedYesterday: yesterdayHours?.isClosed ?? false,
 
       isActive: model.isActive,
 
@@ -116,7 +120,6 @@ Future<List<RestaurantHourModel>> _fetchTodayHoursSafely() async {
       rating: model.rating,
       ratingCount: model.ratingCount,
 
-      // Restaurant coordinates
       latitude: model.latitude,
       longitude: model.longitude,
     );
