@@ -46,15 +46,18 @@ class CartItem {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'item_id': itemId,
-      'name_ar': nameAr,
-      'price': price,
-      'quantity': quantity,
-      'note': note,
-      'addons': selectedAddons,
-    };
-  }
+  return {
+    'item_id': itemId,
+    'name_ar': nameAr,
+    'description': description,
+    'photo_url': photoUrl,
+    'price': price,
+    'quantity': quantity,
+    'business_id': businessId,
+    'note': note,
+    'addons': selectedAddons,
+  };
+}
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
     String asStringOrEmpty(dynamic value) => value?.toString() ?? '';
