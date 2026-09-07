@@ -22,6 +22,14 @@ class BusinessEntity {
 
   final bool isClosedToday;
 
+  // Yesterday's hours — needed to detect overnight windows (e.g.
+  // Wed 09:00->03:00) that are still open after midnight rolls into today.
+  final String? openingTimeYesterday;
+
+  final String? closingTimeYesterday;
+
+  final bool isClosedYesterday;
+
   // ============================================================
   // BUSINESS
   // ============================================================
@@ -61,19 +69,22 @@ class BusinessEntity {
   // ============================================================
 
   bool get isOpen {
-  if (!isActive) {
-    return false;
-  }
+    if (!isActive) {
+      return false;
+    }
 
-  if (isClosedToday) {
-    return false;
-  }
+    final hasYesterdayHours =
+        openingTimeYesterday != null && closingTimeYesterday != null;
 
-  return BusinessTimeUtils.isOpenNow(
-    openingTime,
-    closingTime,
-  );
-}
+    return BusinessTimeUtils.isOpenNowWithOvernightCheck(
+      todayActive: !isClosedToday,
+      todayOpen: openingTime,
+      todayClose: closingTime,
+      yesterdayActive: hasYesterdayHours && !isClosedYesterday,
+      yesterdayOpen: openingTimeYesterday ?? '00:00',
+      yesterdayClose: closingTimeYesterday ?? '00:00',
+    );
+  }
 
   BusinessEntity({
     required this.id,
@@ -86,6 +97,9 @@ class BusinessEntity {
     required this.openingTime,
     required this.closingTime,
     this.isClosedToday = false,
+    this.openingTimeYesterday,
+    this.closingTimeYesterday,
+    this.isClosedYesterday = false,
 
     // Business
     required this.isActive,
