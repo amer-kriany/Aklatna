@@ -42,10 +42,6 @@ This repo contains the **customer + driver Flutter app**.
 - **Automation via `pg_cron`**: stale pending orders are auto-cancelled, and cron's own log table is pruned nightly to avoid bloating the free-tier database.
 - **Shared-schema coordination**: the restaurant dashboard and this app share one Postgres schema. Any change to shared tables — including silent semantic changes to existing columns — requires explicit sign-off from the dashboard maintainer before shipping.
 
-## Screenshots
-
-*(See the `/screenshots` folder or the [LinkedIn launch post] for the full carousel.)*
-
 ## Status
 
 Soft-launched in Daria. Actively maintained — see [Issues](../../issues) for known gaps and planned work (scheduled orders, distance/ETA on cards, password reset).
