@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
@@ -27,6 +28,15 @@ class _DriverOrdersPageState extends State<DriverOrdersPage>
 
   Set<String> _lastOngoingIds = {};
 
+  // ============================================================
+  // AVAILABILITY / BUSY STATE
+  // ============================================================
+
+  bool? _isAvailable;
+  bool _isBusy = false;
+  bool _availabilityLoading = true;
+  StreamSubscription? _driverStatusSubscription;
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +47,8 @@ class _DriverOrdersPageState extends State<DriverOrdersPage>
     );
 
     _fetch();
+    _fetchDriverStatus();
+    _watchDriverStatus();
 
     final businessBloc = context.read<BusinessBloc>();
 
@@ -61,9 +73,77 @@ class _DriverOrdersPageState extends State<DriverOrdersPage>
     );
   }
 
+  Future<void> _fetchDriverStatus() async {
+    try {
+      final row = await Supabase.instance.client
+          .from('drivers')
+          .select('is_available, is_busy')
+          .eq('id', _driverId)
+          .maybeSingle();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isAvailable = row?['is_available'] as bool? ?? false;
+        _isBusy = row?['is_busy'] as bool? ?? false;
+        _availabilityLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _availabilityLoading = false;
+      });
+    }
+  }
+
+  void _watchDriverStatus() {
+    _driverStatusSubscription = Supabase.instance.client
+        .from('drivers')
+        .stream(primaryKey: ['id'])
+        .eq('id', _driverId)
+        .listen((rows) {
+      if (rows.isEmpty || !mounted) return;
+
+      final row = rows.first;
+
+      setState(() {
+        _isAvailable = row['is_available'] as bool? ?? false;
+        _isBusy = row['is_busy'] as bool? ?? false;
+      });
+    });
+  }
+
+  Future<void> _toggleAvailability(bool newValue) async {
+    // optimistic update
+    setState(() {
+      _isAvailable = newValue;
+    });
+
+    try {
+      await Supabase.instance.client
+          .from('drivers')
+          .update({'is_available': newValue})
+          .eq('id', _driverId);
+    } catch (e) {
+      if (!mounted) return;
+
+      // revert on failure
+      setState(() {
+        _isAvailable = !newValue;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تعذر تحديث حالة التوفر، حاول مجدداً'),
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
+    _driverStatusSubscription?.cancel();
     super.dispose();
   }
 
@@ -77,6 +157,10 @@ class _DriverOrdersPageState extends State<DriverOrdersPage>
             'توصيلاتي',
             style: AppTextStyles.h4,
           ),
+          actions: [
+            _availabilityToggle(),
+            const SizedBox(width: AppSpacing.sm),
+          ],
           bottom: TabBar(
             controller: _tabController,
             tabs: const [
@@ -150,6 +234,71 @@ class _DriverOrdersPageState extends State<DriverOrdersPage>
           },
         ),
       ),
+    );
+  }
+
+  // ============================================================
+  // AVAILABILITY TOGGLE WIDGET
+  // ============================================================
+
+  Widget _availabilityToggle() {
+    if (_availabilityLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    if (_isBusy) {
+      return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xxs,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          border: Border.all(color: AppColors.primary.withOpacity(0.4)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.delivery_dining_rounded,
+              size: AppSizes.iconSm,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: AppSpacing.xxs),
+            Text(
+              'في توصيل',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          _isAvailable == true ? 'متاح' : 'غير متاح',
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        Switch(
+          value: _isAvailable ?? false,
+          onChanged: _toggleAvailability,
+          activeColor: AppColors.primary,
+        ),
+      ],
     );
   }
 
