@@ -1,4 +1,3 @@
-import 'package:aklatna/features/orders/presentation/pages/driverHomePage.dart';
 import 'package:aklatna/features/orders/presentation/pages/driverOrderPage.dart';
 import 'package:aklatna/features/orders/presentation/pages/driverProfile.dart';
 import 'package:flutter/material.dart';
@@ -16,10 +15,6 @@ class _DriverShellState extends State<DriverShell> {
   Widget _currentPage() {
     switch (_index) {
       case 0:
-        return DriverHomePage(
-          onOrderAccepted: () => setState(() => _index = 1),
-        );
-      case 1:
         return const DriverOrdersPage();
       default:
         return const DriverProfilePage();
@@ -32,13 +27,10 @@ class _DriverShellState extends State<DriverShell> {
       body: _currentPage(),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        onDestinationSelected: (i) => setState(() => _index = i),
+        onDestinationSelected: (i) {
+          setState(() => _index = i);
+        },
         destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.list_alt_outlined),
-            selectedIcon: Icon(Icons.list_alt),
-            label: 'المتاحة',
-          ),
           NavigationDestination(
             icon: Icon(Icons.local_shipping_outlined),
             selectedIcon: Icon(Icons.local_shipping),
