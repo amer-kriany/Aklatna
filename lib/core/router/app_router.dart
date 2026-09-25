@@ -1,5 +1,4 @@
 import 'package:aklatna/core/router/MainShell.dart';
-import 'package:aklatna/core/router/driverShell.dart';
 import 'package:aklatna/core/router/go_router_refresh_stream.dart';
 
 import 'package:aklatna/features/addOnes/presentation/bloc/add_ones_bloc.dart';
@@ -164,55 +163,13 @@ final GoRouter appRouter = GoRouter(
 
 
     // ==========================================================
-    // ROLE
-    // ==========================================================
-
-    final isDriver =
-        profileState.profile.role ==
-            'driver';
-
-
-    final homeRoute =
-        isDriver
-            ? '/driver-home'
-            : '/home';
-
-
-    final isOnDriverRoute =
-        state.matchedLocation
-            .startsWith('/driver-home');
-
-
-    // ==========================================================
     // AUTH ROUTES
     // ==========================================================
 
     if (isSplash ||
         isGoingToAuth) {
 
-      return homeRoute;
-    }
-
-
-    // ==========================================================
-    // DRIVER
-    // ==========================================================
-
-    if (isDriver &&
-        !isOnDriverRoute) {
-
-      return homeRoute;
-    }
-
-
-    // ==========================================================
-    // CUSTOMER
-    // ==========================================================
-
-    if (!isDriver &&
-        isOnDriverRoute) {
-
-      return homeRoute;
+      return '/home';
     }
 
 
@@ -297,19 +254,6 @@ final GoRouter appRouter = GoRouter(
               args['phone'] as String,
         );
       },
-    ),
-
-
-    // ----------------------------------------------------------
-    // DRIVER HOME
-    // ----------------------------------------------------------
-
-    GoRoute(
-      path: '/driver-home',
-      parentNavigatorKey:
-          MainShell.rootNavigatorKey,
-      builder: (context, state) =>
-          const DriverShell(),
     ),
 
 

@@ -63,7 +63,8 @@ final class CustomerOrdersFetched extends OrderState {
     return CustomerOrdersFetched(
       orders: updatedOrders,
     );
-  }// ----------------------------------------------------------
+  }
+  // ----------------------------------------------------------
   // Single source of truth for "customer has an active order".
   // Used by CartPage/CheckoutPage guards so the ongoing-status
   // list (pending/preparing/ready) is defined in exactly one
@@ -72,8 +73,6 @@ final class CustomerOrdersFetched extends OrderState {
 
   bool get hasActiveOrder => orders.any((order) => order.orderStatus.isOngoing);
 }
-
-
 
 // ============================================================
 // FAILURE
@@ -88,14 +87,6 @@ final class OrderFailure extends OrderState {
 
   @override
   List<Object?> get props => [error];
-}
-class OrderAcceptFailed extends OrderState {
-  final String message;
-
-  const OrderAcceptFailed({required this.message});
-
-  @override
-  List<Object?> get props => [message];
 }
 
 // ============================================================
@@ -140,29 +131,10 @@ final class OrderError extends OrderState {
   List<Object?> get props => [message];
 }
 
-final class DriverOrdersFetched extends OrderState {
-  final List<OrderEntity> orders;
+// ============================================================
+// ORDER JUST COMPLETED
+// ============================================================
 
-  const DriverOrdersFetched({required this.orders});
-
-  @override
-  List<Object?> get props => [orders];
-}
-
-class AvailableOrdersLoaded extends OrderState {
-  final List<OrderEntity> orders;
-  final double totalEarnings;
-  final bool hasActiveDelivery;
-
-  const AvailableOrdersLoaded({
-    required this.orders,
-    this.totalEarnings = 0,
-    this.hasActiveDelivery = false,
-  });
-
-  @override
-  List<Object?> get props => [orders, totalEarnings, hasActiveDelivery];
-}
 class OrderJustCompleted extends OrderState {
   final OrderEntity order;
 

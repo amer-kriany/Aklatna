@@ -1,16 +1,9 @@
 import 'dart:async';
 
 import 'package:aklatna/features/orders/domain/entities/order_entity.dart';
-import 'package:aklatna/features/orders/domain/usecases/accept_order_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/complete_order_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/getDriverOrdersUseCase.dart';
-import 'package:aklatna/features/orders/domain/usecases/get_available_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/watchAvailableOrderUsecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/watchDriverOrder.dart';
 import 'package:aklatna/features/orders/orderStatus.dart';
 
 import 'package:bloc/bloc.dart';
@@ -24,27 +17,9 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
 
   final PlaceOrderUsecase placeOrderUsecase;
 
-  final GetAvailableOrdersUseCase getAvailableOrdersUseCase;
-
-  final AcceptOrderUseCase acceptOrderUseCase;
-
-  final MarkOutForDeliveryUseCase markOutForDeliveryUseCase;
-
-  final CompleteOrderUseCase completeOrderUseCase;
-
-  final GetDriverOrdersUseCase getDriverOrdersUseCase;
-
-  final WatchAvailableOrdersUseCase watchAvailableOrdersUseCase;
-
-  final WatchDriverOrdersUseCase watchDriverOrdersUseCase;
-
   final GetCustomerOrdersUseCase customerOrdersUsecase;
 
   StreamSubscription? _orderStatusSubscription;
-
-  StreamSubscription? _availableOrdersRealtimeSubscription;
-
-  StreamSubscription? _driverOrdersRealtimeSubscription;
 
   // ============================================================
   // LAST KNOWN CUSTOMER ORDERS
@@ -56,25 +31,11 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
     required this.placeOrderUsecase,
     required this.customerOrdersUsecase,
     required this.watchOrderStatusUsecase,
-    required this.getAvailableOrdersUseCase,
-    required this.acceptOrderUseCase,
-    required this.markOutForDeliveryUseCase,
-    required this.completeOrderUseCase,
-    required this.getDriverOrdersUseCase,
-    required this.watchAvailableOrdersUseCase,
-    required this.watchDriverOrdersUseCase,
   }) : super(OrderInitial()) {
     // CUSTOMER
     on<PlaceOrderEvent>(_placeOrder);
     on<GetCustomerOrdersEvent>(_getCustomerOrders);
     on<WatchOrderStatusEvent>(_watchOrderStatus);
-
-    // DRIVER
-    on<GetAvailableOrdersEvent>(_getAvailableOrders);
-    on<AcceptOrderEvent>(_acceptOrder);
-    on<MarkOutForDeliveryEvent>(_markOutForDelivery);
-    on<CompleteOrderEvent>(_completeOrder);
-    on<GetDriverOrdersEvent>(_getDriverOrders);
 
     // INTERNAL REALTIME EVENTS
     on<_OrderRealtimeUpdatedEvent>(_updateOrderInState);
@@ -359,255 +320,12 @@ class OrderBloc extends Bloc<OrderEvent, OrderState> {
   }
 
   // ============================================================
-  // DRIVER - GET AVAILABLE ORDERS
-  // ============================================================
-  //
-  // IMPORTANT:
-  // The datasource controls the 30-minute scheduled-order rule.
-  //
-  // This BLoC simply asks for available orders.
-  //
-  // ============================================================
-
-  Future<void> _getAvailableOrders(
-    GetAvailableOrdersEvent event,
-    Emitter<OrderState> emit,
-  ) async {
-    emit(OrderLoading());
-
-    try {
-      final orders = await getAvailableOrdersUseCase();
-
-      final driverOrders = await getDriverOrdersUseCase(
-        event.driverId,
-      );
-
-      final totalEarnings = driverOrders
-          .where(
-            (o) => o.orderStatus == OrderStatus.completed,
-          )
-          .fold<double>(
-            0,
-            (sum, o) => sum + o.deliveryFee,
-          );
-
-      final hasActiveDelivery = driverOrders.any(
-        (o) => o.orderStatus.isOngoing,
-      );
-
-      emit(
-        AvailableOrdersLoaded(
-          orders: orders,
-          totalEarnings: totalEarnings,
-          hasActiveDelivery: hasActiveDelivery,
-        ),
-      );
-
-      // Start realtime listener only once.
-      _availableOrdersRealtimeSubscription ??=
-          watchAvailableOrdersUseCase().listen(
-        (_) {
-          if (state is AvailableOrdersLoaded) {
-            add(
-              GetAvailableOrdersEvent(
-                driverId: event.driverId,
-              ),
-            );
-          }
-        },
-      );
-    } catch (e) {
-      emit(
-        OrderFailure(
-          error: e.toString(),
-        ),
-      );
-    }
-  }
-
-  // ============================================================
-  // DRIVER - ACCEPT ORDER
-  // ============================================================
-
-Future<void> _acceptOrder(
-  AcceptOrderEvent event,
-  Emitter<OrderState> emit,
-) async {
-  try {
-    await acceptOrderUseCase(
-      orderId: event.orderId,
-      driverId: event.driverId,
-    );
-
-    if (state is AvailableOrdersLoaded) {
-      final liveState =
-          state as AvailableOrdersLoaded;
-
-      emit(
-        AvailableOrdersLoaded(
-          orders: liveState.orders
-              .where(
-                (o) => o.id != event.orderId,
-              )
-              .toList(),
-          totalEarnings: liveState.totalEarnings,
-          hasActiveDelivery: true,
-        ),
-      );
-    }
-
-    add(
-      WatchOrderStatusEvent(
-        orderId: event.orderId,
-      ),
-    );
-  } catch (e) {
-    // Someone else claimed it first (or another failure) --
-    // remove the now-stale card from this driver's list and
-    // let them know why, instead of silently pretending it
-    // just disappeared.
-    if (state is AvailableOrdersLoaded) {
-      final liveState =
-          state as AvailableOrdersLoaded;
-
-      emit(
-        AvailableOrdersLoaded(
-          orders: liveState.orders
-              .where(
-                (o) => o.id != event.orderId,
-              )
-              .toList(),
-          totalEarnings: liveState.totalEarnings,
-          hasActiveDelivery:
-              liveState.hasActiveDelivery,
-        ),
-      );
-    }
-
-    emit(
-      OrderAcceptFailed(
-        message: e.toString().replaceFirst('Exception: ', ''),
-      ),
-    );
-
-    // Re-emit AvailableOrdersLoaded right after so the list UI
-    // keeps working normally -- OrderAcceptFailed is just a
-    // one-shot signal for a snackbar via BlocListener.
-    if (state is AvailableOrdersLoaded) {
-      emit(state as AvailableOrdersLoaded);
-    }
-  }
-}
-
-  // ============================================================
-  // DRIVER - OUT FOR DELIVERY
-  // ============================================================
-
-  Future<void> _markOutForDelivery(
-    MarkOutForDeliveryEvent event,
-    Emitter<OrderState> emit,
-  ) async {
-    try {
-      await markOutForDeliveryUseCase(
-        orderId: event.orderId,
-      );
-
-      add(
-        GetDriverOrdersEvent(
-          driverId: event.driverId,
-        ),
-      );
-    } catch (e) {
-      emit(
-        OrderFailure(
-          error: e.toString(),
-        ),
-      );
-    }
-  }
-
-  // ============================================================
-  // DRIVER - GET DRIVER ORDERS
-  // ============================================================
-
-  Future<void> _getDriverOrders(
-    GetDriverOrdersEvent event,
-    Emitter<OrderState> emit,
-  ) async {
-    emit(OrderLoading());
-
-    try {
-      final orders = await getDriverOrdersUseCase(
-        event.driverId,
-      );
-
-      emit(
-        DriverOrdersFetched(
-          orders: orders,
-        ),
-      );
-
-      _driverOrdersRealtimeSubscription ??=
-          watchDriverOrdersUseCase(
-        event.driverId,
-      ).listen(
-        (_) {
-          if (state is DriverOrdersFetched) {
-            add(
-              GetDriverOrdersEvent(
-                driverId: event.driverId,
-              ),
-            );
-          }
-        },
-      );
-    } catch (e) {
-      emit(
-        OrderFailure(
-          error: e.toString(),
-        ),
-      );
-    }
-  }
-
-  // ============================================================
-  // DRIVER - COMPLETE ORDER
-  // ============================================================
-
-  Future<void> _completeOrder(
-    CompleteOrderEvent event,
-    Emitter<OrderState> emit,
-  ) async {
-    try {
-      await completeOrderUseCase(
-        orderId: event.orderId,
-      );
-
-      add(
-        GetDriverOrdersEvent(
-          driverId: event.driverId,
-        ),
-      );
-    } catch (e) {
-      emit(
-        OrderFailure(
-          error: e.toString(),
-        ),
-      );
-    }
-  }
-
-  // ============================================================
   // CLOSE
   // ============================================================
 
   @override
   Future<void> close() async {
     await _orderStatusSubscription?.cancel();
-
-    await _availableOrdersRealtimeSubscription?.cancel();
-
-    await _driverOrdersRealtimeSubscription?.cancel();
 
     return super.close();
   }

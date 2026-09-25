@@ -25,53 +25,6 @@ class OrderRepositoryImpl implements OrderRepository {
     return orderRemoteDatasource.watchOrderStatus(orderId).map(mapToEntity);
   }
 
-  @override
-  Stream<void> watchAvailableOrdersChanges() {
-    return orderRemoteDatasource.watchAvailableOrdersChanges();
-  }
-
-  @override
-  Future<List<OrderEntity>> getAvailableOrders() async {
-    final orders = await orderRemoteDatasource.getAvailableOrders();
-
-    return orders
-        .map<OrderEntity>((order) => mapToEntity(order))
-        .toList();
-  }
-
-  @override
-  Stream<void> watchDriverOrdersChanges(String driverId) {
-    return orderRemoteDatasource.watchDriverOrdersChanges(driverId);
-  }
-
-  @override
-  Future<List<OrderEntity>> getDriverOrders(String driverId) async {
-    final orders = await orderRemoteDatasource.getDriverOrders(driverId);
-
-    return orders.map(mapToEntity).toList();
-  }
-
-  @override
-  Future<void> acceptOrder({
-    required String orderId,
-    required String driverId,
-  }) async {
-    await orderRemoteDatasource.acceptOrder(
-      orderId: orderId,
-      driverId: driverId,
-    );
-  }
-
-  @override
-  Future<void> markOutForDelivery({required String orderId}) async {
-    await orderRemoteDatasource.markOutForDelivery(orderId: orderId);
-  }
-
-  @override
-  Future<void> completeOrder({required String orderId}) async {
-    await orderRemoteDatasource.completeOrder(orderId: orderId);
-  }
-
   OrderEntity mapToEntity(OrderModel order) {
     return OrderEntity(
       id: order.id,

@@ -47,16 +47,9 @@ import 'package:aklatna/features/menu/presentation/bloc/menu_bloc.dart';
 import 'package:aklatna/features/orders/data/datasources/order_remote_datasource.dart';
 import 'package:aklatna/features/orders/data/repositories/order_repository_impl.dart';
 import 'package:aklatna/features/orders/domain/repositories/order_repository.dart';
-import 'package:aklatna/features/orders/domain/usecases/accept_order_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/complete_order_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/getDriverOrdersUseCase.dart';
-import 'package:aklatna/features/orders/domain/usecases/get_available_orders_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/get_customer_orders_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/mark_out_for_delivery_usecase.dart';
 import 'package:aklatna/features/orders/domain/usecases/orderStatusUseCase.dart';
 import 'package:aklatna/features/orders/domain/usecases/place_order_usecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/watchAvailableOrderUsecase.dart';
-import 'package:aklatna/features/orders/domain/usecases/watchDriverOrder.dart';
 import 'package:aklatna/features/orders/presentation/bloc/order_bloc.dart';
 import 'package:aklatna/features/profile/data/datasource/profile_datasource.dart';
 import 'package:aklatna/features/profile/data/repository/profileRepoImp.dart';
@@ -193,8 +186,6 @@ void setupInjection() {
   sl.registerLazySingleton(
     () => GetCustomerOrdersUseCase(orderRepositoryImpl: sl()),
   );
-  sl.registerLazySingleton(() => GetDriverOrdersUseCase(repository: sl()));
-  sl.registerLazySingleton(() => WatchAvailableOrdersUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetAddressesUsecase(repo: sl()));
   sl.registerLazySingleton(() => AddAddressUsecase(repo: sl()));
   sl.registerLazySingleton(() => DeleteAddressUsecase(repo: sl()));
@@ -202,13 +193,8 @@ void setupInjection() {
   sl.registerLazySingleton(() => GetJobsUsecase(jobRepo: sl()));
   sl.registerLazySingleton(() => Orderstatususecase(orderRepositoryImpl: sl()));
   sl.registerLazySingleton(() => PlaceOrderUsecase(orderRepositoryImpl: sl()));
-  sl.registerLazySingleton(() => GetAvailableOrdersUseCase(repository: sl()));
-  sl.registerLazySingleton(() => AcceptOrderUseCase(repository: sl()));
-  sl.registerLazySingleton(() => MarkOutForDeliveryUseCase(repository: sl()));
-  sl.registerLazySingleton(() => CompleteOrderUseCase(repository: sl()));
-  sl.registerLazySingleton(() => WatchDriverOrdersUseCase(repository: sl()));
   sl.registerLazySingleton(() => GetbusinessUsecase(repository: sl()));
- 
+
   sl.registerLazySingleton(
     () => Searchbusinessesusecase(businessrepo: sl()),
   );
@@ -255,13 +241,6 @@ void setupInjection() {
       watchOrderStatusUsecase: sl(),
       placeOrderUsecase: sl(),
       customerOrdersUsecase: sl(),
-      getAvailableOrdersUseCase: sl(),
-      acceptOrderUseCase: sl(),
-      markOutForDeliveryUseCase: sl(),
-      completeOrderUseCase: sl(),
-      getDriverOrdersUseCase: sl(),
-      watchAvailableOrdersUseCase: sl(),
-      watchDriverOrdersUseCase: sl(),
     ),
   );
   // ============================================================
