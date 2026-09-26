@@ -273,18 +273,18 @@ Widget _buildProgress() {
   }
 
   String _formatReadyTime(int minutes) {
-    final baseTime = order.createdAt ?? DateTime.now();
-    final readyTime =
-        baseTime.add(Duration(minutes: minutes));
+  final baseTime = (order.createdAt ?? DateTime.now()).toLocal();
+  final readyTime =
+      baseTime.add(Duration(minutes: minutes));
 
-    final hour =
-        readyTime.hour.toString().padLeft(2, '0');
+  final hour =
+      readyTime.hour.toString().padLeft(2, '0');
 
-    final minute =
-        readyTime.minute.toString().padLeft(2, '0');
+  final minute =
+      readyTime.minute.toString().padLeft(2, '0');
 
-    return '$hour:$minute';
-  }
+  return '$hour:$minute';
+}
 
   String _timeDescription(int minutes) {
     if (minutes <= 1) {
