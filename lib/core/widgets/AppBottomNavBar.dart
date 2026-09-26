@@ -221,26 +221,37 @@ class _CartIcon extends StatelessWidget {
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 220),
               transitionBuilder: (child, animation) {
-                return ScaleTransition(scale: animation, child: child);
+                return ScaleTransition(
+                  scale: animation,
+                  child: child,
+                );
               },
-              child: Icon(icon, key: ValueKey(icon), size: 22, color: color),
+              child: Icon(
+                icon,
+                key: ValueKey(icon),
+                size: 22,
+                color: color,
+              ),
             ),
           ),
 
-          AnimatedScale(
-            scale: showBadge ? 1 : 0,
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOutBack,
-            child: Positioned(
-              top: -3,
-              right: -2,
+          Positioned(
+            top: -2,
+            right: -2,
+            child: AnimatedScale(
+              scale: showBadge ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutBack,
               child: Container(
                 width: 8,
                 height: 8,
                 decoration: BoxDecoration(
                   color: AppColors.error,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.surface, width: 1.5),
+                  border: Border.all(
+                    color: AppColors.surface,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -250,6 +261,7 @@ class _CartIcon extends StatelessWidget {
     );
   }
 }
+
 
 class _NavItem {
   const _NavItem({
