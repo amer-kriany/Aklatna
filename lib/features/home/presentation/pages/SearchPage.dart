@@ -27,22 +27,25 @@ class SearchPage extends StatefulWidget {
   State<SearchPage> createState() => _SearchPageState();
 }
 
-class _SearchPageState extends State<SearchPage> {
-  final TextEditingController _controller =
-      TextEditingController();
+class _SearchPageState extends State<SearchPage>
+    with SingleTickerProviderStateMixin {
+  final TextEditingController _controller = TextEditingController();
 
   String _query = '';
   String? _selectedCategoryName;
 
   Timer? _debounce;
 
-  // ===========================================================================
-  // INIT
-  // ===========================================================================
+  late final AnimationController _introController;
 
   @override
   void initState() {
     super.initState();
+
+    _introController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
+    );
 
     if (context.read<MenuBloc>().state is MenuInitial) {
       context.read<MenuBloc>().add(
@@ -55,6 +58,20 @@ class _SearchPageState extends State<SearchPage> {
             GetBusinesses(),
           );
     }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _introController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.dispose();
+    _introController.dispose();
+    super.dispose();
   }
 
   // ===========================================================================
@@ -71,13 +88,17 @@ class _SearchPageState extends State<SearchPage> {
     _debounce = Timer(
       const Duration(milliseconds: 350),
       () {
-        if (value.trim().isEmpty) {
+        if (!mounted) return;
+
+        final query = value.trim();
+
+        if (query.isEmpty) {
           return;
         }
 
         context.read<BusinessBloc>().add(
               SearchBusinesses(
-                query: value.trim(),
+                query: query,
               ),
             );
       },
@@ -85,7 +106,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   // ===========================================================================
-  // CART QUANTITY
+  // CART
   // ===========================================================================
 
   int _getCartQuantity(
@@ -105,10 +126,6 @@ class _SearchPageState extends State<SearchPage> {
       (sum, item) => sum + item.quantity,
     );
   }
-
-  // ===========================================================================
-  // ADD ITEM
-  // ===========================================================================
 
   void _addItemToCart(
     BuildContext context,
@@ -149,10 +166,6 @@ class _SearchPageState extends State<SearchPage> {
         );
   }
 
-  // ===========================================================================
-  // REMOVE ITEM
-  // ===========================================================================
-
   void _removeItemFromCart(
     BuildContext context,
     String itemId,
@@ -165,14 +178,33 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   // ===========================================================================
-  // DISPOSE
+  // INTRO ANIMATION
   // ===========================================================================
 
-  @override
-  void dispose() {
-    _debounce?.cancel();
-    _controller.dispose();
-    super.dispose();
+  Widget _animatedIntro({
+    required Widget child,
+    double begin = 16,
+  }) {
+    return AnimatedBuilder(
+      animation: _introController,
+      child: child,
+      builder: (context, child) {
+        final value = Curves.easeOutCubic.transform(
+          _introController.value,
+        );
+
+        return Opacity(
+          opacity: value,
+          child: Transform.translate(
+            offset: Offset(
+              0,
+              begin * (1 - value),
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
   }
 
   // ===========================================================================
@@ -182,14 +214,14 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.pageHorizontal,
           ),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(
                 height: AppSpacing.md,
@@ -199,25 +231,38 @@ class _SearchPageState extends State<SearchPage> {
               // HEADER
               // =================================================================
 
-              Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'البحث',
-                    style: AppTextStyles.h2,
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      context.push('/favorites');
-                    },
-                    icon: const Icon(
-                      Icons.favorite_border,
-                      color: AppColors.primary,
-                      size: 28,
+              _animatedIntro(
+                begin: 12,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'البحث',
+                        style: AppTextStyles.h2,
+                      ),
                     ),
-                  ),
-                ],
+
+                    // Favorites
+                    Material(
+                      color: AppColors.surface,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () {
+                          context.push('/favorites');
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Icon(
+                            Icons.favorite_border_rounded,
+                            color: AppColors.primary,
+                            size: 24,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(
@@ -228,9 +273,12 @@ class _SearchPageState extends State<SearchPage> {
               // SEARCH BAR
               // =================================================================
 
-              app.SearchBar(
-                controller: _controller,
-                onQueryChanged: _onQueryChanged,
+              _animatedIntro(
+                begin: 14,
+                child: app.SearchBar(
+                  controller: _controller,
+                  onQueryChanged: _onQueryChanged,
+                ),
               ),
 
               const SizedBox(
@@ -242,21 +290,36 @@ class _SearchPageState extends State<SearchPage> {
               // =================================================================
 
               Expanded(
-                child: ListView(
-                  children: [
-                    if (_query.trim().isEmpty)
-                      _buildCategoryChipsAndResults(),
-
-                    if (_query.trim().isNotEmpty)
-                      _buildResults(),
-
-                    const SizedBox(
-                      height: AppSpacing.lg,
+                child: AnimatedSwitcher(
+                  duration: const Duration(
+                    milliseconds: 220,
+                  ),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  child: ListView(
+                    key: ValueKey(
+                      _query.trim().isEmpty
+                          ? 'idle'
+                          : 'search',
                     ),
+                    physics:
+                        const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(
+                      bottom: AppSpacing.xl,
+                    ),
+                    children: [
+                      if (_query.trim().isEmpty) ...[
+                        _buildCategoryChipsAndResults(),
+                        const SizedBox(
+                          height: AppSpacing.xl,
+                        ),
+                        _buildIdleContent(),
+                      ],
 
-                    if (_query.trim().isEmpty)
-                      _buildIdleContent(),
-                  ],
+                      if (_query.trim().isNotEmpty)
+                        _buildResults(),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -267,7 +330,7 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   // ===========================================================================
-  // CATEGORY CHIPS
+  // CATEGORIES
   // ===========================================================================
 
   Widget _buildCategoryChipsAndResults() {
@@ -290,19 +353,84 @@ class _SearchPageState extends State<SearchPage> {
           crossAxisAlignment:
               CrossAxisAlignment.start,
           children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: categoryNames.map(
-                  (name) {
-                    final isSelected =
-                        _selectedCategoryName == name;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(
-                        left: AppSpacing.sm,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'تصفح حسب القسم',
+                    style: AppTextStyles.h4,
+                  ),
+                ),
+                if (_selectedCategoryName != null)
+                  TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedCategoryName = null;
+                      });
+                    },
+                    child: Text(
+                      'إلغاء',
+                      style:
+                          AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w600,
                       ),
-                      child: GestureDetector(
+                    ),
+                  ),
+              ],
+            ),
+
+            const SizedBox(
+              height: AppSpacing.sm,
+            ),
+
+            // ================================================================
+            // CATEGORY CHIPS
+            // ================================================================
+
+            SizedBox(
+              height: 42,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics:
+                    const BouncingScrollPhysics(),
+                itemCount: categoryNames.length,
+                separatorBuilder: (_, __) =>
+                    const SizedBox(
+                  width: AppSpacing.sm,
+                ),
+                itemBuilder: (context, index) {
+                  final name = categoryNames[index];
+
+                  final isSelected =
+                      _selectedCategoryName == name;
+
+                  return AnimatedContainer(
+                    duration: const Duration(
+                      milliseconds: 180,
+                    ),
+                    curve: Curves.easeOut,
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.surface,
+                      borderRadius:
+                          BorderRadius.circular(
+                        AppRadius.full,
+                      ),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.border,
+                      ),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius:
+                            BorderRadius.circular(
+                          AppRadius.full,
+                        ),
                         onTap: () {
                           setState(() {
                             _selectedCategoryName =
@@ -311,52 +439,61 @@ class _SearchPageState extends State<SearchPage> {
                                     : name;
                           });
                         },
-                        child: Container(
+                        child: Padding(
                           padding:
                               const EdgeInsets.symmetric(
                             horizontal: AppSpacing.lg,
                             vertical: AppSpacing.xs,
                           ),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.surface,
-                            borderRadius:
-                                BorderRadius.circular(
-                              AppRadius.full,
-                            ),
-                            border: Border.all(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : AppColors.border,
-                            ),
-                          ),
-                          child: Text(
-                            name,
-                            style:
-                                AppTextStyles.bodyMedium.copyWith(
-                              color: isSelected
-                                  ? AppColors.textOnPrimary
-                                  : AppColors.textPrimary,
+                          child: Center(
+                            child: Text(
+                              name,
+                              style: AppTextStyles
+                                  .bodyMedium
+                                  .copyWith(
+                                color: isSelected
+                                    ? AppColors
+                                        .textOnPrimary
+                                    : AppColors
+                                        .textPrimary,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    );
-                  },
-                ).toList(),
+                    ),
+                  );
+                },
               ),
             ),
 
-            if (_selectedCategoryName != null) ...[
-              const SizedBox(
-                height: AppSpacing.lg,
+            // ================================================================
+            // CATEGORY RESULTS
+            // ================================================================
+
+            AnimatedSwitcher(
+              duration: const Duration(
+                milliseconds: 220,
               ),
-              _buildCategoryResults(
-                state,
-                _selectedCategoryName!,
-              ),
-            ],
+              child: _selectedCategoryName == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      key: ValueKey(
+                        _selectedCategoryName,
+                      ),
+                      padding:
+                          const EdgeInsets.only(
+                        top: AppSpacing.lg,
+                      ),
+                      child: _buildCategoryResults(
+                        state,
+                        _selectedCategoryName!,
+                      ),
+                    ),
+            ),
           ],
         );
       },
@@ -389,9 +526,36 @@ class _SearchPageState extends State<SearchPage> {
         .toList();
 
     if (matchingItems.isEmpty) {
-      return Text(
-        'لا توجد أطباق في هذا القسم',
-        style: AppTextStyles.bodyMedium,
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(
+          AppSpacing.lg,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius:
+              BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: AppColors.border,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.restaurant_menu_rounded,
+              size: 34,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(
+              height: AppSpacing.sm,
+            ),
+            Text(
+              'لا توجد أطباق في هذا القسم حالياً',
+              style: AppTextStyles.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       );
     }
 
@@ -448,6 +612,16 @@ class _SearchPageState extends State<SearchPage> {
                       bottom: AppSpacing.md,
                     ),
                     child: BlocBuilder<CartBloc, CartState>(
+                      buildWhen: (previous, current) {
+                        return _getCartQuantity(
+                              previous,
+                              item.id,
+                            ) !=
+                            _getCartQuantity(
+                              current,
+                              item.id,
+                            );
+                      },
                       builder: (
                         context,
                         cartState,
@@ -581,9 +755,23 @@ class _SearchPageState extends State<SearchPage> {
           crossAxisAlignment:
               CrossAxisAlignment.start,
           children: [
-            Text(
-              'أطباق شائعة',
-              style: AppTextStyles.h4,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'أطباق شائعة',
+                    style: AppTextStyles.h4,
+                  ),
+                ),
+                if (popularItems.isNotEmpty)
+                  Text(
+                    'الأكثر طلباً',
+                    style:
+                        AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+              ],
             ),
 
             const SizedBox(
@@ -600,93 +788,132 @@ class _SearchPageState extends State<SearchPage> {
               ),
 
             if (state is MenuError)
-              Padding(
-                padding: const EdgeInsets.only(
-                  top: AppSpacing.sm,
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(
+                  AppSpacing.md,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius:
+                      BorderRadius.circular(
+                    AppRadius.lg,
+                  ),
                 ),
                 child: Text(
                   state.message,
-                  style: AppTextStyles.bodyMedium,
+                  style:
+                      AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
 
             if (state is! MenuLoading &&
                 popularItems.isNotEmpty)
-              SingleChildScrollView(
-                scrollDirection:
-                    Axis.horizontal,
-                child: Row(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                  children: popularItems.map(
-                    (item) {
-                      return Padding(
-                        padding:
-                            const EdgeInsets.only(
-                          left: AppSpacing.sm,
-                        ),
-                        child:
-                            BlocBuilder<CartBloc,
-                                CartState>(
-                          builder: (
-                            context,
-                            cartState,
-                          ) {
-                            final quantity =
-                                _getCartQuantity(
-                              cartState,
+              SizedBox(
+                height: 190,
+                child: ListView.separated(
+                  scrollDirection:
+                      Axis.horizontal,
+                  physics:
+                      const BouncingScrollPhysics(),
+                  itemCount:
+                      popularItems.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(
+                    width: AppSpacing.sm,
+                  ),
+                  itemBuilder: (context, index) {
+                    final item =
+                        popularItems[index];
+
+                    return BlocBuilder<CartBloc,
+                        CartState>(
+                      buildWhen: (previous, current) {
+                        return _getCartQuantity(
+                              previous,
+                              item.id,
+                            ) !=
+                            _getCartQuantity(
+                              current,
                               item.id,
                             );
+                      },
+                      builder: (
+                        context,
+                        cartState,
+                      ) {
+                        final quantity =
+                            _getCartQuantity(
+                          cartState,
+                          item.id,
+                        );
 
-                            return PopularDishCard(
-                              photoUrl:
-                                  item.photoUrl ?? '',
-                              dishNameAr:
-                                  item.nameAr,
-                              dishPrice:
-                                  item.price,
-                              businessNameAr:
-                                  businessNamesById[
-                                          item.businessId] ??
-                                      '',
-                              quantity:
-                                  quantity,
-                              onAdd: () {
-                                _addItemToCart(
-                                  context,
-                                  item,
-                                );
-                              },
-                              onRemove: () {
-                                _removeItemFromCart(
-                                  context,
-                                  item.id,
-                                );
-                              },
-                              onTap: () {
-                                context.push(
-                                  '/food/${item.id}',
-                                );
-                              },
+                        return PopularDishCard(
+                          photoUrl:
+                              item.photoUrl ?? '',
+                          dishNameAr:
+                              item.nameAr,
+                          dishPrice:
+                              item.price,
+                          businessNameAr:
+                              businessNamesById[
+                                      item.businessId] ??
+                                  '',
+                          quantity:
+                              quantity,
+                          onAdd: () {
+                            _addItemToCart(
+                              context,
+                              item,
                             );
                           },
-                        ),
-                      );
-                    },
-                  ).toList(),
+                          onRemove: () {
+                            _removeItemFromCart(
+                              context,
+                              item.id,
+                            );
+                          },
+                          onTap: () {
+                            context.push(
+                              '/food/${item.id}',
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
 
             if (state is! MenuLoading &&
                 popularItems.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(
-                  vertical: AppSpacing.lg,
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  vertical: AppSpacing.xl,
                 ),
-                child: Center(
-                  child: Text(
-                    'لا توجد أطباق حالياً',
-                  ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.restaurant_menu_outlined,
+                      size: 42,
+                      color:
+                          AppColors.textSecondary,
+                    ),
+                    const SizedBox(
+                      height: AppSpacing.sm,
+                    ),
+                    Text(
+                      'لا توجد أطباق حالياً',
+                      style:
+                          AppTextStyles.bodyMedium.copyWith(
+                        color:
+                            AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
           ],
@@ -703,73 +930,232 @@ class _SearchPageState extends State<SearchPage> {
     return BlocBuilder<BusinessBloc, BusinessState>(
       builder: (context, state) {
         if (state is BusinessLoading) {
-          return const SizedBox(
-            height: 220,
-            child: ListSkeleton(
-              itemCount: 4,
-            ),
+          return Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Text(
+                'نتائج البحث',
+                style: AppTextStyles.h4,
+              ),
+              const SizedBox(
+                height: AppSpacing.md,
+              ),
+              const SizedBox(
+                height: 220,
+                child: ListSkeleton(
+                  itemCount: 4,
+                ),
+              ),
+            ],
           );
         }
 
         if (state is BusinessUnfound) {
-          return Center(
-            child: Text(
-              'ما لقينا نتائج',
-              style: AppTextStyles.bodyMedium,
-            ),
-          );
+          return _buildEmptySearchState();
         }
 
         if (state is BusinessError) {
-          return Center(
-            child: Text(
-              state.message,
-              style: AppTextStyles.bodyMedium,
-            ),
+          return _buildSearchErrorState(
+            state.message,
           );
         }
 
         if (state is BusinessFetched) {
-          return ListView.separated(
-            shrinkWrap: true,
-            physics:
-                const NeverScrollableScrollPhysics(),
-            itemCount:
-                state.businesses.length,
-            separatorBuilder: (_, __) {
-              return const Divider(
-                color: AppColors.divider,
-              );
-            },
-            itemBuilder: (
-              context,
-              index,
-            ) {
-              final business =
-                  state.businesses[index];
+          if (state.businesses.isEmpty) {
+            return _buildEmptySearchState();
+          }
 
-              return GestureDetector(
-                onTap: () {
-                  context.push(
-                    '/business/${business.id}',
+          return Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'نتائج البحث',
+                      style: AppTextStyles.h4,
+                    ),
+                  ),
+                  Text(
+                    '${state.businesses.length} نتيجة',
+                    style:
+                        AppTextStyles.bodySmall.copyWith(
+                      color:
+                          AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(
+                height: AppSpacing.md,
+              ),
+
+              ListView.separated(
+                shrinkWrap: true,
+                physics:
+                    const NeverScrollableScrollPhysics(),
+                itemCount:
+                    state.businesses.length,
+                separatorBuilder: (_, __) {
+                  return const SizedBox(
+                    height: AppSpacing.xs,
                   );
                 },
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(
-                    vertical: AppSpacing.sm,
-                  ),
-                  child: SearchResultCard(
-                    business: business,
-                  ),
-                ),
-              );
-            },
+                itemBuilder: (
+                  context,
+                  index,
+                ) {
+                  final business =
+                      state.businesses[index];
+
+                  return Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius:
+                          BorderRadius.circular(
+                        AppRadius.lg,
+                      ),
+                      onTap: () {
+                        context.push(
+                          '/business/${business.id}',
+                        );
+                      },
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.symmetric(
+                          vertical:
+                              AppSpacing.xs,
+                        ),
+                        child: SearchResultCard(
+                          business: business,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           );
         }
 
         return const SizedBox.shrink();
       },
+    );
+  }
+
+  // ===========================================================================
+  // EMPTY SEARCH
+  // ===========================================================================
+
+  Widget _buildEmptySearchState() {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: AppSpacing.xl,
+      ),
+      child: Center(
+        child: Column(
+          children: [
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.border,
+                ),
+              ),
+              child: const Icon(
+                Icons.search_off_rounded,
+                size: 32,
+                color: AppColors.textSecondary,
+              ),
+            ),
+
+            const SizedBox(
+              height: AppSpacing.md,
+            ),
+
+            Text(
+              'ما لقينا نتائج',
+              style: AppTextStyles.h4,
+            ),
+
+            const SizedBox(
+              height: AppSpacing.xs,
+            ),
+
+            Text(
+              'جرّب البحث باسم مطعم أو نوع أكلة مختلف',
+              textAlign: TextAlign.center,
+              style:
+                  AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // SEARCH ERROR
+  // ===========================================================================
+
+  Widget _buildSearchErrorState(
+    String message,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: AppSpacing.lg,
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(
+          AppSpacing.lg,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius:
+              BorderRadius.circular(
+            AppRadius.lg,
+          ),
+          border: Border.all(
+            color: AppColors.border,
+          ),
+        ),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.cloud_off_rounded,
+              size: 36,
+              color: AppColors.textSecondary,
+            ),
+            const SizedBox(
+              height: AppSpacing.sm,
+            ),
+            Text(
+              'حدث خطأ أثناء البحث',
+              style: AppTextStyles.h4,
+            ),
+            const SizedBox(
+              height: AppSpacing.xs,
+            ),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style:
+                  AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

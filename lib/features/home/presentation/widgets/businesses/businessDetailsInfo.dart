@@ -10,14 +10,12 @@ class BusinessDetailsInfo extends StatelessWidget {
     required this.rating,
     required this.description,
     required this.isOpen,
-    required this.deliveryFeeText,
   });
 
   final String nameAr;
   final double rating;
   final String description;
   final bool isOpen;
-  final String deliveryFeeText;
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +29,6 @@ class BusinessDetailsInfo extends StatelessWidget {
               const Icon(Icons.star, color: AppColors.warning, size: AppSizes.iconSm),
               const SizedBox(width: AppSpacing.xxs),
               Text(rating.toStringAsFixed(1), style: AppTextStyles.bodyMedium),
-              const SizedBox(width: AppSpacing.lg),
-
-              const Icon(Icons.delivery_dining, color: AppColors.primary, size: AppSizes.iconSm),
-              const SizedBox(width: AppSpacing.xxs),
-              Text(deliveryFeeText, style: AppTextStyles.bodyMedium),
             ],
           ),
 

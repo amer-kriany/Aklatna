@@ -1,3 +1,4 @@
+
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
@@ -34,16 +35,8 @@ class PromotionCard extends StatelessWidget {
   final double? width;
   final String currencySymbol;
 
-  // ===========================================================================
-  // CONSTANTS
-  // ===========================================================================
-
-  static const double cardHeight = 245.0;
-  static const double imageHeight = 120.0;
-
-  // ===========================================================================
-  // HELPERS
-  // ===========================================================================
+  static const double cardHeight = 250;
+  static const double imageHeight = 142;
 
   bool get _hasDiscount => discountPercentage > 0;
 
@@ -75,15 +68,8 @@ class PromotionCard extends StatelessWidget {
       return width!;
     }
 
-    return (screenWidth * 0.44).clamp(
-      165.0,
-      200.0,
-    );
+    return (screenWidth * 0.47).clamp(175.0, 205.0);
   }
-
-  // ===========================================================================
-  // BUILD
-  // ===========================================================================
 
   @override
   Widget build(BuildContext context) {
@@ -93,162 +79,110 @@ class PromotionCard extends StatelessWidget {
       width: cardWidth,
       height: cardHeight,
       child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(
-          AppRadius.lg,
-        ),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         clipBehavior: Clip.antiAlias,
+        elevation: 0,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(
-            AppRadius.lg,
-          ),
+          splashColor: AppColors.primary.withOpacity(0.06),
+          highlightColor: AppColors.primary.withOpacity(0.03),
           child: Container(
-            width: cardWidth,
-            height: cardHeight,
             decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(
-                AppRadius.lg,
-              ),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(
-                color: AppColors.border.withOpacity(0.35),
+                color: AppColors.border.withOpacity(0.45),
+                width: 0.8,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.shadow.withOpacity(0.07),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  color: AppColors.shadow.withOpacity(0.08),
+                  blurRadius: 18,
+                  offset: const Offset(0, 7),
                 ),
               ],
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // =============================================================
-                // IMAGE
-                // =============================================================
-
-                SizedBox(
-                  width: double.infinity,
-                  height: imageHeight,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _buildCoverImage(),
-
-                      if (_hasDiscount)
-                        Positioned(
-                          top: 9,
-                          right: 9,
-                          child: _DiscountBadge(
-                            discount: discountPercentage,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-
-                // =============================================================
-                // CONTENT
-                // =============================================================
+                _buildImage(cardWidth),
 
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.sm,
-                      8,
-                      AppSpacing.sm,
-                      6,
+                      12,
+                      10,
+                      12,
+                      10,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // =====================================================
-                        // ITEM NAME
-                        // =====================================================
-
-                        SizedBox(
-                          height: 20,
-                          child: Text(
-                            _displayName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            textDirection: TextDirection.rtl,
-                            style: AppTextStyles.h4.copyWith(
-                              color: AppColors.textPrimary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              height: 1.2,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 3),
-
-                        // =====================================================
+                        // ---------------------------------------------------
                         // BUSINESS
-                        // =====================================================
+                        // ---------------------------------------------------
 
-                        SizedBox(
-                          height: 18,
-                          child: Row(
-                            textDirection: TextDirection.rtl,
-                            children: [
-                              const Icon(
-                                Icons.storefront_rounded,
-                                size: 13,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  businessName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textDirection: TextDirection.rtl,
-                                  style:
-                                      AppTextStyles.regularSmall.copyWith(
-                                    color: AppColors.textSecondary,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 10.5,
-                                  ),
+                        Row(
+                          textDirection: TextDirection.rtl,
+                          children: [
+                            Icon(
+                              Icons.storefront_rounded,
+                              size: 13,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: 5),
+                            Expanded(
+                              child: Text(
+                                businessName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textDirection: TextDirection.rtl,
+                                style: AppTextStyles.regularSmall.copyWith(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ],
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        // ---------------------------------------------------
+                        // ITEM NAME
+                        // ---------------------------------------------------
+
+                        Text(
+                          _displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textDirection: TextDirection.rtl,
+                          style: AppTextStyles.h4.copyWith(
+                            color: AppColors.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            height: 1.15,
                           ),
                         ),
 
-                        const SizedBox(height: 2),
+                        const Spacer(),
 
-                        // =====================================================
-                        // DIVIDER
-                        // =====================================================
+                        // ---------------------------------------------------
+                        // PRICE + CTA
+                        // ---------------------------------------------------
 
-                        const Divider(
-                          height: 6,
-                          thickness: 0.5,
-                          color: AppColors.divider,
-                        ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: _buildPrice(),
+                            ),
 
-                        // =====================================================
-                        // PRICE
-                        // =====================================================
+                            const SizedBox(width: 8),
 
-                        Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: _PriceBlock(),
-                              ),
-
-                              if (_savingsAmount > 0)
-                                _SavingsBadge(
-                                  amount: _savingsAmount,
-                                  currencySymbol: currencySymbol,
-                                ),
-                            ],
-                          ),
+                            _buildArrowButton(),
+                          ],
                         ),
                       ],
                     ),
@@ -266,6 +200,113 @@ class PromotionCard extends StatelessWidget {
   // IMAGE
   // ===========================================================================
 
+  Widget _buildImage(double cardWidth) {
+    return SizedBox(
+      width: double.infinity,
+      height: imageHeight,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          _buildCoverImage(),
+
+          // Soft bottom gradient so the image blends naturally
+          // into the card instead of looking like a separate rectangle.
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  stops: const [0.55, 1.0],
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ---------------------------------------------------------------
+          // DISCOUNT
+          // ---------------------------------------------------------------
+
+          if (_hasDiscount)
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 9,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(
+                    AppRadius.full,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.16),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'خصم %$discountPercentage',
+                  textDirection: TextDirection.rtl,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textOnPrimary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+
+          // ---------------------------------------------------------------
+          // DEAL LABEL
+          // ---------------------------------------------------------------
+
+          if (label != null &&
+              label!.trim().isNotEmpty &&
+              menuItemId != null)
+            Positioned(
+              bottom: 9,
+              left: 10,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: cardWidth * 0.62,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.52),
+                  borderRadius: BorderRadius.circular(
+                    AppRadius.full,
+                  ),
+                ),
+                child: Text(
+                  label!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textDirection: TextDirection.rtl,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCoverImage() {
     if (coverUrl == null || coverUrl!.trim().isEmpty) {
       return const _ImagePlaceholder();
@@ -273,15 +314,9 @@ class PromotionCard extends StatelessWidget {
 
     return Image.network(
       coverUrl!,
-      width: double.infinity,
-      height: double.infinity,
       fit: BoxFit.cover,
       filterQuality: FilterQuality.medium,
-      errorBuilder: (
-        context,
-        error,
-        stackTrace,
-      ) {
+      errorBuilder: (_, __, ___) {
         return const _ImagePlaceholder();
       },
       loadingBuilder: (
@@ -302,24 +337,45 @@ class PromotionCard extends StatelessWidget {
   // PRICE
   // ===========================================================================
 
-  Widget _PriceBlock() {
+  Widget _buildPrice() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (_hasDiscount && oldPrice != null)
-          Text(
-            '${_formatPrice(oldPrice!)} $currencySymbol',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textHint,
-              fontSize: 9,
-              decoration: TextDecoration.lineThrough,
-              decorationThickness: 1.2,
-            ),
+        if (oldPrice != null && _hasDiscount)
+          Row(
+            textDirection: TextDirection.rtl,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${_formatPrice(oldPrice!)} $currencySymbol',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textHint,
+                  fontSize: 9.5,
+                  decoration: TextDecoration.lineThrough,
+                  decorationThickness: 1.2,
+                ),
+              ),
+
+              if (_savingsAmount > 0) ...[
+                const SizedBox(width: 5),
+                Text(
+                  'وفر ${_formatPrice(_savingsAmount)}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.primary,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ],
           ),
+
+        const SizedBox(height: 1),
 
         if (newPrice != null)
           Text(
@@ -328,11 +384,39 @@ class PromotionCard extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.priceMedium.copyWith(
               color: AppColors.primary,
-              fontSize: 16,
+              fontSize: 17,
               fontWeight: FontWeight.w900,
+              height: 1.1,
             ),
           ),
       ],
+    );
+  }
+
+  // ===========================================================================
+  // CTA
+  // ===========================================================================
+
+  Widget _buildArrowButton() {
+    return Container(
+      width: 38,
+      height: 38,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(13),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.20),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: const Icon(
+        Icons.arrow_back_rounded,
+        color: AppColors.textOnPrimary,
+        size: 19,
+      ),
     );
   }
 
@@ -348,101 +432,6 @@ class PromotionCard extends StatelessWidget {
           RegExp(r'\B(?=(\d{3})+(?!\d))'),
           (match) => ',',
         );
-  }
-}
-
-// =============================================================================
-// DISCOUNT BADGE
-// =============================================================================
-
-class _DiscountBadge extends StatelessWidget {
-  const _DiscountBadge({
-    required this.discount,
-  });
-
-  final int discount;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 5,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(
-          AppRadius.full,
-        ),
-      ),
-      child: Text(
-        'خصم %$discount',
-        maxLines: 1,
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.textOnPrimary,
-          fontWeight: FontWeight.w800,
-          fontSize: 9,
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// SAVINGS BADGE
-// =============================================================================
-
-class _SavingsBadge extends StatelessWidget {
-  const _SavingsBadge({
-    required this.amount,
-    required this.currencySymbol,
-  });
-
-  final double amount;
-  final String currencySymbol;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(
-        maxWidth: 62,
-      ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 6,
-        vertical: 4,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.primaryLight,
-        borderRadius: BorderRadius.circular(
-          AppRadius.sm,
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'وفر',
-            maxLines: 1,
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w800,
-              fontSize: 8,
-            ),
-          ),
-          const SizedBox(height: 1),
-          Text(
-            '${amount.toInt()} $currencySymbol',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.primary,
-              fontWeight: FontWeight.w800,
-              fontSize: 8,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -466,3 +455,4 @@ class _ImagePlaceholder extends StatelessWidget {
     );
   }
 }
+

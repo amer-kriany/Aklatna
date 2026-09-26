@@ -1,3 +1,4 @@
+
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/features/favorit/presentation/bloc/favorite_bloc.dart';
@@ -22,7 +23,9 @@ class BusinessCard extends StatelessWidget {
   final double height;
 
   final String? statusText;
-  final String? deliveryFeeText;
+
+  /// Whether the business is currently open.
+  final bool isOpen;
 
   /// Makes the card suitable for small horizontal lists.
   final bool compact;
@@ -39,173 +42,201 @@ class BusinessCard extends StatelessWidget {
     this.width,
     this.height = 245,
     this.statusText,
-    this.deliveryFeeText,
+    this.isOpen = false,
     this.compact = false,
   });
+
+  // ==========================================================================
+  // FAVORITE
+  // ==========================================================================
 
   void _onToggleFavorite(BuildContext context) {
     final userId = Supabase.instance.client.auth.currentUser?.id;
 
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('الرجاء تسجيل الدخول لإضافة المفضلة')),
+        const SnackBar(
+          content: Text('الرجاء تسجيل الدخول لإضافة المفضلة'),
+        ),
       );
       return;
     }
 
     context.read<FavoriteBloc>().add(
-      ToggleFavoriteEvent(userId: userId, businessId: businessId),
-    );
+          ToggleFavoriteEvent(
+            userId: userId,
+            businessId: businessId,
+          ),
+        );
   }
+
+  // ==========================================================================
+  // BUILD
+  // ==========================================================================
 
   @override
   Widget build(BuildContext context) {
-    final hasSubtitle = subtitle != null && subtitle!.trim().isNotEmpty;
-    final hasStatus = statusText != null && statusText!.trim().isNotEmpty;
-    final hasDelivery =
-        deliveryFeeText != null && deliveryFeeText!.trim().isNotEmpty;
+    final hasSubtitle =
+        subtitle != null && subtitle!.trim().isNotEmpty;
+
+    final hasStatus =
+        statusText != null && statusText!.trim().isNotEmpty;
 
     return SizedBox(
       width: width,
       height: height,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.background,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.shadow,
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        clipBehavior: Clip.antiAlias,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Ink(
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              border: Border.all(
+                color: AppColors.border.withOpacity(0.7),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadow.withOpacity(0.08),
+                  blurRadius: 14,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ==========================================================
+                  // IMAGE
+                  // ==========================================================
 
-            children: [
-              // ============================================================
-              // IMAGE
-              // ============================================================
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(child: _buildImage()),
+                  Expanded(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        _buildImage(),
 
-                    // Gradient Mask
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      height: compact ? 24 : 36,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withOpacity(0),
-                              Colors.black.withOpacity(0.35),
-                            ],
+                        // Slight bottom gradient
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          height: compact ? 38 : 52,
+                          child: IgnorePointer(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.32),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
 
-                    // Rating Badge
-                    if (rating != null)
-                      Positioned(
-                        left: compact ? 6 : AppSpacing.xs,
-                        bottom: compact ? 6 : AppSpacing.xs,
-                        child: _buildRating(),
-                      ),
+                        // ====================================================
+                        // STATUS
+                        // ====================================================
 
-                    // Favorite Button
-                    Positioned(
-                      top: compact ? 6 : AppSpacing.xs,
-                      right: compact ? 6 : AppSpacing.xs,
-                      child: _buildFavoriteButton(context),
-                    ),
-                  ],
-                ),
-              ),
+                        if (hasStatus)
+                          Positioned(
+                            top: compact ? 7 : 10,
+                            left: compact ? 7 : 10,
+                            child: _buildStatusBadge(),
+                          ),
 
-              // ============================================================
-              // INFORMATION
-              // ============================================================
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  compact ? 8 : AppSpacing.sm,
-                  compact ? 5 : AppSpacing.xs,
-                  compact ? 8 : AppSpacing.sm,
-                  compact ? 7 : AppSpacing.sm,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Business name
-                    Text(
-                      businessName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.h4.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: compact ? 13 : 16,
-                      ),
-                    ),
+                        // ====================================================
+                        // FAVORITE
+                        // ====================================================
 
-                    // Subtitle
-                    if (hasSubtitle) ...[
-                      const SizedBox(height: 1),
-                      Text(
-                        subtitle!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.regularSmall.copyWith(
-                          color: AppColors.textSecondary,
-                          fontSize: compact ? 10 : 12,
+                        Positioned(
+                          top: compact ? 7 : 10,
+                          right: compact ? 7 : 10,
+                          child: _buildFavoriteButton(context),
                         ),
-                      ),
-                    ],
 
-                    // Status + Delivery Pills
-                    if (hasStatus || hasDelivery) ...[
-                      SizedBox(height: compact ? 4 : 6),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        clipBehavior: Clip.none,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (hasStatus)
-                              _buildPill(
-                                text: statusText!,
-                                backgroundColor: AppColors.primaryLight,
-                                foregroundColor: AppColors.primary,
-                              ),
-                            if (hasStatus && hasDelivery)
-                              SizedBox(width: compact ? 5 : 6),
-                            if (hasDelivery)
-                              _buildPill(
-                                text: deliveryFeeText!,
-                                backgroundColor: AppColors.surfaceVariant,
-                                foregroundColor: AppColors.textPrimary,
-                              ),
-                          ],
+                        // ====================================================
+                        // RATING
+                        // ====================================================
+
+                        if (rating != null)
+                          Positioned(
+                            bottom: compact ? 7 : 10,
+                            right: compact ? 7 : 10,
+                            child: _buildRating(),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  // ==========================================================
+                  // INFORMATION
+                  // ==========================================================
+
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      compact ? 9 : AppSpacing.sm,
+                      compact ? 7 : AppSpacing.sm,
+                      compact ? 9 : AppSpacing.sm,
+                      compact ? 9 : AppSpacing.sm,
+                    ),
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                      children: [
+                        // ----------------------------------------------------
+                        // BUSINESS NAME
+                        // ----------------------------------------------------
+
+                        Text(
+                          businessName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.h4.copyWith(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: compact ? 13 : 16,
+                          ),
                         ),
-                      ),
-                    ],
-                  ],
-                ),
+
+                        // ----------------------------------------------------
+                        // SUBTITLE
+                        // ----------------------------------------------------
+
+                        if (hasSubtitle) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            subtitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                AppTextStyles.regularSmall.copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: compact ? 10 : 12,
+                            ),
+                          ),
+                        ],
+
+                        // Small bottom breathing room
+                        if (!hasSubtitle)
+                          SizedBox(
+                            height: compact ? 3 : 5,
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -219,14 +250,12 @@ class BusinessCard extends StatelessWidget {
   Widget _buildImage() {
     if (coverUrl == null || coverUrl!.trim().isEmpty) {
       return Container(
-        width: double.infinity,
-        height: double.infinity,
         color: AppColors.primaryLight,
         alignment: Alignment.center,
         child: Icon(
           Icons.storefront_rounded,
           color: AppColors.primary,
-          size: compact ? 24 : 36,
+          size: compact ? 28 : 40,
         ),
       );
     }
@@ -237,11 +266,11 @@ class BusinessCard extends StatelessWidget {
       height: double.infinity,
       fit: BoxFit.cover,
       loadingBuilder: (context, child, progress) {
-        if (progress == null) return child;
+        if (progress == null) {
+          return child;
+        }
 
         return Container(
-          width: double.infinity,
-          height: double.infinity,
           color: AppColors.surfaceVariant,
           child: const Skeleton(
             width: double.infinity,
@@ -252,17 +281,67 @@ class BusinessCard extends StatelessWidget {
       },
       errorBuilder: (context, error, stackTrace) {
         return Container(
-          width: double.infinity,
-          height: double.infinity,
           color: AppColors.surfaceVariant,
           alignment: Alignment.center,
           child: Icon(
             Icons.broken_image_outlined,
             color: AppColors.textSecondary,
-            size: compact ? 20 : 30,
+            size: compact ? 22 : 30,
           ),
         );
       },
+    );
+  }
+
+  // ==========================================================================
+  // STATUS BADGE
+  // ==========================================================================
+
+  Widget _buildStatusBadge() {
+    final backgroundColor = isOpen
+        ? Colors.green.withOpacity(0.94)
+        : Colors.red.withOpacity(0.94);
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 7 : 9,
+        vertical: compact ? 3 : 5,
+      ),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(
+          AppRadius.full,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.12),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: compact ? 5 : 6,
+            height: compact ? 5 : 6,
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            statusText!,
+            style: AppTextStyles.caption.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: compact ? 9 : 10.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -273,22 +352,31 @@ class BusinessCard extends StatelessWidget {
   Widget _buildRating() {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 5 : AppSpacing.xs,
-        vertical: compact ? 2 : 3,
+        horizontal: compact ? 6 : 8,
+        vertical: compact ? 3 : 4,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(AppRadius.full),
+        color: Colors.white.withOpacity(0.96),
+        borderRadius: BorderRadius.circular(
+          AppRadius.full,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.10),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.star_rounded,
-            size: compact ? 10 : 13,
+            size: compact ? 11 : 14,
             color: AppColors.warning,
           ),
-          const SizedBox(width: 2),
+          const SizedBox(width: 3),
           Text(
             rating!.toStringAsFixed(1),
             style: AppTextStyles.caption.copyWith(
@@ -298,12 +386,12 @@ class BusinessCard extends StatelessWidget {
             ),
           ),
           if (ratingCount != null) ...[
-            const SizedBox(width: 1),
+            const SizedBox(width: 2),
             Text(
               '($ratingCount)',
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.textSecondary,
-                fontSize: compact ? 9 : 10,
+                fontSize: compact ? 8.5 : 10,
               ),
             ),
           ],
@@ -313,7 +401,7 @@ class BusinessCard extends StatelessWidget {
   }
 
   // ==========================================================================
-  // FAVORITE
+  // FAVORITE BUTTON
   // ==========================================================================
 
   Widget _buildFavoriteButton(BuildContext context) {
@@ -321,60 +409,45 @@ class BusinessCard extends StatelessWidget {
       builder: (context, favoriteState) {
         final isFavorite =
             favoriteState is FavoriteLoaded &&
-            favoriteState.favoriteIds.contains(businessId);
+            favoriteState.favoriteIds.contains(
+              businessId,
+            );
 
-        final size = compact ? 24.0 : 32.0;
+        final size = compact ? 28.0 : 36.0;
 
         return Material(
-          color: Colors.white.withOpacity(0.9),
+          color: Colors.white.withOpacity(0.94),
           shape: const CircleBorder(),
+          elevation: 1,
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: () => _onToggleFavorite(context),
             child: SizedBox(
               width: size,
               height: size,
-              child: Icon(
-                isFavorite
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                color: isFavorite ? AppColors.primary : Colors.black87,
-                size: compact ? 13 : 17,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 180),
+                transitionBuilder: (child, animation) {
+                  return ScaleTransition(
+                    scale: animation,
+                    child: child,
+                  );
+                },
+                child: Icon(
+                  isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_border_rounded,
+                  key: ValueKey(isFavorite),
+                  color: isFavorite
+                      ? AppColors.primary
+                      : Colors.black87,
+                  size: compact ? 15 : 19,
+                ),
               ),
             ),
           ),
         );
       },
-    );
-  }
-
-  // ==========================================================================
-  // PILL
-  // ==========================================================================
-
-  Widget _buildPill({
-    required String text,
-    required Color backgroundColor,
-    required Color foregroundColor,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 10,
-        vertical: compact ? 3 : 4,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(AppRadius.full),
-      ),
-      child: Text(
-        text,
-        maxLines: 1,
-        style: AppTextStyles.caption.copyWith(
-          color: foregroundColor,
-          fontWeight: FontWeight.w700,
-          fontSize: compact ? 9.5 : 10.5,
-        ),
-      ),
     );
   }
 }

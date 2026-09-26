@@ -18,14 +18,10 @@ class OrderModel {
   final String? businessLogo;
   final String? businessName;
   final double totalPrice;
-  final double deliveryFee;
   final OrderType orderType;
   final OrderStatus orderStatus;
   final DateTime? scheduledFor;
   final int? estimatedPreparationTime;
-  final String? driverId;
-  final DateTime? pickedUpAt;
-  final DateTime? deliveredAt;
 
   OrderModel({
     this.id,
@@ -40,7 +36,6 @@ class OrderModel {
     this.deliveryLatitude,
     this.deliveryLongitude,
     required this.totalPrice,
-    required this.deliveryFee,
     required this.orderType,
     required this.orderStatus,
     this.scheduledFor,
@@ -48,9 +43,6 @@ class OrderModel {
     this.businessLogo,
     this.businessName,
     this.estimatedPreparationTime,
-    this.driverId,
-    this.pickedUpAt,
-    this.deliveredAt,
   });
 
   Map<String, dynamic> toJson() {
@@ -64,7 +56,6 @@ class OrderModel {
       'delivery_latitude': deliveryLatitude,
       'delivery_longitude': deliveryLongitude,
       'total_price': totalPrice,
-      'delivery_fee': deliveryFee,
       'order_type': orderType.name,
       'description': description,
       'business_logo': businessLogo,
@@ -73,7 +64,6 @@ class OrderModel {
       'scheduled_for': scheduledFor?.toUtc().toIso8601String(),
       // id, created_at, order_number — DB-generated, not sent from client
       // estimated_preparation_time — set later by the restaurant dashboard
-      // driver_id — set later when a driver claims the order
     };
   }
 
@@ -160,7 +150,6 @@ class OrderModel {
       businessLogo: asNullableString(orders['business_logo']),
 
       totalPrice: asDoubleOrZero(orders['total_price']),
-      deliveryFee: asDoubleOrZero(orders['delivery_fee']),
 
       orderType: asOrderType(orders['order_type']),
       deliveryAddress: asNullableString(orders['delivery_address']),
@@ -181,18 +170,6 @@ class OrderModel {
 
       estimatedPreparationTime: asNullableInt(
         orders['estimated_preparation_time'],
-      ),
-
-      driverId: asNullableString(
-        orders['driver_id'],
-      ),
-
-      pickedUpAt: asNullableDate(
-        orders['picked_up_at'],
-      ),
-
-      deliveredAt: asNullableDate(
-        orders['delivered_at'],
       ),
     );
   }

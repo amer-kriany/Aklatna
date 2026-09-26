@@ -47,7 +47,6 @@ class OrderRepositoryImpl implements OrderRepository {
       businessName: order.businessName,
 
       totalPrice: order.totalPrice,
-      deliveryFee: order.deliveryFee,
 
       orderType: order.orderType,
       orderStatus: order.orderStatus,
@@ -56,9 +55,7 @@ class OrderRepositoryImpl implements OrderRepository {
 
       estimatedPreparationTime: order.estimatedPreparationTime,
 
-      driverId: order.driverId,
-      pickedUpAt: order.pickedUpAt,
-      deliveredAt: order.deliveredAt,
+      
     );
   }
 
@@ -84,7 +81,6 @@ class OrderRepositoryImpl implements OrderRepository {
       businessName: entity.businessName,
 
       totalPrice: entity.totalPrice,
-      deliveryFee: entity.deliveryFee,
 
       orderType: entity.orderType,
       orderStatus: entity.orderStatus,
@@ -94,9 +90,7 @@ class OrderRepositoryImpl implements OrderRepository {
       // Not sent when placing an order, but preserved for updates.
       estimatedPreparationTime: entity.estimatedPreparationTime,
 
-      driverId: entity.driverId,
-      pickedUpAt: entity.pickedUpAt,
-      deliveredAt: entity.deliveredAt,
+    
     );
   }
 }
