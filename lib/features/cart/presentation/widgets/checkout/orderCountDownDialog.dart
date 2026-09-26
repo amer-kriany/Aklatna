@@ -1,28 +1,9 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-
-
-
-// ===========================================================================
-// ORDER COUNTDOWN DIALOG (modern version)
-// ===========================================================================
-//
-// Same behavior as before: 5s window to cancel before PlaceOrderEvent
-// fires. Visual upgrade —
-//   - frosted glass full-screen backdrop (BackdropFilter blur)
-//   - scale + fade entrance animation
-//   - glowing/pulsing countdown ring
-//   - filled danger button with icon instead of plain outlined button
-//
-// IMPORTANT: this widget is full-screen (Positioned.fill + Center), so it
-// must be shown via showGeneralDialog with barrierColor: Colors.transparent
-// — NOT showDialog/Dialog. See usage at the bottom of this file.
-// ===========================================================================
 
 class OrderCountdownDialog extends StatefulWidget {
   const OrderCountdownDialog({super.key});
@@ -30,22 +11,23 @@ class OrderCountdownDialog extends StatefulWidget {
   @override
   State<OrderCountdownDialog> createState() => _OrderCountdownDialogState();
 
-  // ============================================================
-  // SHOW HELPER
-  // ============================================================
-  //
-  // Call this instead of showDialog(). Returns true if the countdown
-  // finished naturally (proceed with placing the order), false if the
-  // customer tapped cancel.
-  // ============================================================
-
   static Future<bool?> show(BuildContext context) {
     return showGeneralDialog<bool>(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
-      transitionDuration: Duration.zero,
-      pageBuilder: (context, _, __) => const OrderCountdownDialog(),
+      transitionDuration: const Duration(milliseconds: 420),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return const OrderCountdownDialog();
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
+
+        return FadeTransition(opacity: curved, child: child);
+      },
     );
   }
 }
@@ -55,10 +37,15 @@ class _OrderCountdownDialogState extends State<OrderCountdownDialog>
   static const int _totalSeconds = 5;
 
   int _secondsLeft = _totalSeconds;
+
   Timer? _timer;
 
   late final AnimationController _entranceController;
-  late final AnimationController _pulseController;
+  late final AnimationController _countdownController;
+  late final AnimationController _buttonController;
+
+  late final Animation<double> _scaleAnimation;
+  late final Animation<double> _opacityAnimation;
 
   @override
   void initState() {
@@ -66,41 +53,79 @@ class _OrderCountdownDialogState extends State<OrderCountdownDialog>
 
     _entranceController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 350),
-    )..forward();
+      duration: const Duration(milliseconds: 520),
+    );
 
-    _pulseController = AnimationController(
+    _countdownController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    )..repeat(reverse: true);
+      duration: const Duration(milliseconds: 500),
+    );
 
+    _buttonController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+      lowerBound: 0.96,
+      upperBound: 1,
+      value: 1,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.94, end: 1).animate(
+      CurvedAnimation(parent: _entranceController, curve: Curves.easeOutBack),
+    );
+
+    _opacityAnimation = CurvedAnimation(
+      parent: _entranceController,
+      curve: Curves.easeOut,
+    );
+
+    _entranceController.forward();
+
+    _startCountdown();
+  }
+
+  void _startCountdown() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
       if (_secondsLeft <= 1) {
         timer.cancel();
 
-        if (mounted) {
-          Navigator.of(context).pop(true);
-        }
+        Navigator.of(context).pop(true);
         return;
       }
 
       setState(() {
         _secondsLeft--;
       });
+
+      _countdownController
+        ..reset()
+        ..forward();
     });
+  }
+
+  Future<void> _cancel() async {
+    _timer?.cancel();
+
+    await _buttonController.reverse();
+
+    if (!mounted) return;
+
+    Navigator.of(context).pop(false);
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _entranceController.dispose();
-    _pulseController.dispose();
-    super.dispose();
-  }
 
-  void _cancel() {
-    _timer?.cancel();
-    Navigator.of(context).pop(false);
+    _entranceController.dispose();
+    _countdownController.dispose();
+    _buttonController.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -115,185 +140,228 @@ class _OrderCountdownDialogState extends State<OrderCountdownDialog>
           color: Colors.transparent,
           child: Stack(
             children: [
-              // Full-screen frosted backdrop
               Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.25),
-                  ),
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration: const Duration(milliseconds: 420),
+                  curve: Curves.easeOut,
+                  builder: (context, value, child) {
+                    return BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 7 * value,
+                        sigmaY: 7 * value,
+                      ),
+                      child: Container(
+                        color: Colors.black.withOpacity(0.28 * value),
+                      ),
+                    );
+                  },
                 ),
               ),
 
-              // Centered card
               Center(
-                child: ScaleTransition(
-                  scale: CurvedAnimation(
-                    parent: _entranceController,
-                    curve: Curves.easeOutBack,
-                  ),
-                  child: FadeTransition(
-                    opacity: _entranceController,
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.xl,
+                child: AnimatedBuilder(
+                  animation: _entranceController,
+                  builder: (context, child) {
+                    return FadeTransition(
+                      opacity: _opacityAnimation,
+                      child: Transform.scale(
+                        scale: _scaleAnimation.value,
+                        child: child,
                       ),
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.xl,
-                        AppSpacing.lg,
-                        AppSpacing.lg,
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 26),
+                    padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: AppColors.border.withOpacity(0.3),
                       ),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(28),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primary.withOpacity(0.15),
-                            blurRadius: 40,
-                            spreadRadius: -8,
-                            offset: const Offset(0, 20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 32,
+                          offset: const Offset(0, 14),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildTopIcon(),
+
+                        const SizedBox(height: 14),
+
+                        Text(
+                          'تأكيد الطلب',
+                          style: AppTextStyles.h4.copyWith(
+                            fontWeight: FontWeight.w900,
                           ),
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+                        ),
+
+                        const SizedBox(height: 5),
+
+                        Text(
+                          'سيتم إرسال طلبك خلال لحظات',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // ============================
-                          // COUNTDOWN RING WITH GLOW
-                          // ============================
-                          AnimatedBuilder(
-                            animation: _pulseController,
-                            builder: (context, child) {
-                              final glowStrength =
-                                  0.15 + (_pulseController.value * 0.15);
+                        ),
 
-                              return Container(
-                                width: 92,
-                                height: 92,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.primary
-                                          .withOpacity(glowStrength),
-                                      blurRadius: 24,
-                                      spreadRadius: 4,
-                                    ),
-                                  ],
-                                ),
-                                child: child,
-                              );
-                            },
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 92,
-                                  height: 92,
-                                  child: CircularProgressIndicator(
-                                    value: progress,
-                                    strokeWidth: 6,
-                                    strokeCap: StrokeCap.round,
-                                    backgroundColor:
-                                        AppColors.border.withOpacity(0.4),
-                                    valueColor: const AlwaysStoppedAnimation(
-                                      AppColors.primary,
-                                    ),
-                                  ),
-                                ),
-                                AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 200),
-                                  transitionBuilder: (child, animation) {
-                                    return ScaleTransition(
-                                      scale: animation,
-                                      child: child,
-                                    );
-                                  },
-                                  child: Text(
-                                    '$_secondsLeft',
-                                    key: ValueKey(_secondsLeft),
-                                    style: AppTextStyles.h2.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        const SizedBox(height: 22),
 
-                          const SizedBox(height: AppSpacing.lg),
+                        _buildCountdown(progress),
 
-                          Text(
-                            'جاري إرسال طلبك',
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.h4.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
+                        const SizedBox(height: 18),
 
-                          const SizedBox(height: 6),
+                        _buildHint(),
 
-                          Text(
-                            'يمكنك التراجع خلال الثواني القادمة فقط',
-                            textAlign: TextAlign.center,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
+                        const SizedBox(height: 20),
 
-                          const SizedBox(height: AppSpacing.xl),
-
-                          // ============================
-                          // CANCEL BUTTON — filled, modern
-                          // ============================
-                          SizedBox(
-                            width: double.infinity,
-                            child: Material(
-                              color: AppColors.error.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(16),
-                              child: InkWell(
-                                onTap: _cancel,
-                                borderRadius: BorderRadius.circular(16),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: AppSpacing.md,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.close_rounded,
-                                        color: AppColors.error,
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'إلغاء الطلب',
-                                        style: AppTextStyles.bodyMedium
-                                            .copyWith(
-                                          color: AppColors.error,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        _buildCancelButton(),
+                      ],
                     ),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopIcon() {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        shape: BoxShape.circle,
+      ),
+      child: Icon(Icons.check_rounded, color: AppColors.primary, size: 23),
+    );
+  }
+
+  Widget _buildCountdown(double progress) {
+    return SizedBox(
+      width: 92,
+      height: 92,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: progress),
+            duration: const Duration(milliseconds: 650),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return SizedBox(
+                width: 92,
+                height: 92,
+                child: CircularProgressIndicator(
+                  value: value,
+                  strokeWidth: 5,
+                  strokeCap: StrokeCap.round,
+                  backgroundColor: AppColors.border.withOpacity(0.3),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              );
+            },
+          ),
+
+          Container(
+            width: 70,
+            height: 70,
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 320),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  final slide = Tween<Offset>(
+                    begin: const Offset(0, 0.25),
+                    end: Offset.zero,
+                  ).animate(animation);
+
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(position: slide, child: child),
+                  );
+                },
+                child: Text(
+                  '$_secondsLeft',
+                  key: ValueKey(_secondsLeft),
+                  style: AppTextStyles.h2.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHint() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.info_outline_rounded, size: 15, color: AppColors.textHint),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            'يمكنك إلغاء الطلب قبل انتهاء الوقت',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCancelButton() {
+    return GestureDetector(
+      onTapDown: (_) {
+        _buttonController.reverse();
+      },
+      onTapUp: (_) {
+        _buttonController.forward();
+      },
+      onTapCancel: () {
+        _buttonController.forward();
+      },
+      onTap: _cancel,
+      child: ScaleTransition(
+        scale: _buttonController,
+        child: Container(
+          width: double.infinity,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border.withOpacity(0.7)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.close_rounded, size: 18, color: AppColors.error),
+              const SizedBox(width: 7),
+              Text(
+                'إلغاء الطلب',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w800,
                 ),
               ),
             ],

@@ -52,7 +52,6 @@ import 'package:go_router/go_router.dart';
 // ============================================================
 
 final GoRouter appRouter = GoRouter(
-
   initialLocation: '/splash',
 
   navigatorKey: MainShell.rootNavigatorKey,
@@ -60,7 +59,6 @@ final GoRouter appRouter = GoRouter(
   refreshListenable: GoRouterRefreshStream(
     Stream.multi(
       (controller) {
-
         sl<AuthBloc>().stream.listen(
           controller.add,
         );
@@ -68,24 +66,18 @@ final GoRouter appRouter = GoRouter(
         sl<ProfileBloc>().stream.listen(
           controller.add,
         );
-
       },
     ),
   ),
-
 
   // ============================================================
   // REDIRECT
   // ============================================================
 
   redirect: (context, state) {
+    final authState = sl<AuthBloc>().state;
 
-    final authState =
-        sl<AuthBloc>().state;
-
-    final profileState =
-        sl<ProfileBloc>().state;
-
+    final profileState = sl<ProfileBloc>().state;
 
     final isGoingToAuth =
         state.matchedLocation == '/signin' ||
@@ -94,16 +86,11 @@ final GoRouter appRouter = GoRouter(
         state.matchedLocation == '/forgot-password' ||
         state.matchedLocation == '/reset-password';
 
-
     final isResetPassword =
-        state.matchedLocation ==
-            '/reset-password';
-
+        state.matchedLocation == '/reset-password';
 
     final isSplash =
-        state.matchedLocation ==
-            '/splash';
-
+        state.matchedLocation == '/splash';
 
     // ==========================================================
     // AUTH LOADING
@@ -111,10 +98,8 @@ final GoRouter appRouter = GoRouter(
 
     if (authState is AuthInitial ||
         authState is AuthLoading) {
-
       return null;
     }
-
 
     // ==========================================================
     // AUTHENTICATED
@@ -123,13 +108,11 @@ final GoRouter appRouter = GoRouter(
     final isAuthenticated =
         authState is AuthAuthenticated;
 
-
     // ==========================================================
     // NOT AUTHENTICATED
     // ==========================================================
 
     if (!isAuthenticated) {
-
       if (isGoingToAuth) {
         return null;
       }
@@ -137,30 +120,23 @@ final GoRouter appRouter = GoRouter(
       return '/signin';
     }
 
-
     // ==========================================================
     // PASSWORD RECOVERY
-    //
-    // VERY IMPORTANT:
-    // Do not redirect the recovery user to home.
     // ==========================================================
 
     if (isResetPassword) {
       return null;
     }
 
-
     // ==========================================================
     // PROFILE
     // ==========================================================
 
     if (profileState is! ProfileLoaded) {
-
       return isSplash
           ? null
           : '/splash';
     }
-
 
     // ==========================================================
     // AUTH ROUTES
@@ -168,14 +144,11 @@ final GoRouter appRouter = GoRouter(
 
     if (isSplash ||
         isGoingToAuth) {
-
       return '/home';
     }
 
-
     return null;
   },
-
 
   // ============================================================
   // ROUTES
@@ -195,7 +168,6 @@ final GoRouter appRouter = GoRouter(
           const SplashScreen(),
     ),
 
-
     // ----------------------------------------------------------
     // ONBOARDING
     // ----------------------------------------------------------
@@ -207,7 +179,6 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) =>
           const OnboardingScreen(),
     ),
-
 
     // ----------------------------------------------------------
     // SIGN IN
@@ -221,7 +192,6 @@ final GoRouter appRouter = GoRouter(
           const SignInPage(),
     ),
 
-
     // ----------------------------------------------------------
     // SIGN UP
     // ----------------------------------------------------------
@@ -234,7 +204,6 @@ final GoRouter appRouter = GoRouter(
           const SignUpPage(),
     ),
 
-
     // ----------------------------------------------------------
     // PHONE CONFIRMATION
     // ----------------------------------------------------------
@@ -244,10 +213,8 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey:
           MainShell.rootNavigatorKey,
       builder: (context, state) {
-
         final args =
-            state.extra
-                as Map<String, dynamic>;
+            state.extra as Map<String, dynamic>;
 
         return ConfirmPhonePage(
           initialPhone:
@@ -256,19 +223,16 @@ final GoRouter appRouter = GoRouter(
       },
     ),
 
-
     // ----------------------------------------------------------
     // MAIN SHELL
     // ----------------------------------------------------------
 
     StatefulShellRoute.indexedStack(
-
       builder: (
         context,
         state,
         navigationShell,
       ) {
-
         return MainShell(
           navigationShell:
               navigationShell,
@@ -277,30 +241,32 @@ final GoRouter appRouter = GoRouter(
 
       branches: [
 
+        // ======================================================
+        // HOME
+        // ======================================================
+
         StatefulShellBranch(
           routes: [
-
             GoRoute(
               path: '/home',
-              builder:
-                  (context, state) =>
-                      const HomePage(),
+              builder: (context, state) =>
+                  const HomePage(),
             ),
-
           ],
         ),
 
+        // ======================================================
+        // SEARCH
+        // ======================================================
 
         StatefulShellBranch(
           routes: [
-
             GoRoute(
               path: '/search',
               builder: (
                 context,
                 state,
               ) {
-
                 return BlocProvider(
                   create: (_) =>
                       sl<BusinessBloc>(),
@@ -309,55 +275,52 @@ final GoRouter appRouter = GoRouter(
                 );
               },
             ),
-
           ],
         ),
 
+        // ======================================================
+        // CART
+        // ======================================================
 
         StatefulShellBranch(
           routes: [
-
             GoRoute(
               path: '/cart',
-              builder:
-                  (context, state) =>
-                      CartPage(),
+              builder: (context, state) =>
+                  CartPage(),
             ),
-
           ],
         ),
 
+        // ======================================================
+        // ORDERS
+        // ======================================================
 
         StatefulShellBranch(
           routes: [
-
             GoRoute(
               path: '/orders',
-              builder:
-                  (context, state) =>
-                      const MyOrdersPage(),
+              builder: (context, state) =>
+                  const MyOrdersPage(),
             ),
-
           ],
         ),
 
+        // ======================================================
+        // JOBS
+        // ======================================================
 
         StatefulShellBranch(
           routes: [
-
             GoRoute(
               path: '/jobs',
-              builder:
-                  (context, state) =>
-                      const JobsPage(),
+              builder: (context, state) =>
+                  const JobsPage(),
             ),
-
           ],
         ),
-
       ],
     ),
-
 
     // ----------------------------------------------------------
     // FOOD
@@ -368,28 +331,21 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey:
           MainShell.rootNavigatorKey,
       builder: (context, state) {
-
         return MultiBlocProvider(
-
           providers: [
-
             BlocProvider(
               create: (_) =>
                   sl<MenuBloc>(),
             ),
-
             BlocProvider(
               create: (_) =>
                   sl<AddonBloc>(),
             ),
-
             BlocProvider(
               create: (_) =>
                   sl<BusinessBloc>(),
             ),
-
           ],
-
           child: Foodetailspage(
             itemId:
                 state.pathParameters['id']!,
@@ -397,7 +353,6 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
-
 
     // ----------------------------------------------------------
     // CHECK EMAIL
@@ -408,10 +363,8 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey:
           MainShell.rootNavigatorKey,
       builder: (context, state) {
-
         final args =
-            state.extra
-                as Map<String, dynamic>;
+            state.extra as Map<String, dynamic>;
 
         return CheckEmailPage(
           email:
@@ -423,7 +376,6 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
-
 
     // ----------------------------------------------------------
     // CHECKOUT
@@ -437,7 +389,6 @@ final GoRouter appRouter = GoRouter(
           const CheckoutPage(),
     ),
 
-
     // ----------------------------------------------------------
     // ADDRESSES
     // ----------------------------------------------------------
@@ -449,7 +400,6 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) =>
           const AddressesPage(),
     ),
-
 
     // ----------------------------------------------------------
     // ORDER PLACED
@@ -463,7 +413,6 @@ final GoRouter appRouter = GoRouter(
           const OrderPlacedPage(),
     ),
 
-
     // ----------------------------------------------------------
     // BUSINESS
     // ----------------------------------------------------------
@@ -473,23 +422,17 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey:
           MainShell.rootNavigatorKey,
       builder: (context, state) {
-
         return MultiBlocProvider(
-
           providers: [
-
             BlocProvider(
               create: (_) =>
                   sl<BusinessBloc>(),
             ),
-
             BlocProvider(
               create: (_) =>
                   sl<MenuBloc>(),
             ),
-
           ],
-
           child: BusinessDetailsPage(
             businessId:
                 state.pathParameters['id']!,
@@ -497,7 +440,6 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
-
 
     // ----------------------------------------------------------
     // FAVORITES
@@ -511,25 +453,28 @@ final GoRouter appRouter = GoRouter(
           const FavoritesPage(),
     ),
 
-
     // ----------------------------------------------------------
     // PROMOTION
+    //
+    // IMPORTANT:
+    // This route is explicitly pushed onto the root navigator.
+    // This prevents the promotion page from becoming part of
+    // the Home branch's navigation stack.
     // ----------------------------------------------------------
 
     GoRoute(
       path: '/promotion-details',
+      parentNavigatorKey:
+          MainShell.rootNavigatorKey,
       builder: (context, state) {
-
         final promo =
-            state.extra
-                as PromotionEntity;
+            state.extra as PromotionEntity;
 
         return PromotionDetailsPage(
           promotion: promo,
         );
       },
     ),
-
 
     // ----------------------------------------------------------
     // FORGOT PASSWORD
@@ -543,7 +488,6 @@ final GoRouter appRouter = GoRouter(
           const ForgotPasswordPage(),
     ),
 
-
     // ----------------------------------------------------------
     // RESET PASSWORD
     // ----------------------------------------------------------
@@ -556,7 +500,6 @@ final GoRouter appRouter = GoRouter(
           const ResetPasswordPage(),
     ),
 
-
     // ----------------------------------------------------------
     // PROFILE
     // ----------------------------------------------------------
@@ -568,6 +511,5 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) =>
           const ProfilePage(),
     ),
-
   ],
 );

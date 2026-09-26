@@ -1,4 +1,3 @@
-
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
@@ -8,11 +7,7 @@ import 'package:aklatna/features/orders/order_type.dart';
 import 'package:flutter/material.dart';
 
 class OngoingOrderCard extends StatelessWidget {
-  const OngoingOrderCard({
-    super.key,
-    required this.order,
-    required this.onTap,
-  });
+  const OngoingOrderCard({super.key, required this.order, required this.onTap});
 
   final OrderEntity order;
   final VoidCallback onTap;
@@ -34,25 +29,22 @@ class OngoingOrderCard extends StatelessWidget {
         vertical: AppSpacing.sm,
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          child: Ink(
+          splashColor: AppColors.primary.withOpacity(0.04),
+          highlightColor: AppColors.primary.withOpacity(0.02),
+          child: Container(
             padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
-              color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
-                color: AppColors.primary.withOpacity(0.18),
+                color: AppColors.border.withOpacity(0.65),
+                width: 1,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow.withOpacity(0.06),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,8 +56,7 @@ class OngoingOrderCard extends StatelessWidget {
                       height: 46,
                       decoration: BoxDecoration(
                         color: AppColors.primary.withOpacity(0.10),
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Icon(
                         _statusIcon(order.orderStatus),
@@ -73,11 +64,12 @@ class OngoingOrderCard extends StatelessWidget {
                         size: 24,
                       ),
                     ),
+
                     const SizedBox(width: AppSpacing.sm),
+
                     Expanded(
                       child: Column(
-                        crossAxisAlignment:
-                            CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             order.businessName ?? 'المطعم',
@@ -99,6 +91,7 @@ class OngoingOrderCard extends StatelessWidget {
                         ],
                       ),
                     ),
+
                     if (order.orderNumber != null)
                       Text(
                         '#${order.orderNumber}',
@@ -109,22 +102,24 @@ class OngoingOrderCard extends StatelessWidget {
                       ),
                   ],
                 ),
+
                 const SizedBox(height: AppSpacing.lg),
+
                 _buildProgress(),
+
                 if (showPredictedTime) ...[
                   const SizedBox(height: AppSpacing.md),
                   _buildEstimatedTime(estimatedTime),
                 ],
+
                 const SizedBox(height: AppSpacing.md),
+
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.sm,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                   decoration: BoxDecoration(
                     color: AppColors.primary.withOpacity(0.07),
-                    borderRadius:
-                        BorderRadius.circular(AppRadius.md),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -153,16 +148,13 @@ class OngoingOrderCard extends StatelessWidget {
     );
   }
 
+  Widget _buildProgress() {
+    final currentStep = _currentStep(order.orderStatus);
+    const totalSteps = 4;
 
-Widget _buildProgress() {
-  final currentStep = _currentStep(order.orderStatus);
-  const totalSteps = 4;
-
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: List.generate(
-      totalSteps * 2 - 1,
-      (index) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: List.generate(totalSteps * 2 - 1, (index) {
         if (index.isOdd) {
           final lineIndex = index ~/ 2;
 
@@ -185,15 +177,10 @@ Widget _buildProgress() {
         final isCompleted = stepIndex < currentStep;
         final isCurrent = stepIndex == currentStep - 1;
 
-        return _ProgressDot(
-          active: isCompleted,
-          current: isCurrent,
-        );
-      },
-    ),
-  );
-}
-
+        return _ProgressDot(active: isCompleted, current: isCurrent);
+      }),
+    );
+  }
 
   Widget _buildEstimatedTime(int minutes) {
     return Container(
@@ -221,11 +208,12 @@ Widget _buildProgress() {
               size: 18,
             ),
           ),
+
           const SizedBox(width: AppSpacing.sm),
+
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'الوقت المتوقع',
@@ -244,6 +232,7 @@ Widget _buildProgress() {
               ],
             ),
           ),
+
           Text(
             _timeDescription(minutes),
             style: AppTextStyles.caption.copyWith(
@@ -259,32 +248,34 @@ Widget _buildProgress() {
     switch (status) {
       case OrderStatus.pending:
         return 1;
+
       case OrderStatus.preparing:
         return 2;
+
       case OrderStatus.ready:
         return 3;
+
       case OrderStatus.outForDelivery:
         return 4;
+
       case OrderStatus.completed:
         return 4;
+
       case OrderStatus.cancelled:
         return 0;
     }
   }
 
   String _formatReadyTime(int minutes) {
-  final baseTime = (order.createdAt ?? DateTime.now()).toLocal();
-  final readyTime =
-      baseTime.add(Duration(minutes: minutes));
+    final baseTime = (order.createdAt ?? DateTime.now()).toLocal();
 
-  final hour =
-      readyTime.hour.toString().padLeft(2, '0');
+    final readyTime = baseTime.add(Duration(minutes: minutes));
 
-  final minute =
-      readyTime.minute.toString().padLeft(2, '0');
+    final hour = readyTime.hour.toString().padLeft(2, '0');
+    final minute = readyTime.minute.toString().padLeft(2, '0');
 
-  return '$hour:$minute';
-}
+    return '$hour:$minute';
+  }
 
   String _timeDescription(int minutes) {
     if (minutes <= 1) {
@@ -306,8 +297,7 @@ Widget _buildProgress() {
   }
 
   String _statusText(OrderStatus status) {
-    final isPickup =
-        order.orderType == OrderType.pickup;
+    final isPickup = order.orderType == OrderType.pickup;
 
     switch (status) {
       case OrderStatus.pending:
@@ -317,9 +307,7 @@ Widget _buildProgress() {
         return 'جاري تحضير طلبك';
 
       case OrderStatus.ready:
-        return isPickup
-            ? 'طلبك جاهز للاستلام'
-            : 'طلبك جاهز';
+        return isPickup ? 'طلبك جاهز للاستلام' : 'طلبك جاهز';
 
       case OrderStatus.outForDelivery:
         return 'طلبك مع السائق';
@@ -356,10 +344,7 @@ Widget _buildProgress() {
 }
 
 class _ProgressDot extends StatelessWidget {
-  const _ProgressDot({
-    required this.active,
-    required this.current,
-  });
+  const _ProgressDot({required this.active, required this.current});
 
   final bool active;
   final bool current;
@@ -368,18 +353,17 @@ class _ProgressDot extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
       width: current ? 13 : 9,
       height: current ? 13 : 9,
       decoration: BoxDecoration(
-        color: active
-            ? AppColors.primary
-            : AppColors.border,
+        color: active ? AppColors.primary : AppColors.border,
         shape: BoxShape.circle,
         boxShadow: current
             ? [
                 BoxShadow(
-                  color: AppColors.primary.withOpacity(0.25),
-                  blurRadius: 8,
+                  color: AppColors.primary.withOpacity(0.18),
+                  blurRadius: 7,
                 ),
               ]
             : null,

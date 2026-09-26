@@ -45,64 +45,42 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin, PeriodicRebuildMixin {
-  // ===========================================================================
-  // CONSTANTS
-  // ===========================================================================
-
   static const double _recommendedTileWidth = 160;
   static const double _recommendedRowHeight = 220;
-
-  // ===========================================================================
-  // PROFILE TOOLTIP
-  // ===========================================================================
 
   final LayerLink _profileLayerLink = LayerLink();
 
   late final AnimationController _profilePulseController;
 
   OverlayEntry? _profileTooltipEntry;
-
   Timer? _profileTooltipTimer;
-
-  // ===========================================================================
-  // INIT
-  // ===========================================================================
 
   @override
   void initState() {
     super.initState();
 
     context.read<BusinessBloc>().add(
-          GetBusinesses(),
-        );
+      GetBusinesses(),
+    );
 
     context.read<PromotionsBloc>().add(
-          LoadPromotionsEvent(),
-        );
+      LoadPromotionsEvent(),
+    );
 
     startPeriodicRebuild();
 
-    // Small profile animation only.
-    // This is intentionally isolated from the rest of the page.
     _profilePulseController = AnimationController(
       vsync: this,
-      duration: const Duration(
-        milliseconds: 450,
-      ),
+      duration: const Duration(milliseconds: 450),
       lowerBound: 1.0,
       upperBound: 1.08,
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-
       _showProfileHint();
     });
   }
-
-  // ===========================================================================
-  // DISPOSE
-  // ===========================================================================
 
   @override
   void dispose() {
@@ -151,15 +129,11 @@ class _HomePageState extends State<HomePage>
 
     _profilePulseController.repeat(
       reverse: true,
-      period: const Duration(
-        milliseconds: 450,
-      ),
+      period: const Duration(milliseconds: 450),
     );
 
     Future.delayed(
-      const Duration(
-        milliseconds: 1800,
-      ),
+      const Duration(milliseconds: 1800),
       () {
         if (!mounted) return;
 
@@ -194,19 +168,14 @@ class _HomePageState extends State<HomePage>
   // ===========================================================================
 
   String _formatAddress(String? fullAddress) {
-    if (fullAddress == null ||
-        fullAddress.trim().isEmpty) {
+    if (fullAddress == null || fullAddress.trim().isEmpty) {
       return '';
     }
 
     final parts = fullAddress
         .split(',')
-        .map(
-          (e) => e.trim(),
-        )
-        .where(
-          (e) => e.isNotEmpty,
-        )
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
         .toList();
 
     if (parts.length >= 2) {
@@ -227,7 +196,7 @@ class _HomePageState extends State<HomePage>
   }
 
   // ===========================================================================
-  // ADDRESS SHEET
+  // ADDRESS
   // ===========================================================================
 
   Future<void> _showAddressBottomSheet(
@@ -237,11 +206,10 @@ class _HomePageState extends State<HomePage>
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: AppColors.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(
-            AppRadius.xl,
-          ),
+          top: Radius.circular(AppRadius.xl),
         ),
       ),
       builder: (_) {
@@ -254,8 +222,30 @@ class _HomePageState extends State<HomePage>
     if (!mounted) return;
 
     context.read<ProfileBloc>().add(
-          GetProfilesEvent(),
-        );
+      GetProfilesEvent(),
+    );
+  }
+
+  // ===========================================================================
+  // SECTION SPACING
+  // ===========================================================================
+
+  Widget _sectionDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.pageHorizontal,
+      ),
+      child: Container(
+        height: 1,
+        color: AppColors.divider.withOpacity(0.65),
+      ),
+    );
+  }
+
+  Widget _sectionTopSpace() {
+    return const SizedBox(
+      height: AppSpacing.xl,
+    );
   }
 
   // ===========================================================================
@@ -272,18 +262,10 @@ class _HomePageState extends State<HomePage>
             context,
             profileState,
           ) {
-            // =================================================================
-            // PROFILE LOADING
-            // =================================================================
-
             if (profileState is ProfileLoading ||
                 profileState is ProfileInitial) {
               return const DashboardSkeleton();
             }
-
-            // =================================================================
-            // PROFILE ERROR
-            // =================================================================
 
             if (profileState is ProfileError ||
                 profileState is! ProfileLoaded) {
@@ -292,13 +274,11 @@ class _HomePageState extends State<HomePage>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(
-                      Icons.error_outline,
+                      Icons.error_outline_rounded,
                       size: 64,
-                      color: Colors.orange,
+                      color: AppColors.warning,
                     ),
-                    const SizedBox(
-                      height: 16,
-                    ),
+                    const SizedBox(height: 16),
                     const Text(
                       'Profile not found',
                       style: TextStyle(
@@ -306,20 +286,14 @@ class _HomePageState extends State<HomePage>
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(
-                      height: 8,
-                    ),
+                    const SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
-                        context
-                            .read<ProfileBloc>()
-                            .add(
-                              GetProfilesEvent(),
-                            );
+                        context.read<ProfileBloc>().add(
+                          GetProfilesEvent(),
+                        );
                       },
-                      child: const Text(
-                        'Retry',
-                      ),
+                      child: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -327,10 +301,6 @@ class _HomePageState extends State<HomePage>
             }
 
             final profile = profileState.profile;
-
-            // =================================================================
-            // LOAD USER DATA
-            // =================================================================
 
             final orderBloc = context.read<OrderBloc>();
 
@@ -342,8 +312,7 @@ class _HomePageState extends State<HomePage>
               );
             }
 
-            final addressBloc =
-                context.read<AddressBloc>();
+            final addressBloc = context.read<AddressBloc>();
 
             if (addressBloc.state is AddressInitial) {
               addressBloc.add(
@@ -353,8 +322,7 @@ class _HomePageState extends State<HomePage>
               );
             }
 
-            final favoriteBloc =
-                context.read<FavoriteBloc>();
+            final favoriteBloc = context.read<FavoriteBloc>();
 
             if (favoriteBloc.state is FavoriteInitial) {
               favoriteBloc.add(
@@ -363,10 +331,6 @@ class _HomePageState extends State<HomePage>
                 ),
               );
             }
-
-            // =================================================================
-            // BUSINESS BLOC
-            // =================================================================
 
             return BlocBuilder<BusinessBloc, BusinessState>(
               builder: (
@@ -385,307 +349,143 @@ class _HomePageState extends State<HomePage>
                   );
                 }
 
-                List<BusinessEntity> businesses =
-                    <BusinessEntity>[];
+                List<BusinessEntity> businesses = <BusinessEntity>[];
 
                 if (businessState is BusinessFetched) {
                   businesses = businessState.businesses;
                 }
 
-                // =============================================================
-                // SORTED DATA
-                // =============================================================
+                final sorted = [...businesses]
+                  ..sort(
+                    (a, b) => b.rating.compareTo(a.rating),
+                  );
 
-                final sorted =
-                    [...businesses]..sort(
-                        (a, b) =>
-                            b.rating.compareTo(
-                          a.rating,
-                        ),
-                      );
+                final topRatedBusinesses = sorted
+                    .where(
+                      (b) => b.rating > 4.5,
+                    )
+                    .toList();
 
-                final topRatedBusinesses =
-                    sorted
-                        .where(
-                          (b) => b.rating > 4.5,
-                        )
-                        .toList();
+                final openNowCandidates = sorted
+                    .where(
+                      (b) => b.isOpen,
+                    )
+                    .toList();
 
-                final openNowCandidates =
-                    sorted
-                        .where(
-                          (b) => b.isOpen,
-                        )
-                        .toList();
+                final newestBusinesses = [...businesses]
+                  ..sort(
+                    (a, b) => b.createdAt.compareTo(a.createdAt),
+                  );
 
-                final newestBusinesses =
-                    [...businesses]..sort(
-                        (a, b) =>
-                            b.createdAt.compareTo(
-                          a.createdAt,
-                        ),
-                      );
+                final newestList = newestBusinesses.take(10).toList();
 
-                final newestList =
-                    newestBusinesses
-                        .take(10)
-                        .toList();
+                final juiceShops = sorted
+                    .where(
+                      (b) => b.type == BusinessType.juice_shop,
+                    )
+                    .toList();
 
-                final juiceShops =
-                    sorted
-                        .where(
-                          (b) =>
-                              b.type ==
-                              BusinessType.juice_shop,
-                        )
-                        .toList();
-
-                // =============================================================
-                // SPONSORED
-                // =============================================================
-
-                const String?
-                    sponsoredBannerImageUrl = null;
-
-                // =============================================================
-                // MAIN PAGE
-                // =============================================================
+                const String? sponsoredBannerImageUrl = null;
 
                 return SingleChildScrollView(
                   padding: EdgeInsets.zero,
-                  physics:
-                      const BouncingScrollPhysics(),
+                  physics: const BouncingScrollPhysics(),
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // ========================================================
                       // HEADER
                       // ========================================================
 
-                      Container(
-                        decoration:
-                            const BoxDecoration(
-                          color:
-                              AppColors.surface,
-                          borderRadius:
-                              BorderRadius.only(
-                            bottomLeft:
-                                Radius.circular(
-                              AppRadius.xl,
-                            ),
-                            bottomRight:
-                                Radius.circular(
-                              AppRadius.xl,
-                            ),
-                          ),
-                        ),
-                        padding:
-                            const EdgeInsets.fromLTRB(
-                          AppSpacing
-                              .pageHorizontal,
-                          AppSpacing.md,
-                          AppSpacing
-                              .pageHorizontal,
-                          AppSpacing.lg,
-                        ),
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment
-                                  .start,
-                          children: [
-                            // ==================================================
-                            // DELIVERY HEADER
-                            // ==================================================
-
-                            HomeDeliveryHeader(
-                              addressLabel:
-                                  _formatAddress(
-                                profile.address,
-                              ),
-                              avatarUrl:
-                                  profile.photo,
-                              profileLayerLink:
-                                  _profileLayerLink,
-                              profilePulseAnimation:
-                                  _profilePulseController,
-                              onAvatarTap:
-                                  () async {
-                                _hideProfileHint();
-
-                                await context.push(
-                                  '/profile',
-                                );
-
-                                if (context
-                                    .mounted) {
-                                  context
-                                      .read<
-                                          ProfileBloc>()
-                                      .add(
-                                        GetProfilesEvent(),
-                                      );
-                                }
-                              },
-                              onAddressTap: () =>
-                                  _showAddressBottomSheet(
-                                context,
-                                profile.id,
-                              ),
-                            ),
-
-                            const SizedBox(
-                              height:
-                                  AppSpacing.lg,
-                            ),
-
-                            // ==================================================
-                            // GREETING
-                            // ==================================================
-
-                            HomeGreeting(
-                              userName:
-                                  profile.userName,
-                            ),
-
-                            const SizedBox(
-                              height:
-                                  AppSpacing.md,
-                            ),
-
-                            // ==================================================
-                            // SEARCH
-                            // ==================================================
-
-                            HomeSearchBar(
-                              onTap: () =>
-                                  context.go(
-                                '/search',
-                              ),
-                              onMicTap: null,
-                            ),
-                          ],
-                        ),
+                      _buildHeader(
+                        profile,
                       ),
 
                       // ========================================================
                       // ONGOING ORDER
                       // ========================================================
 
-                      BlocBuilder<OrderBloc,
-                          OrderState>(
+                      BlocBuilder<OrderBloc, OrderState>(
                         builder: (
                           context,
                           orderState,
                         ) {
-                          if (orderState
-                              is! CustomerOrdersFetched) {
-                            return const SizedBox
-                                .shrink();
+                          if (orderState is! CustomerOrdersFetched) {
+                            return const SizedBox.shrink();
                           }
 
-                          final now =
-                              DateTime.now();
+                          final now = DateTime.now();
 
-                          final ongoingOrders =
-                              orderState.orders
-                                  .where(
-                            (order) {
-                              if (!order
-                                  .orderStatus
-                                  .isOngoing) {
-                                return false;
-                              }
+                          final ongoingOrders = orderState.orders
+                              .where(
+                                (order) {
+                                  if (!order.orderStatus.isOngoing) {
+                                    return false;
+                                  }
 
-                              if (order
-                                      .scheduledFor ==
-                                  null) {
-                                return true;
-                              }
+                                  if (order.scheduledFor == null) {
+                                    return true;
+                                  }
 
-                              final releaseTime =
-                                  order
-                                      .scheduledFor!
+                                  final releaseTime = order.scheduledFor!
                                       .subtract(
-                                const Duration(
-                                  minutes: 30,
-                                ),
-                              );
+                                    const Duration(minutes: 30),
+                                  );
 
-                              return !now.isBefore(
-                                releaseTime,
-                              );
-                            },
-                          ).toList();
+                                  return !now.isBefore(releaseTime);
+                                },
+                              )
+                              .toList();
 
-                          if (ongoingOrders
-                              .isEmpty) {
-                            return const SizedBox
-                                .shrink();
+                          if (ongoingOrders.isEmpty) {
+                            return const SizedBox.shrink();
                           }
 
-                          final order =
-                              ongoingOrders.first;
+                          final order = ongoingOrders.first;
 
                           return Padding(
-                            padding:
-                                const EdgeInsets
-                                    .fromLTRB(
-                              AppSpacing
-                                  .pageHorizontal,
-                              AppSpacing.lg,
-                              AppSpacing
-                                  .pageHorizontal,
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.pageHorizontal,
+                              AppSpacing.xl,
+                              AppSpacing.pageHorizontal,
                               0,
                             ),
-                            child:
-                                OngoingOrderCard(
-                              order: order,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        OrderDetailsPage(
-                                      order: order,
+                            child: _buildFloatingCard(
+                              child: OngoingOrderCard(
+                                order: order,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => OrderDetailsPage(
+                                        order: order,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              },
+                                  );
+                                },
+                              ),
                             ),
                           );
                         },
-                      ),
-
-                      const SizedBox(
-                        height:
-                            AppSpacing.xl,
                       ),
 
                       // ========================================================
                       // SPONSORED BANNER
                       // ========================================================
 
-                      if (sponsoredBannerImageUrl !=
-                          null) ...[
+                      if (sponsoredBannerImageUrl != null) ...[
+                        _sectionTopSpace(),
+
                         Padding(
-                          padding:
-                              const EdgeInsets
-                                  .symmetric(
-                            horizontal:
-                                AppSpacing
-                                    .pageHorizontal,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.pageHorizontal,
                           ),
-                          child:
-                              SponsoredBanner(
-                            imageUrl:
-                                sponsoredBannerImageUrl,
-                            onTap: () {},
+                          child: _buildFloatingCard(
+                            child: SponsoredBanner(
+                              imageUrl: sponsoredBannerImageUrl,
+                              onTap: () {},
+                            ),
                           ),
-                        ),
-                        const SizedBox(
-                          height:
-                              AppSpacing.xl,
                         ),
                       ],
 
@@ -693,163 +493,37 @@ class _HomePageState extends State<HomePage>
                       // PROMOTIONS
                       // ========================================================
 
-                      BlocBuilder<
-                          PromotionsBloc,
-                          PromotionsState>(
+                      BlocBuilder<PromotionsBloc, PromotionsState>(
                         builder: (
                           context,
                           promoState,
                         ) {
-                          if (promoState
-                              is PromotionsLoading) {
+                          if (promoState is PromotionsLoading) {
                             return const Padding(
-                              padding:
-                                  EdgeInsets.symmetric(
-                                vertical:
-                                    AppSpacing.xl,
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppSpacing.xl,
                               ),
                               child: SizedBox(
                                 height: 110,
-                                child:
-                                    ListSkeleton(
+                                child: ListSkeleton(
                                   itemCount: 2,
-                                  showLeadingCircle:
-                                      false,
+                                  showLeadingCircle: false,
                                 ),
                               ),
                             );
                           }
 
-                          if (promoState
-                              is PromotionsError) {
-                            return const SizedBox
-                                .shrink();
+                          if (promoState is PromotionsError) {
+                            return const SizedBox.shrink();
                           }
 
-                          if (promoState
-                                  is! PromotionsLoaded ||
-                              promoState.promotions
-                                  .isEmpty) {
-                            return const SizedBox
-                                .shrink();
+                          if (promoState is! PromotionsLoaded ||
+                              promoState.promotions.isEmpty) {
+                            return const SizedBox.shrink();
                           }
 
-                          return Column(
-                            crossAxisAlignment:
-                                CrossAxisAlignment
-                                    .start,
-                            children: [
-                              const Padding(
-                                padding:
-                                    EdgeInsets
-                                        .symmetric(
-                                  horizontal:
-                                      AppSpacing
-                                          .pageHorizontal,
-                                ),
-                                child:
-                                    SectionHeader(
-                                  title:
-                                      'عروض وخصومات',
-                                ),
-                              ),
-
-                              const SizedBox(
-                                height:
-                                    AppSpacing.md,
-                              ),
-
-                              SizedBox(
-                                height:
-                                    PromotionCard
-                                        .cardHeight,
-                                child:
-                                    ListView.separated(
-                                  scrollDirection:
-                                      Axis.horizontal,
-                                  physics:
-                                      const BouncingScrollPhysics(),
-                                  padding:
-                                      const EdgeInsets
-                                          .only(
-                                    left: AppSpacing
-                                        .pageHorizontal,
-                                    right:
-                                        AppSpacing.sm,
-                                  ),
-                                  itemCount:
-                                      promoState
-                                          .promotions
-                                          .length,
-                                  separatorBuilder:
-                                      (
-                                    _,
-                                    __,
-                                  ) {
-                                    return const SizedBox(
-                                      width:
-                                          AppSpacing.sm,
-                                    );
-                                  },
-                                  itemBuilder:
-                                      (
-                                    context,
-                                    index,
-                                  ) {
-                                    final promo =
-                                        promoState
-                                            .promotions[
-                                                index];
-
-                                    return PromotionCard(
-                                      businessName:
-                                          promo
-                                              .businessName,
-                                      coverUrl:
-                                          promo
-                                              .photoUrl,
-                                      itemName:
-                                          promo
-                                              .itemName,
-                                      label:
-                                          promo.label,
-                                      menuItemId:
-                                          promo
-                                              .menuItemId,
-                                      discountPercentage:
-                                          promo
-                                              .discountPercentage,
-                                      oldPrice:
-                                          promo.oldPrice
-                                              ?.toDouble(),
-                                      newPrice:
-                                          promo.newPrice
-                                              ?.toDouble(),
-                                      onTap: () {
-                                        if (promo
-                                                .menuItemId !=
-                                            null) {
-                                          context.push(
-                                            '/food/${promo.menuItemId}',
-                                          );
-                                        } else {
-                                          context.push(
-                                            '/promotion-details',
-                                            extra:
-                                                promo,
-                                          );
-                                        }
-                                      },
-                                    );
-                                  },
-                                ),
-                              ),
-
-                              const SizedBox(
-                                height:
-                                    AppSpacing.xl,
-                              ),
-                            ],
+                          return _buildPromotionSection(
+                            promoState,
                           );
                         },
                       ),
@@ -858,43 +532,31 @@ class _HomePageState extends State<HomePage>
                       // FAVORITES
                       // ========================================================
 
-                      BlocBuilder<
-                          FavoriteBloc,
-                          FavoriteState>(
+                      BlocBuilder<FavoriteBloc, FavoriteState>(
                         builder: (
                           context,
                           favoriteState,
                         ) {
-                          if (favoriteState
-                                  is! FavoriteLoaded ||
-                              favoriteState
-                                  .favoriteIds
-                                  .isEmpty) {
-                            return const SizedBox
-                                .shrink();
+                          if (favoriteState is! FavoriteLoaded ||
+                              favoriteState.favoriteIds.isEmpty) {
+                            return const SizedBox.shrink();
                           }
 
-                          final favoriteBusinesses =
-                              sorted
-                                  .where(
-                            (b) => favoriteState
-                                .favoriteIds
-                                .contains(
-                              b.id,
-                            ),
-                          ).toList();
+                          final favoriteBusinesses = sorted
+                              .where(
+                                (b) => favoriteState.favoriteIds.contains(
+                                  b.id,
+                                ),
+                              )
+                              .toList();
 
-                          if (favoriteBusinesses
-                              .isEmpty) {
-                            return const SizedBox
-                                .shrink();
+                          if (favoriteBusinesses.isEmpty) {
+                            return const SizedBox.shrink();
                           }
 
                           return _buildBusinessSection(
-                            title:
-                                'المفضلة لديك',
-                            businesses:
-                                favoriteBusinesses,
+                            title: 'المفضلة لديك',
+                            businesses: favoriteBusinesses,
                           );
                         },
                       ),
@@ -903,13 +565,10 @@ class _HomePageState extends State<HomePage>
                       // TOP RATED
                       // ========================================================
 
-                      if (topRatedBusinesses
-                          .isNotEmpty)
+                      if (topRatedBusinesses.isNotEmpty)
                         _buildBusinessSection(
-                          title:
-                              'الأعلى تقييمًا',
-                          businesses:
-                              topRatedBusinesses,
+                          title: 'الأعلى تقييمًا',
+                          businesses: topRatedBusinesses,
                         ),
 
                       // ========================================================
@@ -919,8 +578,7 @@ class _HomePageState extends State<HomePage>
                       if (newestList.isNotEmpty)
                         _buildBusinessSection(
                           title: 'الأحدث',
-                          businesses:
-                              newestList,
+                          businesses: newestList,
                         ),
 
                       // ========================================================
@@ -929,10 +587,8 @@ class _HomePageState extends State<HomePage>
 
                       if (juiceShops.isNotEmpty)
                         _buildBusinessSection(
-                          title:
-                              'محلات العصائر',
-                          businesses:
-                              juiceShops,
+                          title: 'محلات العصائر',
+                          businesses: juiceShops,
                         ),
 
                       // ========================================================
@@ -941,104 +597,22 @@ class _HomePageState extends State<HomePage>
 
                       if (sorted.isNotEmpty)
                         _buildBusinessSection(
-                          title:
-                              'تصفح الكل',
-                          businesses:
-                              sorted,
+                          title: 'تصفح الكل',
+                          businesses: sorted,
                         ),
 
                       // ========================================================
                       // OPEN NOW
                       // ========================================================
 
-                      if (openNowCandidates
-                          .isNotEmpty) ...[
-                        const Padding(
-                          padding:
-                              EdgeInsets.symmetric(
-                            horizontal:
-                                AppSpacing
-                                    .pageHorizontal,
-                          ),
-                          child:
-                              SectionHeader(
-                            title:
-                                'مفتوح الآن',
-                          ),
+                      if (openNowCandidates.isNotEmpty)
+                        _buildOpenNowSection(
+                          openNowCandidates,
                         ),
 
-                        const SizedBox(
-                          height:
-                              AppSpacing.md,
-                        ),
-
-                        ListView.separated(
-                          shrinkWrap: true,
-                          physics:
-                              const NeverScrollableScrollPhysics(),
-                          padding:
-                              const EdgeInsets
-                                  .symmetric(
-                            horizontal:
-                                AppSpacing
-                                    .pageHorizontal,
-                          ),
-                          itemCount:
-                              openNowCandidates
-                                  .length,
-                          separatorBuilder:
-                              (_, __) =>
-                                  const SizedBox(
-                            height:
-                                AppSpacing.md,
-                          ),
-                          itemBuilder:
-                              (
-                            context,
-                            index,
-                          ) {
-                            final business =
-                                openNowCandidates[
-                                    index];
-
-                            return BusinessCard(
-                              businessId:
-                                  business.id,
-                              height: 250,
-                              compact: false,
-                              businessName:
-                                  business
-                                      .nameAr,
-                              subtitle:
-                                  '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
-                              coverUrl:
-                                  business
-                                      .coverUrl,
-                              rating:
-                                  business.rating,
-                              ratingCount:
-                                  business
-                                      .ratingCount,
-                              statusText:
-                                  business
-                                          .isOpen
-                                      ? 'مفتوح الآن'
-                                      : 'مغلق الآن',
-                              isOpen:
-                                  business.isOpen,
-                              onTap: () =>
-                                  context.push(
-                                '/business/${business.id}',
-                              ),
-                            );
-                          },
-                        ),
-
-                        const SizedBox(
-                          height:
-                              AppSpacing.xl,
-                        ),
-                      ],
+                      const SizedBox(
+                        height: 32,
+                      ),
                     ],
                   ),
                 );
@@ -1051,7 +625,209 @@ class _HomePageState extends State<HomePage>
   }
 
   // ===========================================================================
-  // BUSINESS HORIZONTAL SECTION
+  // HEADER
+  // ===========================================================================
+
+  Widget _buildHeader(
+    dynamic profile,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(AppRadius.xl),
+          bottomRight: Radius.circular(AppRadius.xl),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withOpacity(0.035),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.pageHorizontal,
+        AppSpacing.md,
+        AppSpacing.pageHorizontal,
+        22,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          HomeDeliveryHeader(
+            addressLabel: _formatAddress(
+              profile.address,
+            ),
+            avatarUrl: profile.photo,
+            profileLayerLink: _profileLayerLink,
+            profilePulseAnimation: _profilePulseController,
+            onAvatarTap: () async {
+              _hideProfileHint();
+
+              await context.push('/profile');
+
+              if (context.mounted) {
+                context.read<ProfileBloc>().add(
+                  GetProfilesEvent(),
+                );
+              }
+            },
+            onAddressTap: () => _showAddressBottomSheet(
+              context,
+              profile.id,
+            ),
+          ),
+
+          const SizedBox(
+            height: 22,
+          ),
+
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 2,
+            ),
+            child: HomeGreeting(
+              userName: profile.userName,
+            ),
+          ),
+
+          const SizedBox(
+            height: 14,
+          ),
+
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(
+                AppRadius.lg,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.035),
+                  blurRadius: 18,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: HomeSearchBar(
+              onTap: () => context.go('/search'),
+              onMicTap: null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // PROMOTIONS
+  // ===========================================================================
+
+  Widget _buildPromotionSection(
+    PromotionsLoaded promoState,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(
+        top: AppSpacing.xl,
+        bottom: AppSpacing.xl,
+      ),
+      padding: const EdgeInsets.only(
+        top: 18,
+        bottom: 20,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight.withOpacity(0.32),
+        borderRadius: const BorderRadius.all(
+          Radius.circular(AppRadius.xl),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.pageHorizontal,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(
+                      AppRadius.full,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 9),
+                const Expanded(
+                  child: SectionHeader(
+                    title: 'عروض وخصومات',
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(
+            height: 14,
+          ),
+
+          SizedBox(
+            height: PromotionCard.cardHeight,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(
+                left: AppSpacing.pageHorizontal,
+                right: AppSpacing.sm,
+              ),
+              itemCount: promoState.promotions.length,
+              separatorBuilder: (_, __) {
+                return const SizedBox(
+                  width: AppSpacing.sm,
+                );
+              },
+              itemBuilder: (
+                context,
+                index,
+              ) {
+                final promo = promoState.promotions[index];
+
+                return PromotionCard(
+                  businessName: promo.businessName,
+                  coverUrl: promo.photoUrl,
+                  itemName: promo.itemName,
+                  label: promo.label,
+                  menuItemId: promo.menuItemId,
+                  discountPercentage: promo.discountPercentage,
+                  oldPrice: promo.oldPrice?.toDouble(),
+                  newPrice: promo.newPrice?.toDouble(),
+                  onTap: () {
+                    if (promo.menuItemId != null) {
+                      context.push(
+                        '/food/${promo.menuItemId}',
+                      );
+                    } else {
+                      context.push(
+                        '/promotion-details',
+                        extra: promo,
+                      );
+                    }
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // BUSINESS SECTION
   // ===========================================================================
 
   Widget _buildBusinessSection({
@@ -1059,18 +835,13 @@ class _HomePageState extends State<HomePage>
     required List<BusinessEntity> businesses,
   }) {
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // =====================================================================
-        // SECTION TITLE
-        // =====================================================================
+        _sectionTopSpace(),
 
         Padding(
-          padding:
-              const EdgeInsets.symmetric(
-            horizontal:
-                AppSpacing.pageHorizontal,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.pageHorizontal,
           ),
           child: SectionHeader(
             title: title,
@@ -1078,65 +849,46 @@ class _HomePageState extends State<HomePage>
         ),
 
         const SizedBox(
-          height: AppSpacing.md,
+          height: 13,
         ),
-
-        // =====================================================================
-        // HORIZONTAL BUSINESSES
-        // =====================================================================
 
         SizedBox(
           height: _recommendedRowHeight,
           child: ListView.separated(
-            scrollDirection:
-                Axis.horizontal,
-            physics:
-                const BouncingScrollPhysics(),
-            padding:
-                const EdgeInsets.only(
-              left:
-                  AppSpacing.pageHorizontal,
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(
+              left: AppSpacing.pageHorizontal,
               right: AppSpacing.sm,
             ),
-            itemCount:
-                businesses.length,
-            separatorBuilder:
-                (_, __) =>
-                    const SizedBox(
-              width: AppSpacing.sm,
-            ),
+            itemCount: businesses.length,
+            separatorBuilder: (_, __) {
+              return const SizedBox(
+                width: AppSpacing.sm,
+              );
+            },
             itemBuilder: (
               context,
               index,
             ) {
-              final business =
-                  businesses[index];
+              final business = businesses[index];
 
               return BusinessCard(
-                businessId:
-                    business.id,
-                width:
-                    _recommendedTileWidth,
+                businessId: business.id,
+                width: _recommendedTileWidth,
                 height: 175,
                 compact: true,
-                businessName:
-                    business.nameAr,
+                businessName: business.nameAr,
                 subtitle:
                     '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
-                coverUrl:
-                    business.coverUrl,
-                rating:
-                    business.rating,
-                ratingCount:
-                    business.ratingCount,
-                statusText:
-                    business.isOpen
-                        ? 'مفتوح الآن'
-                        : 'مغلق الآن',
-                isOpen:
-                    business.isOpen,
-                onTap: () =>
-                    context.push(
+                coverUrl: business.coverUrl,
+                rating: business.rating,
+                ratingCount: business.ratingCount,
+                statusText: business.isOpen
+                    ? 'مفتوح الآن'
+                    : 'مغلق الآن',
+                isOpen: business.isOpen,
+                onTap: () => context.push(
                   '/business/${business.id}',
                 ),
               );
@@ -1148,6 +900,126 @@ class _HomePageState extends State<HomePage>
           height: AppSpacing.xl,
         ),
       ],
+    );
+  }
+
+  // ===========================================================================
+  // OPEN NOW
+  // ===========================================================================
+
+  Widget _buildOpenNowSection(
+    List<BusinessEntity> businesses,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(
+        top: 6,
+      ),
+      padding: const EdgeInsets.only(
+        top: 20,
+        bottom: 24,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.surface.withOpacity(0.72),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.pageHorizontal,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.success,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: SectionHeader(
+                    title: 'مفتوح الآن',
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(
+            height: AppSpacing.md,
+          ),
+
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.pageHorizontal,
+            ),
+            itemCount: businesses.length,
+            separatorBuilder: (_, __) {
+              return const SizedBox(
+                height: AppSpacing.md,
+              );
+            },
+            itemBuilder: (
+              context,
+              index,
+            ) {
+              final business = businesses[index];
+
+              return BusinessCard(
+                businessId: business.id,
+                height: 250,
+                compact: false,
+                businessName: business.nameAr,
+                subtitle:
+                    '${_typeLabel(business.type)} · ${_formatAddress(business.adress)}',
+                coverUrl: business.coverUrl,
+                rating: business.rating,
+                ratingCount: business.ratingCount,
+                statusText: business.isOpen
+                    ? 'مفتوح الآن'
+                    : 'مغلق الآن',
+                isOpen: business.isOpen,
+                onTap: () => context.push(
+                  '/business/${business.id}',
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // FLOATING CARD
+  // ===========================================================================
+
+  Widget _buildFloatingCard({
+    required Widget child,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(
+          AppRadius.xl,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow.withOpacity(0.07),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 }

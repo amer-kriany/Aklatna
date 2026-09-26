@@ -1,4 +1,3 @@
-
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/features/favorit/presentation/bloc/favorite_bloc.dart';
@@ -24,10 +23,8 @@ class BusinessCard extends StatelessWidget {
 
   final String? statusText;
 
-  /// Whether the business is currently open.
   final bool isOpen;
 
-  /// Makes the card suitable for small horizontal lists.
   final bool compact;
 
   const BusinessCard({
@@ -85,29 +82,38 @@ class BusinessCard extends StatelessWidget {
     return SizedBox(
       width: width,
       height: height,
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        child: InkWell(
-          onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.background,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          child: Ink(
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(
-                color: AppColors.border.withOpacity(0.7),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow.withOpacity(0.08),
-                  blurRadius: 14,
-                  offset: const Offset(0, 5),
-                ),
-              ],
+          border: Border.all(
+            color: AppColors.border.withOpacity(0.65),
+            width: 0.8,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.055),
+              blurRadius: 20,
+              spreadRadius: 0,
+              offset: const Offset(0, 7),
             ),
-            child: ClipRRect(
+            BoxShadow(
+              color: Colors.black.withOpacity(0.025),
+              blurRadius: 4,
+              spreadRadius: 0,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
               borderRadius: BorderRadius.circular(AppRadius.xl),
+              splashColor: AppColors.primary.withOpacity(0.05),
+              highlightColor: AppColors.primary.withOpacity(0.02),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -121,7 +127,10 @@ class BusinessCard extends StatelessWidget {
                       children: [
                         _buildImage(),
 
-                        // Slight bottom gradient
+                        // ----------------------------------------------------
+                        // IMAGE GRADIENT
+                        // ----------------------------------------------------
+
                         Positioned(
                           left: 0,
                           right: 0,
@@ -143,9 +152,9 @@ class BusinessCard extends StatelessWidget {
                           ),
                         ),
 
-                        // ====================================================
+                        // ----------------------------------------------------
                         // STATUS
-                        // ====================================================
+                        // ----------------------------------------------------
 
                         if (hasStatus)
                           Positioned(
@@ -154,9 +163,9 @@ class BusinessCard extends StatelessWidget {
                             child: _buildStatusBadge(),
                           ),
 
-                        // ====================================================
+                        // ----------------------------------------------------
                         // FAVORITE
-                        // ====================================================
+                        // ----------------------------------------------------
 
                         Positioned(
                           top: compact ? 7 : 10,
@@ -164,9 +173,9 @@ class BusinessCard extends StatelessWidget {
                           child: _buildFavoriteButton(context),
                         ),
 
-                        // ====================================================
+                        // ----------------------------------------------------
                         // RATING
-                        // ====================================================
+                        // ----------------------------------------------------
 
                         if (rating != null)
                           Positioned(
@@ -190,8 +199,7 @@ class BusinessCard extends StatelessWidget {
                       compact ? 9 : AppSpacing.sm,
                     ),
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // ----------------------------------------------------
                         // BUSINESS NAME
@@ -218,15 +226,13 @@ class BusinessCard extends StatelessWidget {
                             subtitle!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style:
-                                AppTextStyles.regularSmall.copyWith(
+                            style: AppTextStyles.regularSmall.copyWith(
                               color: AppColors.textSecondary,
                               fontSize: compact ? 10 : 12,
                             ),
                           ),
                         ],
 
-                        // Small bottom breathing room
                         if (!hasSubtitle)
                           SizedBox(
                             height: compact ? 3 : 5,
@@ -265,7 +271,12 @@ class BusinessCard extends StatelessWidget {
       width: double.infinity,
       height: double.infinity,
       fit: BoxFit.cover,
-      loadingBuilder: (context, child, progress) {
+      filterQuality: FilterQuality.medium,
+      loadingBuilder: (
+        context,
+        child,
+        progress,
+      ) {
         if (progress == null) {
           return child;
         }
@@ -279,7 +290,11 @@ class BusinessCard extends StatelessWidget {
           ),
         );
       },
-      errorBuilder: (context, error, stackTrace) {
+      errorBuilder: (
+        context,
+        error,
+        stackTrace,
+      ) {
         return Container(
           color: AppColors.surfaceVariant,
           alignment: Alignment.center,
@@ -299,8 +314,8 @@ class BusinessCard extends StatelessWidget {
 
   Widget _buildStatusBadge() {
     final backgroundColor = isOpen
-        ? Colors.green.withOpacity(0.94)
-        : Colors.red.withOpacity(0.94);
+        ? AppColors.openBadge.withOpacity(0.94)
+        : AppColors.closedBadge.withOpacity(0.94);
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -314,8 +329,9 @@ class BusinessCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.12),
-            blurRadius: 6,
+            color: Colors.black.withOpacity(0.10),
+            blurRadius: 7,
+            spreadRadius: 0,
             offset: const Offset(0, 2),
           ),
         ],
@@ -362,8 +378,9 @@ class BusinessCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.10),
-            blurRadius: 5,
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 6,
+            spreadRadius: 0,
             offset: const Offset(0, 2),
           ),
         ],
@@ -418,19 +435,28 @@ class BusinessCard extends StatelessWidget {
         return Material(
           color: Colors.white.withOpacity(0.94),
           shape: const CircleBorder(),
-          elevation: 1,
           child: InkWell(
             customBorder: const CircleBorder(),
             onTap: () => _onToggleFavorite(context),
+            splashColor: AppColors.primary.withOpacity(0.10),
+            highlightColor: AppColors.primary.withOpacity(0.05),
             child: SizedBox(
               width: size,
               height: size,
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
-                transitionBuilder: (child, animation) {
+                duration: const Duration(milliseconds: 220),
+                switchInCurve: Curves.easeOutBack,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (
+                  child,
+                  animation,
+                ) {
                   return ScaleTransition(
                     scale: animation,
-                    child: child,
+                    child: FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    ),
                   );
                 },
                 child: Icon(

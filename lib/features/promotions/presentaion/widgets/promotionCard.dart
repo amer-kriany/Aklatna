@@ -1,10 +1,11 @@
+import 'dart:async';
 
 import 'package:aklatna/core/constants/app_spacing.dart';
 import 'package:aklatna/core/constants/app_text_style.dart';
 import 'package:aklatna/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-class PromotionCard extends StatelessWidget {
+class PromotionCard extends StatefulWidget {
   const PromotionCard({
     super.key,
     required this.businessName,
@@ -35,160 +36,206 @@ class PromotionCard extends StatelessWidget {
   final double? width;
   final String currencySymbol;
 
-  static const double cardHeight = 250;
-  static const double imageHeight = 142;
+  static const double cardHeight = 252;
+  static const double imageHeight = 148;
 
-  bool get _hasDiscount => discountPercentage > 0;
+  @override
+  State<PromotionCard> createState() => _PromotionCardState();
+}
+
+class _PromotionCardState extends State<PromotionCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animationController;
+  late final Animation<double> _imageScale;
+  late final Animation<double> _shinePosition;
+
+  bool _pressed = false;
+
+  bool get _hasDiscount => widget.discountPercentage > 0;
 
   String get _displayName {
-    if (menuItemId == null &&
-        label != null &&
-        label!.trim().isNotEmpty) {
-      return label!;
+    if (widget.menuItemId == null &&
+        widget.label != null &&
+        widget.label!.trim().isNotEmpty) {
+      return widget.label!;
     }
 
-    return itemName;
+    return widget.itemName;
   }
 
   double get _savingsAmount {
     if (!_hasDiscount ||
-        oldPrice == null ||
-        newPrice == null ||
-        oldPrice! <= newPrice!) {
+        widget.oldPrice == null ||
+        widget.newPrice == null ||
+        widget.oldPrice! <= widget.newPrice!) {
       return 0;
     }
 
-    return oldPrice! - newPrice!;
+    return widget.oldPrice! - widget.newPrice!;
   }
 
   double _resolveWidth(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
 
-    if (width != null) {
-      return width!;
+    if (widget.width != null) {
+      return widget.width!;
     }
 
-    return (screenWidth * 0.47).clamp(175.0, 205.0);
+    return (screenWidth * 0.47).clamp(178.0, 208.0);
+  }
+@override
+void initState() {
+  super.initState();
+
+  _animationController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 4200),
+  );
+
+  _imageScale = Tween<double>(
+    begin: 1.0,
+    end: 1.035,
+  ).animate(
+    CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOutSine,
+    ),
+  );
+
+  _shinePosition = Tween<double>(
+    begin: -1.5,
+    end: 1.5,
+  ).animate(
+    CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ),
+  );
+
+  _animationController.repeat(reverse: true);
+}
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    if (!mounted) return;
+
+    setState(() {
+      _pressed = true;
+    });
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    if (!mounted) return;
+
+    setState(() {
+      _pressed = false;
+    });
+
+    widget.onTap();
+  }
+
+  void _handleTapCancel() {
+    if (!mounted) return;
+
+    setState(() {
+      _pressed = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final cardWidth = _resolveWidth(context);
 
-    return SizedBox(
-      width: cardWidth,
-      height: cardHeight,
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        clipBehavior: Clip.antiAlias,
-        elevation: 0,
-        child: InkWell(
-          onTap: onTap,
-          splashColor: AppColors.primary.withOpacity(0.06),
-          highlightColor: AppColors.primary.withOpacity(0.03),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(
-                color: AppColors.border.withOpacity(0.45),
-                width: 0.8,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow.withOpacity(0.08),
-                  blurRadius: 18,
-                  offset: const Offset(0, 7),
+    return AnimatedScale(
+      scale: _pressed ? 0.975 : 1.0,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      child: SizedBox(
+        width: cardWidth,
+        height: PromotionCard.cardHeight,
+        child: Material(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: widget.onTap,
+            onTapDown: _handleTapDown,
+            onTapUp: _handleTapUp,
+            onTapCancel: _handleTapCancel,
+            splashColor: AppColors.primary.withOpacity(0.06),
+            highlightColor: AppColors.primary.withOpacity(0.025),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                border: Border.all(
+                  color: AppColors.border.withOpacity(0.38),
+                  width: 0.8,
                 ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildImage(cardWidth),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.shadow.withOpacity(0.07),
+                    blurRadius: 18,
+                    offset: const Offset(0, 7),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildImage(cardWidth),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        12,
+                        9,
+                        12,
+                        10,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildBusiness(),
 
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      12,
-                      10,
-                      12,
-                      10,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ---------------------------------------------------
-                        // BUSINESS
-                        // ---------------------------------------------------
+                          const SizedBox(height: 4),
 
-                        Row(
-                          textDirection: TextDirection.rtl,
-                          children: [
-                            Icon(
-                              Icons.storefront_rounded,
-                              size: 13,
-                              color: AppColors.primary,
+                          Text(
+                            _displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textDirection: TextDirection.rtl,
+                            style: AppTextStyles.h4.copyWith(
+                              color: AppColors.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              height: 1.15,
                             ),
-                            const SizedBox(width: 5),
-                            Expanded(
-                              child: Text(
-                                businessName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textDirection: TextDirection.rtl,
-                                style: AppTextStyles.regularSmall.copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 4),
-
-                        // ---------------------------------------------------
-                        // ITEM NAME
-                        // ---------------------------------------------------
-
-                        Text(
-                          _displayName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textDirection: TextDirection.rtl,
-                          style: AppTextStyles.h4.copyWith(
-                            color: AppColors.textPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            height: 1.15,
                           ),
-                        ),
 
-                        const Spacer(),
+                          const Spacer(),
 
-                        // ---------------------------------------------------
-                        // PRICE + CTA
-                        // ---------------------------------------------------
+                          Row(
+                            crossAxisAlignment:
+                                CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: _buildPrice(),
+                              ),
 
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              child: _buildPrice(),
-                            ),
+                              const SizedBox(width: 8),
 
-                            const SizedBox(width: 8),
-
-                            _buildArrowButton(),
-                          ],
-                        ),
-                      ],
+                              _buildArrowButton(),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -196,124 +243,207 @@ class PromotionCard extends StatelessWidget {
     );
   }
 
-  // ===========================================================================
-  // IMAGE
-  // ===========================================================================
+  Widget _buildBusiness() {
+    return Row(
+      textDirection: TextDirection.rtl,
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.08),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            Icons.storefront_rounded,
+            size: 12,
+            color: AppColors.primary,
+          ),
+        ),
+
+        const SizedBox(width: 6),
+
+        Expanded(
+          child: Text(
+            widget.businessName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textDirection: TextDirection.rtl,
+            style: AppTextStyles.regularSmall.copyWith(
+              color: AppColors.textSecondary,
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildImage(double cardWidth) {
     return SizedBox(
       width: double.infinity,
-      height: imageHeight,
+      height: PromotionCard.imageHeight,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          _buildCoverImage(),
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
+            child: AnimatedBuilder(
+              animation: _imageScale,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _imageScale.value,
+                  child: child,
+                );
+              },
+              child: _buildCoverImage(),
+            ),
+          ),
 
-          // Soft bottom gradient so the image blends naturally
-          // into the card instead of looking like a separate rectangle.
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  stops: const [0.55, 1.0],
+                  stops: const [
+                    0.45,
+                    1.0,
+                  ],
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.18),
+                    Colors.black.withOpacity(0.10),
                   ],
                 ),
               ),
             ),
           ),
 
-          // ---------------------------------------------------------------
-          // DISCOUNT
-          // ---------------------------------------------------------------
-
           if (_hasDiscount)
             Positioned(
               top: 10,
               right: 10,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(
-                    AppRadius.full,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.16),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  'خصم %$discountPercentage',
-                  textDirection: TextDirection.rtl,
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textOnPrimary,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
+              child: _buildDiscountBadge(),
             ),
 
-          // ---------------------------------------------------------------
-          // DEAL LABEL
-          // ---------------------------------------------------------------
-
-          if (label != null &&
-              label!.trim().isNotEmpty &&
-              menuItemId != null)
+          if (widget.label != null &&
+              widget.label!.trim().isNotEmpty &&
+              widget.menuItemId != null)
             Positioned(
-              bottom: 9,
+              bottom: 10,
               left: 10,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: cardWidth * 0.62,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.52),
-                  borderRadius: BorderRadius.circular(
-                    AppRadius.full,
-                  ),
-                ),
-                child: Text(
-                  label!,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textDirection: TextDirection.rtl,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
+              child: _buildDealLabel(cardWidth),
             ),
         ],
       ),
     );
   }
 
+  Widget _buildDiscountBadge() {
+    return AnimatedBuilder(
+      animation: _shinePosition,
+      builder: (context, child) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          child: Stack(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.94),
+                  borderRadius: BorderRadius.circular(
+                    AppRadius.full,
+                  ),
+                  border: Border.all(
+                    color: AppColors.primary.withOpacity(0.16),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.10),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Text(
+                  'خصم %${widget.discountPercentage}',
+                  textDirection: TextDirection.rtl,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.primary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+
+              Positioned.fill(
+                child: FractionalTranslation(
+                  translation: Offset(
+                    _shinePosition.value,
+                    0,
+                  ),
+                  child: Transform.rotate(
+                    angle: 0.25,
+                    child: Container(
+                      width: 18,
+                      color: Colors.white.withOpacity(0.32),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDealLabel(double cardWidth) {
+    return Container(
+      constraints: BoxConstraints(
+        maxWidth: cardWidth * 0.62,
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 9,
+        vertical: 5,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.90),
+        borderRadius: BorderRadius.circular(
+          AppRadius.full,
+        ),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.5),
+        ),
+      ),
+      child: Text(
+        widget.label!,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textDirection: TextDirection.rtl,
+        style: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+
   Widget _buildCoverImage() {
-    if (coverUrl == null || coverUrl!.trim().isEmpty) {
+    if (widget.coverUrl == null ||
+        widget.coverUrl!.trim().isEmpty) {
       return const _ImagePlaceholder();
     }
 
     return Image.network(
-      coverUrl!,
+      widget.coverUrl!,
       fit: BoxFit.cover,
       filterQuality: FilterQuality.medium,
       errorBuilder: (_, __, ___) {
@@ -333,22 +463,18 @@ class PromotionCard extends StatelessWidget {
     );
   }
 
-  // ===========================================================================
-  // PRICE
-  // ===========================================================================
-
   Widget _buildPrice() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (oldPrice != null && _hasDiscount)
+        if (widget.oldPrice != null && _hasDiscount)
           Row(
             textDirection: TextDirection.rtl,
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${_formatPrice(oldPrice!)} $currencySymbol',
+                '${_formatPrice(widget.oldPrice!)} ${widget.currencySymbol}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.bodySmall.copyWith(
@@ -375,11 +501,11 @@ class PromotionCard extends StatelessWidget {
             ],
           ),
 
-        const SizedBox(height: 1),
+        if (widget.newPrice != null) ...[
+          const SizedBox(height: 1),
 
-        if (newPrice != null)
           Text(
-            '${_formatPrice(newPrice!)} $currencySymbol',
+            '${_formatPrice(widget.newPrice!)} ${widget.currencySymbol}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.priceMedium.copyWith(
@@ -389,26 +515,27 @@ class PromotionCard extends StatelessWidget {
               height: 1.1,
             ),
           ),
+        ],
       ],
     );
   }
 
-  // ===========================================================================
-  // CTA
-  // ===========================================================================
-
   Widget _buildArrowButton() {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
       width: 38,
       height: 38,
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: AppColors.primary.withOpacity(
+          _pressed ? 0.85 : 1.0,
+        ),
         borderRadius: BorderRadius.circular(13),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.20),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: AppColors.primary.withOpacity(0.18),
+            blurRadius: _pressed ? 4 : 9,
+            offset: Offset(0, _pressed ? 1 : 3),
           ),
         ],
       ),
@@ -420,10 +547,6 @@ class PromotionCard extends StatelessWidget {
     );
   }
 
-  // ===========================================================================
-  // FORMAT
-  // ===========================================================================
-
   String _formatPrice(double price) {
     return price
         .toInt()
@@ -434,10 +557,6 @@ class PromotionCard extends StatelessWidget {
         );
   }
 }
-
-// =============================================================================
-// PLACEHOLDER
-// =============================================================================
 
 class _ImagePlaceholder extends StatelessWidget {
   const _ImagePlaceholder();
@@ -455,4 +574,3 @@ class _ImagePlaceholder extends StatelessWidget {
     );
   }
 }
-
